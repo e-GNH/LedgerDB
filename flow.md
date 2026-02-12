@@ -1,3 +1,5 @@
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#fffd9e', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#f4f4f4'}}}%%
 flowchart TD
     %% 1. The Many Users
     subgraph Users [Users]
@@ -51,6 +53,7 @@ flowchart TD
 
     %% Styling
     classDef storage fill:#dbeafe,stroke:#3b82f6,stroke-width:2px;
+```
     class HDFS,WS storage;
     classDef comm fill:#dcfce7,stroke:#22c55e,stroke-width:2px;
     class Proxy comm;
