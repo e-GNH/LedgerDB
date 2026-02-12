@@ -1,64 +1,58 @@
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#fffd9e', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#f4f4f4'}}}%%
 flowchart TD
-    %% Define Groups for visual structure
-    subgraph Clients ["Client Layer (Many Users)"]
+    %% 1. The Many Users
+    subgraph Users [Users]
         U1(User A)
         U2(User B)
         Un(User N...)
     end
 
-    subgraph Proxies ["Proxy Layer (Execution & State)"]
-        LP1[Ledger Proxy 1]
-        LP2[Ledger Proxy N...]
-        WS[(World State\nIn-Memory DB)]
-        %% Couple WS tightly with proxies
-        LP1 -.- WS
-        LP2 -.- WS
+    %% 2. The Single Communication Entry Point (Representing Many Proxies)
+    subgraph CommLayer [Communication Layer]
+        Proxy[Communication Server\n(Ledger Proxies)]
+        WS[(World State)]
     end
 
-    subgraph Storage ["Storage Layer"]
-        HDFS[(Storage Kernel\nHDFS Cluster)]
+    %% 3. The Shared Storage
+    subgraph Storage [Storage Layer]
+        HDFS[(HDFS Storage Kernel)]
     end
 
-    subgraph Core ["Core/Sequencing Layer"]
+    %% 4. The Core Logic (Master + Server Blocks)
+    subgraph Core [Core System]
         LM{{Ledger Master\nGlobal Sequencer}}
-        subgraph Servers ["Many Servers"]
-           LS1[Ledger Server 1]
-           LS2[Ledger Server N...]
+        
+        %% The Servers are just blocks in a cluster
+        subgraph ServerCluster [Ledger Servers]
+            direction LR
+            LS1[Server 1]
+            LS2[Server 2]
+            LS3[Server 3]
         end
     end
 
-    %% ---- THE FLOW ----
+    %% ---- FLOW CONNECTIONS ----
 
-    %% 1. Clients send to many Proxies
-    U1 & U2 & Un -- "1. Send Request (API)" --> LP1 & LP2
+    %% Users -> Communication
+    U1 & U2 & Un -->|1. Request| Proxy
 
-    %% 2. Proxy writes payload to HDFS via RPC
-    LP1 & LP2 -- "2. RPC Write Payload (Big Data)" --> HDFS
+    %% Communication -> Storage & State & Master
+    Proxy -->|2. Write Payload RPC| HDFS
+    Proxy -.->|3. Update State| WS
+    Proxy -->|4. Pass to Master| LM
 
-    %% 3. Proxy updates World State
-    LP1 & LP2 -- "3. Update State" --> WS
+    %% Master -> The Server Cluster (One arrow to the group)
+    LM -->|5. Distribute Work| ServerCluster
 
-    %% 4. Passes to Master for Sequencing/Distribution
-    LP1 & LP2 -- "4. Pass Metadata for Sequencing" --> LM
+    %% Server Cluster -> Storage
+    ServerCluster -->|6. Commit Metadata| HDFS
 
-    %% 5. Master distributes to appropriate Server
-    LM -- "5. Distribute/Assign" --> LS1 & LS2
+    %% Server Cluster -> Users (Direct Receipt)
+    ServerCluster -.->|7. Return Receipt| U1 & U2 & Un
 
-    %% 6. Servers write metadata to HDFS
-    LS1 & LS2 -- "6. RPC Write Metadata/Commit" --> HDFS
-
-    %% 7. Servers build indexes (internal action)
-    LS1 & LS2 -- "7. Build Indexes" --> LS1 & LS2
-
-    %% 8. DIRECT RETURN of receipt to original client
-    %% Using dotted line to emphasize direct, async return path bypassing proxies/master
-    LS1 & LS2 -. "8. Direct Receipt Return" .-> U1 & U2 & Un
-
-    %% Styling for emphasis
+    %% Styling
     classDef storage fill:#dbeafe,stroke:#3b82f6,stroke-width:2px;
     class HDFS,WS storage;
-    classDef master fill:#fce7f3,stroke:#db2777,stroke-width:2px,shape:hexagon;
+    classDef comm fill:#dcfce7,stroke:#22c55e,stroke-width:2px;
+    class Proxy comm;
+    classDef master fill:#fce7f3,stroke:#db2777,stroke-width:2px;
     class LM master;
-```
