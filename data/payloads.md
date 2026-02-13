@@ -46,4 +46,5 @@ message?: str
 1. what about mobile_phone field, should we add enum[mobile_phone, card_number, bank_account]?
 2. World State needs to be discussed (check miro board)
 3. `transaction_ptr` should be a pointer to the transaction in the Transactions store. (will depend on the DB used (which is most likely HDFS))
+4. Account at the bank level and the CB level
 
