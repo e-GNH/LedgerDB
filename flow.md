@@ -1,3 +1,4 @@
+```mermaid
 ---
 config:
   theme: neutral
@@ -38,3 +39,4 @@ flowchart TB
     style Servers fill:#d1c4e9
     style Databases fill:#f5f5f5
     linkStyle 10 stroke:#000000
+```
