@@ -1,33 +1,21 @@
 # Database Schemas
 
-## ``Commercial Bank DB``
-It will be addressed more later when handling KYC modules.
-### DB Type: None
-### Schema
+# ```World State```
+This is an in memory database.
+## DB Type: Redis Key-Value
 
-| | | | | | | | |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| **UserID** | **Name** | **Mobile Phone** | **Public Key** | **Role** | **Wallet** | **Registraion Time** | **Geographic Location** |
-
-### Indexes
-- None
-
-## ```World State```
-This is an in memory database. (3I)
-### DB Type: Redis
-
-### Schema
+## Schema
 
 | | | |
 | --- | --- | --- |
 | **UserID** | **Public Key** | **Amount** |
 
-### Indexes
-- `UserID` index 
+## Indexes
+- None
 
 
-## ```Users DB```
-### DB Type: None
+## ```Users DB``` (TO BE SOLVED IN PHASE 2)
+### DB Type: MySQL
 ### Schema
 
 | | | | | | | |
@@ -37,8 +25,9 @@ This is an in memory database. (3I)
 ### Indexes
 
 ## ```Servers DB```
-### DB Type: None
-
+This will be a database for monitoring the state of the servers.\
+It will be at the Ledger Master.
+### DB Type: MySQL
 
 ### Schema
 
@@ -50,31 +39,32 @@ This is an in memory database. (3I)
 ### Indexes
 - None
 
+## ``Banks DB``
 
-## ```JournalInfo Store```
-### DB Type: None
+### DB Type: Key-Value (Redis)
+### Schema
+
+| | | 
+| --- | --- | 
+| **wallet_id** | **bank_id** |
+
+### Indexes
+- None
+
+
+## ```Journal Store```
+### DB Type: HDFS
 
 ### Schema
-| | | |
-| --- | --- | --- |
-| **TX_ID** | **Pointer** | **Hash** |
+| | | | | | |
+| --- | --- | --- | --- | --- | --- |
+| **TX_ID** | **From** | **To** | **Amount** | **Timestamp** | **Nonce** |
 
 ### Indexes
 - TX_ID
 
-## ```Transaction Store```
-### DB Type: HDFS
-
-### Schema
-| | | | | | 
-| --- | --- | --- | --- | --- |
-| **From** | **To** | **Amount** | **Timestamp** | **Nonce** |
-
-### Indexes
-- None as it is a log
-
 ## ```BlockInfo Store```
-### DB Type: None
+### DB Type: MySQL
 | | | |
 | --- | --- | --- |
 | **Block Height** | **Previous Block Hash** | **Merkle Root** |
@@ -87,14 +77,19 @@ This is an in memory database. (3I)
 
 1. `transaction_id` is str which is bad for indexes but the idea is that we retreive very little.
 2. `Servers DB` should be at `Ledger Master` as it has info about the state of the ledger and should sync when a new server is added.
+3. In `World State`, the `Public Key` and `Amount` will be tuple.
 
 
 ## Issues and Required to Discuss
 
 1. what about mobile_phone field, should we add enum[mobile_phone, card_number, bank_account]?
+    SOLVED: `mobile_phone` only.
 2. World State needs to be discussed (check miro)
+    SOLVED: It won't be sharded
 3. `World State` should enable fast access because it is frequently called, so I think we should make proxy servers based on geographic location / number.
+    SOLVED: It won't be sharded
 4. `Commercial Bank DB` will be designed later when handling KYC modules.
 5. When is `Users DB` going to reside, also how to sync?
 6. We should discuss the data base types
+    SOLVED: `Redis`, `MySQL`, `HDFS`
 7. what will host the HDFS and what types of authentication will be used?

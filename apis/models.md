@@ -1,7 +1,7 @@
 # Restful API endpoints
 
 ## ```/send```
-This is the endpoint clients send to us, it will be a background task with status `pending` till completed.
+This is the endpoint on which the commercial bank is going to send us, it will be a background task with status `pending` till completed.
 
 ### Method
 ```
@@ -12,9 +12,9 @@ post
 data: Encrypt(
     Encrypt(
         request_payload,
-        users_private_key
+        commercial_banks_private_key
     ),
-    banks_public_key
+    central_banks_public_key
 ),
 hash: Hash(
     request_payload
@@ -26,9 +26,9 @@ hash: Hash(
 data: Encrypt(
     Encrypt(
         receipt_payload,
-        banks_private_key
+        central_banks_private_key
     ),
-    users_public_key
+    commercial_banks_public_key
 ),
 hash: Hash(
     receipt_payload
@@ -46,12 +46,12 @@ post
 data: Encrypt(
     Encrypt(
         receipt_payload,
-        banks_private_key
+        central_banks_private_key
     ),
-    users_public_key
+    commercial_banks_public_key
 ),
 hash: Hash(
-    receipt_payload     
+    receipt_payload
 )
 ```
 
@@ -67,4 +67,6 @@ hash: Hash(
 1. Who will generate nonce?
 2. What if any request failed in the middle? 
 3. Timestamp saved in DB must be server side one, not the client side one.(how to handle this with many servers? ledger master?)
+    SOLVED: the HDFS will generate the unified timestamp
 4. Are mobile_phone, card_number, bank_account valid or we need our naming ```wallet``` for example?
+    SOLVED: we will unify it by mobile_phone

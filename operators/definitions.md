@@ -6,7 +6,7 @@
 
 Appends a new transaction to the ledger.
 **level**: User level function to set a transaction as a trusted anchor.\
-**Module**: UNKNOWN\
+**Module**: Storage Module\
 **Server**: Ledger Proxy\
 **Type**: RPC call to Storage Kernel
 
@@ -37,7 +37,7 @@ Retreives a transaction from the ledger.
 
 ### Inputs
 ```
-tx_id: str
+tx_id: uuid
 ```
 
 ### Outputs
@@ -52,7 +52,7 @@ tx_data: dict(
 )
 ```
 
-## ```set_trusted_anchor(tx_id)```
+## ```set_trusted_anchor(tx_id)``` (WON'T BE IMPLEMENTED)
 
 **level**: System level function to set a transaction as a trusted anchor.\
 **Module**: UNKNOWN\
@@ -61,7 +61,7 @@ tx_data: dict(
 
 ### Inputs
 ```
-tx_id: str
+tx_id: uuid
 ```
 
 ### Outputs
@@ -76,7 +76,7 @@ tx_data: dict(
 )
 ```
 
-## ```get_trusted_anchor(tx_id)```
+## ```get_trusted_anchor(tx_id)``` (WON'T BE IMPLEMENTED)
 
 **level**: System level function to set a transaction as a trusted anchor.\
 **Module**: UNKNOWN\
@@ -85,7 +85,7 @@ tx_data: dict(
 
 ### Inputs
 ```
-tx_id: str
+tx_id: uuid
 ```
 
 ### Outputs
@@ -125,7 +125,7 @@ safe: bool
 
 ### Inputs
 ```
-tx_ids: list[str],
+tx_ids: list[uuid],
 tx_hashes: list[str]    
 ```
 
@@ -147,7 +147,7 @@ block: Block(
 
 ### Inputs
 ```
-tx_ids: list[str],
+tx_ids: list[uuid],
 tx_hashes: list[str] 
 ```
 
@@ -158,7 +158,7 @@ root_hash: str
 
 ## General Notes
 
-1. `transaction_id` is equivilant to ```jsn`` in the ledger paper.
+1. `transaction_id` is equivilant to `jsn` in the ledger paper.
 
 ## Issues and Required to Discuss
 

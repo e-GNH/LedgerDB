@@ -1,46 +1,40 @@
-```mermaid
-flowchart TD
-    %% 1. Clients send requests to Proxies
-    subgraph Clients [Clients]
-        U1(User A)
-        U2(User B)
-        Un(User N...)
-    end
+---
+config:
+  theme: neutral
+---
+flowchart TB
+ subgraph Databases["Databases"]
+        WS["World State<br>(Redis)<br>UserID → Amount"]
+        Users["Users DB<br>(MySQL)<br>User Info"]
+        Banks["Banks DB<br>(Redis)<br>wallet_id → bank_id"]
+        Journal["Journal Store<br>(HDFS)<br>Transaction Log"]
+        BlockInfo["BlockInfo Store<br>(MySQL)<br>Block Metadata"]
+        Servers["Servers DB<br>(MySQL)<br>Server Status"]
+  end
+    Client["👤 Client"] -- "1. Send Request<br>Client-Bank Payload" --> CB["🏦 Commercial Bank<br>(KYC/AML)"]
+    CB -- "2. Forward<br>Request Payload<br>with Encryption" --> Proxy["🔐 Ledger Proxy<br>(Auth &amp; Verify)"]
+    Proxy -- "3a. Verify TX" --> Proxy
+    Proxy -- "3b. Check Balance" --> WS
+    Proxy -- "3c. Update Balance" --> WS
+    Proxy -- "4. Forward<br>Proxy-Server Payload" --> Server["📚 Ledger Server<br>(Append)"]
+    Server -- "5. Append Transaction<br>Append TX" --> Journal
+    Server -- "6. Update Block Info" --> BlockInfo
+    Server -- "6a. Response to client<br>Receipt Payload" --> CB
+    CB -- "7. Response to Client" --> Client
+    Proxy -. Query User Info .-> Users
+    Proxy -. Query Bank Info .-> Banks
+    Master -. Monitor Servers .-> Servers
 
-    subgraph Proxies [Execution Layer]
-        LP1[Ledger Proxy 1]
-        LP2[Ledger Proxy N...]
-        WS[(World State)]
-    end
-
-    %% 2. Proxies Execute & Write Payload to Storage
-    subgraph Storage [Storage Layer]
-        HDFS[(HDFS Storage Kernel)]
-    end
-
-    %% 3. Sequencing & Indexing
-    subgraph Core [Ordering Layer]
-        LM{{Ledger Master\nGlobal Sequencer}}
-        LS1[Ledger Server 1]
-        LS2[Ledger Server N...]
-    end
-
-    %% Connections
-    U1 & U2 & Un -->|1. Send Request| LP1 & LP2
-    LP1 & LP2 -->|2. Write Payload RPC| HDFS
-    LP1 & LP2 -.->|3. Update State| WS
-    
-    LP1 & LP2 -->|4. Submit for Ordering| LM
-    LM -->|5. Assign Batch| LS1 & LS2
-    
-    LS1 & LS2 -->|6. Commit Metadata| HDFS
-    LS1 & LS2 -->|7. Build Indexes| LS1 & LS2
-    
-    %% Return Path
-    LS1 & LS2 -.->|8. Return Receipt| U1 & U2 & Un
-
-    %% Styling
-    classDef storage fill:#f9f,stroke:#333,stroke-width:2px;
-    class HDFS,WS storage;
-    classDef master fill:#ff9,stroke:#333,stroke-width:2px;
-    class LM master;
+    style Client fill:#e1f5ff
+    style CB fill:#fff3e0
+    style Proxy fill:#f3e5f5
+    style Master fill:#e8f5e9
+    style Server fill:#fce4ec
+    style WS fill:#c8e6c9
+    style Users fill:#bbdefb
+    style Banks fill:#ffccbc
+    style Journal fill:#ffe0b2
+    style BlockInfo fill:#f0f4c3
+    style Servers fill:#d1c4e9
+    style Databases fill:#f5f5f5
+    linkStyle 10 stroke:#000000
