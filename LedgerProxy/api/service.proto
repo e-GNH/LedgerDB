@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "./api/pb";
+
+package LedgerProxy;
+
+// SecurityService handles the decryption, authentication, and 
+// integrity validation of incoming ledger transactions.
+service SecurityService {
+    // Secure accepts a hybrid-encrypted payload, decrypts it, and 
+    // verifies the sender's signature, data hash, and timeliness.
+    rpc Secure(SecureRequest) returns (SecureResponse) {}
+}
+
+message SecureRequest {
+    bytes encrypted_data = 1; 
+}
+
+message SecureResponse {
+    bool success = 1;
+    string message = 2; // Optional: details about the result
+}
