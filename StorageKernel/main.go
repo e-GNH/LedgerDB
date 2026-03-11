@@ -9,7 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
     "google.golang.org/grpc"
     "google.golang.org/grpc/reflection"
-    pb "ledgerdb/proto/worldstate"
+    pb "LedgerDB/proto/worldstate"
 
 )
 
@@ -32,15 +32,16 @@ func test_transfer(rdb *redis.Client, h *KernelHandler) {
 func main() {
     rdb := newRedisClient() 
     h := &KernelHandler{rdb: rdb}
-	test_transfer(rdb, h) // TODO: remove after onboarding
+    // TODO REMOVE after testing
+	rdb.FlushAll(ctx) // Delete Everything 
     if err := h.CreateAccount(ctx, "A", 100); err != nil { // Shall be from onboarding
         log.Fatal(err)
     }
     if err := h.CreateAccount(ctx, "B", 100); err != nil {
         log.Fatal(err)
     }
-
-    lis, err := net.Listen("tcp", ":50051")
+	test_transfer(rdb, h) // TODO: remove after onboarding
+    lis, err := net.Listen("tcp", ":50053")
     if err != nil {
         log.Fatalf("failed to listen: %v", err)
     }
@@ -49,11 +50,9 @@ func main() {
     pb.RegisterWorldStateServiceServer(grpcServer, h)
     reflection.Register(grpcServer)
 
-    fmt.Println("StorageKernel listening on :50051")
+    fmt.Println("StorageKernel listening on :50053")
     if err := grpcServer.Serve(lis); err != nil {
         log.Fatalf("failed to serve: %v", err)
     }
-	// TODO REMOVE after testing
-	rdb.FlushAll(ctx) // Delete Everything 
 
 }

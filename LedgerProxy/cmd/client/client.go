@@ -46,9 +46,9 @@ func main() {
 	// =========================================================================
 	payload := types.SecureMessage{
 		Timestamp: time.Now(),
-		From:      "Alice",
-		To:        "Bob",
-		Amount:    999.99, // Let's send a new amount to prove it works!
+		From:      "A",
+		To:        "B",
+		Amount:    12, // Let's send a new amount to prove it works!
 		Message:   "Payment for cloud infrastructure",
 		Nonce:     "unique-txn-12345",
 	}

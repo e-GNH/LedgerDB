@@ -1,7 +1,7 @@
 package main
 
 import (
-	pb "ledgerdb/proto/worldstate"
+	pb "LedgerDB/proto/worldstate"
     "context"
     "github.com/redis/go-redis/v9"
 )

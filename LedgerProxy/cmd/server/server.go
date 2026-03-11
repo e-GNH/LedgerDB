@@ -8,12 +8,13 @@ import (
 	"fmt"
 	"net"
 	"os"
-
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"LedgerProxy/api"           
 	"LedgerProxy/modules/security" 
 	"LedgerDB/services/logging"
+	kernelpb "LedgerDB/proto/worldstate"
 )
 
 var log = logging.New("server", "./")
@@ -22,12 +23,13 @@ type securityServer struct {
 	pb.UnimplementedSecurityServiceServer
 	myPrivKey    *rsa.PrivateKey
 	senderPubKey *rsa.PublicKey
+	kernelClient kernelpb.WorldStateServiceClient
 }
 
 func (s *securityServer) Secure(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
 
 	log.Info("--> Received gRPC Secure() request")
-	_, ok := security.ProcessMessage(req.EncryptedData, s.myPrivKey, s.senderPubKey)
+	msg, ok := security.ProcessMessage(req.EncryptedData, s.myPrivKey, s.senderPubKey)
 
 	if !ok {
 		log.Error("Security pipeline rejected the message")
@@ -38,9 +40,23 @@ func (s *securityServer) Secure(ctx context.Context, req *pb.SecureRequest) (*pb
 	}
 
 	log.Debug("SECURITY SUCCESS: Pipeline passed!")
+
+	_, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
+		Nonce:  msg.Nonce,
+		FromId: msg.From,
+		ToId:   msg.To,
+		Amount: int64(msg.Amount),
+	})
+    if err != nil {
+        log.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+        return &pb.SecureResponse{
+            Success: false,
+            Message: fmt.Sprintf("transfer failed: %v", err),
+        }, nil
+    }
 	return &pb.SecureResponse{
 		Success: true,
-		Message: "Transaction validated successfully",
+		Message: "Transaction validated & successfully added to world state",
 	}, nil
 }
 
@@ -96,12 +112,17 @@ func main() {
 		log.Error(fmt.Sprintf("Failed to listen: %v", err))
 		panic(fmt.Sprintf("Failed to listen: %v", err))
 	}
-
+    kernelConn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
+    if err != nil {
+        panic(fmt.Sprintf("failed to connect to kernel: %v", err))
+    }
+    defer kernelConn.Close()
 	grpcServer := grpc.NewServer()
 	
 	myServerInstance := &securityServer{
 		myPrivKey:    parsePrivateKey(myPrivBytes),
 		senderPubKey: parsePublicKey(senderPubBytes),
+		kernelClient: kernelpb.NewWorldStateServiceClient(kernelConn),
 	}
 	
 	pb.RegisterSecurityServiceServer(grpcServer, myServerInstance)
