@@ -10,6 +10,7 @@ var (
     ErrFromAccountMissing = errors.New("FROM_ACCOUNT_NOT_FOUND")
     ErrToAccountMissing   = errors.New("TO_ACCOUNT_NOT_FOUND")
     ErrInsufficientFunds  = errors.New("INSUFFICIENT_FUNDS")
+    ErrInvalidAmount       = errors.New("INVALID_AMOUNT")
 )
 
 func mapLuaError(err error) error {
@@ -17,6 +18,8 @@ func mapLuaError(err error) error {
         return nil
     }
     switch err.Error() {
+    case "INVALID_AMOUNT":
+        return ErrInvalidAmount
     case "NONCE_ALREADY_USED":
         return ErrNonceAlreadyUsed
     case "FROM_ACCOUNT_NOT_FOUND":

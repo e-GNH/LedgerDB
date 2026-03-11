@@ -15,7 +15,7 @@ import (
 
 var ctx = context.Background()
 func test_transfer(rdb *redis.Client, h *KernelHandler) {
-	err := h.Transfer_Test(ctx, "nonce:1211122", "A", "B", 30)
+	err := h.Transfer_Test(ctx, "nonce:1211123122", "A", "B", 1)
 	switch {
 	case err == nil:
 		fmt.Println("test transfer OK")
