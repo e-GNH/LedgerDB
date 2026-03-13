@@ -29,9 +29,10 @@ const (
 // TransactionsStoreService defines the gRPC service for storing transactions in
 // the transactions store, which is our main ledger
 type TransactionsStoreServiceClient interface {
-	// Store is a gRPC method that takes a TransactionRequest and returns a TransactionResponse
+	// Store is a gRPC method that takes a batch of transactions and
+	// returns a batc of TransactionResponse
 	// It is used to store a transaction in the transactions store
-	Store(ctx context.Context, in *TransactionRequest, opts ...grpc.CallOption) (*TransactionResponse, error)
+	Store(ctx context.Context, in *TransactionBatchRequest, opts ...grpc.CallOption) (*TransactionBatchResponse, error)
 }
 
 type transactionsStoreServiceClient struct {
@@ -42,9 +43,9 @@ func NewTransactionsStoreServiceClient(cc grpc.ClientConnInterface) Transactions
 	return &transactionsStoreServiceClient{cc}
 }
 
-func (c *transactionsStoreServiceClient) Store(ctx context.Context, in *TransactionRequest, opts ...grpc.CallOption) (*TransactionResponse, error) {
+func (c *transactionsStoreServiceClient) Store(ctx context.Context, in *TransactionBatchRequest, opts ...grpc.CallOption) (*TransactionBatchResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TransactionResponse)
+	out := new(TransactionBatchResponse)
 	err := c.cc.Invoke(ctx, TransactionsStoreService_Store_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -59,9 +60,10 @@ func (c *transactionsStoreServiceClient) Store(ctx context.Context, in *Transact
 // TransactionsStoreService defines the gRPC service for storing transactions in
 // the transactions store, which is our main ledger
 type TransactionsStoreServiceServer interface {
-	// Store is a gRPC method that takes a TransactionRequest and returns a TransactionResponse
+	// Store is a gRPC method that takes a batch of transactions and
+	// returns a batc of TransactionResponse
 	// It is used to store a transaction in the transactions store
-	Store(context.Context, *TransactionRequest) (*TransactionResponse, error)
+	Store(context.Context, *TransactionBatchRequest) (*TransactionBatchResponse, error)
 	mustEmbedUnimplementedTransactionsStoreServiceServer()
 }
 
@@ -72,7 +74,7 @@ type TransactionsStoreServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedTransactionsStoreServiceServer struct{}
 
-func (UnimplementedTransactionsStoreServiceServer) Store(context.Context, *TransactionRequest) (*TransactionResponse, error) {
+func (UnimplementedTransactionsStoreServiceServer) Store(context.Context, *TransactionBatchRequest) (*TransactionBatchResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Store not implemented")
 }
 func (UnimplementedTransactionsStoreServiceServer) mustEmbedUnimplementedTransactionsStoreServiceServer() {
@@ -98,7 +100,7 @@ func RegisterTransactionsStoreServiceServer(s grpc.ServiceRegistrar, srv Transac
 }
 
 func _TransactionsStoreService_Store_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TransactionRequest)
+	in := new(TransactionBatchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -110,7 +112,7 @@ func _TransactionsStoreService_Store_Handler(srv interface{}, ctx context.Contex
 		FullMethod: TransactionsStoreService_Store_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TransactionsStoreServiceServer).Store(ctx, req.(*TransactionRequest))
+		return srv.(TransactionsStoreServiceServer).Store(ctx, req.(*TransactionBatchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

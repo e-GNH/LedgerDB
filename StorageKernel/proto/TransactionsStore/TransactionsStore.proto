@@ -8,13 +8,14 @@ option go_package = "ledgerdb/proto/TransactionsStore";
 // TransactionsStoreService defines the gRPC service for storing transactions in
 // the transactions store, which is our main ledger
 service TransactionsStoreService {
-  // Store is a gRPC method that takes a TransactionRequest and returns a TransactionResponse
+  // Store is a gRPC method that takes a batch of transactions and 
+  // returns a batc of TransactionResponse
   // It is used to store a transaction in the transactions store
-  rpc Store(TransactionRequest) returns (TransactionResponse);
+  rpc Store(TransactionBatchRequest) returns (TransactionBatchResponse);
 }
 
 // TransactionRequest represents a request to store a transaction in the transactions store
-message TransactionRequest {
+message Transaction {
   bool   status      = 1;
   string from_wallet = 2;
   string to_wallet   = 3;
@@ -24,13 +25,22 @@ message TransactionRequest {
   string hash        = 7;
 }
 
+// I will receive a batch of transcations
+message TransactionBatchRequest {
+  repeated Transaction transactions = 1;
+}
+
 // The server responds with a receipt
 // then it will start the indexing process
-message TransactionResponse {
+message TransactionReceipt {
   string transaction_id = 1;
   bool status = 2;
   string from_wallet = 3;
   string to_wallet = 4;
   float amount = 5;
   string message = 6;
+}
+// I will return a batch of receipts
+message TransactionBatchResponse {
+  repeated TransactionReceipt receipts = 1; 
 }
