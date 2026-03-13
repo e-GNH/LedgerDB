@@ -9,11 +9,10 @@ import (
 
 type Logger struct {
 	moduleName string
-	pathName string
 }
 
-func New(module string, path string) *Logger {
-	return &Logger{moduleName: module, pathName: path}
+func New(module string) *Logger {
+	return &Logger{moduleName: module}
 }
 
 func (l *Logger) log(level, message string) {
@@ -21,9 +20,9 @@ func (l *Logger) log(level, message string) {
 	timestamp := now.Format("15:04:05") 
 	dateFile := now.Format("02-01-2006") 
 
-	logDir := filepath.Join(l.pathName, "logs")
+	logDir := "logs"
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
-		os.MkdirAll(logDir, 0755)
+		os.Mkdir(logDir, 0755)
 	}
 
 	logEntry := fmt.Sprintf("[%s]-[%s]-[%s]-%s\n", timestamp, level, l.moduleName, message)
