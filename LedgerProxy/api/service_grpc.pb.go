@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v3.21.12
-// source: api/service.proto
+// source: service.proto
 
 package pb
 
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SecurityService_Secure_FullMethodName = "/LedgerProxy.SecurityService/Secure"
+	SecurityService_Execute_FullMethodName = "/LedgerProxy.SecurityService/Execute"
 )
 
 // SecurityServiceClient is the client API for SecurityService service.
@@ -29,9 +29,9 @@ const (
 // SecurityService handles the decryption, authentication, and
 // integrity validation of incoming ledger transactions.
 type SecurityServiceClient interface {
-	// Secure accepts a hybrid-encrypted payload, decrypts it, and
+	// Execute accepts a hybrid-encrypted payload, decrypts it, and
 	// verifies the sender's signature, data hash, and timeliness.
-	Secure(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
+	Execute(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
 }
 
 type securityServiceClient struct {
@@ -42,10 +42,10 @@ func NewSecurityServiceClient(cc grpc.ClientConnInterface) SecurityServiceClient
 	return &securityServiceClient{cc}
 }
 
-func (c *securityServiceClient) Secure(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error) {
+func (c *securityServiceClient) Execute(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SecureResponse)
-	err := c.cc.Invoke(ctx, SecurityService_Secure_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, SecurityService_Execute_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -59,9 +59,9 @@ func (c *securityServiceClient) Secure(ctx context.Context, in *SecureRequest, o
 // SecurityService handles the decryption, authentication, and
 // integrity validation of incoming ledger transactions.
 type SecurityServiceServer interface {
-	// Secure accepts a hybrid-encrypted payload, decrypts it, and
+	// Execute accepts a hybrid-encrypted payload, decrypts it, and
 	// verifies the sender's signature, data hash, and timeliness.
-	Secure(context.Context, *SecureRequest) (*SecureResponse, error)
+	Execute(context.Context, *SecureRequest) (*SecureResponse, error)
 	mustEmbedUnimplementedSecurityServiceServer()
 }
 
@@ -72,8 +72,8 @@ type SecurityServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSecurityServiceServer struct{}
 
-func (UnimplementedSecurityServiceServer) Secure(context.Context, *SecureRequest) (*SecureResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Secure not implemented")
+func (UnimplementedSecurityServiceServer) Execute(context.Context, *SecureRequest) (*SecureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Execute not implemented")
 }
 func (UnimplementedSecurityServiceServer) mustEmbedUnimplementedSecurityServiceServer() {}
 func (UnimplementedSecurityServiceServer) testEmbeddedByValue()                         {}
@@ -96,20 +96,20 @@ func RegisterSecurityServiceServer(s grpc.ServiceRegistrar, srv SecurityServiceS
 	s.RegisterService(&SecurityService_ServiceDesc, srv)
 }
 
-func _SecurityService_Secure_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecurityService_Execute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SecureRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SecurityServiceServer).Secure(ctx, in)
+		return srv.(SecurityServiceServer).Execute(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SecurityService_Secure_FullMethodName,
+		FullMethod: SecurityService_Execute_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecurityServiceServer).Secure(ctx, req.(*SecureRequest))
+		return srv.(SecurityServiceServer).Execute(ctx, req.(*SecureRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -122,10 +122,10 @@ var SecurityService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SecurityServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Secure",
-			Handler:    _SecurityService_Secure_Handler,
+			MethodName: "Execute",
+			Handler:    _SecurityService_Execute_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/service.proto",
+	Metadata: "service.proto",
 }

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package worldstate;
 
-option go_package = "ledgerdb/proto/worldstate";
+option go_package = "StorageKernel/proto/worldstate";
 
 service WorldStateService {
   rpc Transfer(TransferRequest) returns (TransferResponse);

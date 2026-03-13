@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v3.21.12
-// source: api/service.proto
+// source: service.proto
 
 package pb
 
@@ -30,7 +30,7 @@ type SecureRequest struct {
 
 func (x *SecureRequest) Reset() {
 	*x = SecureRequest{}
-	mi := &file_api_service_proto_msgTypes[0]
+	mi := &file_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +42,7 @@ func (x *SecureRequest) String() string {
 func (*SecureRequest) ProtoMessage() {}
 
 func (x *SecureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_service_proto_msgTypes[0]
+	mi := &file_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +55,7 @@ func (x *SecureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SecureRequest.ProtoReflect.Descriptor instead.
 func (*SecureRequest) Descriptor() ([]byte, []int) {
-	return file_api_service_proto_rawDescGZIP(), []int{0}
+	return file_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SecureRequest) GetEncryptedData() []byte {
@@ -75,7 +75,7 @@ type SecureResponse struct {
 
 func (x *SecureResponse) Reset() {
 	*x = SecureResponse{}
-	mi := &file_api_service_proto_msgTypes[1]
+	mi := &file_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -87,7 +87,7 @@ func (x *SecureResponse) String() string {
 func (*SecureResponse) ProtoMessage() {}
 
 func (x *SecureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_service_proto_msgTypes[1]
+	mi := &file_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -100,7 +100,7 @@ func (x *SecureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SecureResponse.ProtoReflect.Descriptor instead.
 func (*SecureResponse) Descriptor() ([]byte, []int) {
-	return file_api_service_proto_rawDescGZIP(), []int{1}
+	return file_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SecureResponse) GetSuccess() bool {
@@ -117,40 +117,39 @@ func (x *SecureResponse) GetMessage() string {
 	return ""
 }
 
-var File_api_service_proto protoreflect.FileDescriptor
+var File_service_proto protoreflect.FileDescriptor
 
-const file_api_service_proto_rawDesc = "" +
+const file_service_proto_rawDesc = "" +
 	"\n" +
-	"\x11api/service.proto\x12\vLedgerProxy\"6\n" +
+	"\rservice.proto\x12\vLedgerProxy\"6\n" +
 	"\rSecureRequest\x12%\n" +
 	"\x0eencrypted_data\x18\x01 \x01(\fR\rencryptedData\"D\n" +
 	"\x0eSecureResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2V\n" +
-	"\x0fSecurityService\x12C\n" +
-	"\x06Secure\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00B\n" +
-	"Z\b./api/pbb\x06proto3"
+	"\amessage\x18\x02 \x01(\tR\amessage2W\n" +
+	"\x0fSecurityService\x12D\n" +
+	"\aExecute\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00B\x14Z\x12LedgerProxy/api/pbb\x06proto3"
 
 var (
-	file_api_service_proto_rawDescOnce sync.Once
-	file_api_service_proto_rawDescData []byte
+	file_service_proto_rawDescOnce sync.Once
+	file_service_proto_rawDescData []byte
 )
 
-func file_api_service_proto_rawDescGZIP() []byte {
-	file_api_service_proto_rawDescOnce.Do(func() {
-		file_api_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_service_proto_rawDesc), len(file_api_service_proto_rawDesc)))
+func file_service_proto_rawDescGZIP() []byte {
+	file_service_proto_rawDescOnce.Do(func() {
+		file_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)))
 	})
-	return file_api_service_proto_rawDescData
+	return file_service_proto_rawDescData
 }
 
-var file_api_service_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_api_service_proto_goTypes = []any{
+var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_service_proto_goTypes = []any{
 	(*SecureRequest)(nil),  // 0: LedgerProxy.SecureRequest
 	(*SecureResponse)(nil), // 1: LedgerProxy.SecureResponse
 }
-var file_api_service_proto_depIdxs = []int32{
-	0, // 0: LedgerProxy.SecurityService.Secure:input_type -> LedgerProxy.SecureRequest
-	1, // 1: LedgerProxy.SecurityService.Secure:output_type -> LedgerProxy.SecureResponse
+var file_service_proto_depIdxs = []int32{
+	0, // 0: LedgerProxy.SecurityService.Execute:input_type -> LedgerProxy.SecureRequest
+	1, // 1: LedgerProxy.SecurityService.Execute:output_type -> LedgerProxy.SecureResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -158,26 +157,26 @@ var file_api_service_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_api_service_proto_init() }
-func file_api_service_proto_init() {
-	if File_api_service_proto != nil {
+func init() { file_service_proto_init() }
+func file_service_proto_init() {
+	if File_service_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_service_proto_rawDesc), len(file_api_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_api_service_proto_goTypes,
-		DependencyIndexes: file_api_service_proto_depIdxs,
-		MessageInfos:      file_api_service_proto_msgTypes,
+		GoTypes:           file_service_proto_goTypes,
+		DependencyIndexes: file_service_proto_depIdxs,
+		MessageInfos:      file_service_proto_msgTypes,
 	}.Build()
-	File_api_service_proto = out.File
-	file_api_service_proto_goTypes = nil
-	file_api_service_proto_depIdxs = nil
+	File_service_proto = out.File
+	file_service_proto_goTypes = nil
+	file_service_proto_depIdxs = nil
 }

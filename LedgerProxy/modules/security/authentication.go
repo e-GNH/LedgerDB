@@ -12,7 +12,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"time"
-	"os"
 
 	"LedgerDB/services/logging"
 	"LedgerProxy/types"
@@ -55,7 +54,7 @@ func parsePublicKey(pemStr string) *rsa.PublicKey {
 
 	return rsaPub
 }
-func ProcessMessage(encryptedData []byte, myPrivKey *rsa.PrivateKey, senderPubKey *rsa.PublicKey) (*types.SecureMessage, bool) {
+func VerifySecurity(encryptedData []byte, myPrivKey *rsa.PrivateKey, senderPubKey *rsa.PublicKey) (*types.SecureMessage, bool) {
 	log.Debug("Started Processing")
 
 	decryptedBytes, err := HybridDecrypt(encryptedData, myPrivKey)
@@ -121,7 +120,7 @@ func HybridDecrypt(encryptedData []byte, myPrivKey *rsa.PrivateKey) ([]byte, err
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
-    }
+	}
 
 	nonceSize := gcm.NonceSize()
 	if len(aesCiphertext) < nonceSize {
@@ -153,43 +152,41 @@ func VerifyTimeliness(msgTimestamp time.Time) bool {
 	return diff <= 5*time.Minute
 }
 
+// func secure() bool {
 
+// 	log.Info("Reading keys...")
+// 	myPrivBytes, err := os.ReadFile("keys/my_key")
+// 	if err != nil {
+// 		log.Error(fmt.Sprintf("Could not read my_key file: %v", err))
+// 		return false
+// 	}
+// 	senderPubBytes, err := os.ReadFile("keys/sender_key_pub.pem")
+// 	if err != nil {
+// 		log.Error(fmt.Sprintf("Could not read sender_key_pub.pem file: %v", err))
+// 		return false
+// 	}
 
-func secure() bool {
-	
-	log.Info("Reading keys...")
-	myPrivBytes, err := os.ReadFile("keys/my_key")
-	if err != nil {
-		log.Error(fmt.Sprintf("Could not read my_key file: %v", err))
-		return false
-	}
-	senderPubBytes, err := os.ReadFile("keys/sender_key_pub.pem")
-	if err != nil {
-		log.Error(fmt.Sprintf("Could not read sender_key_pub.pem file: %v", err))
-		return false
-	}
+// 	log.Debug("Started Parsing.")
+// 	myPrivKey := parsePrivateKey(string(myPrivBytes))
+// 	senderPubKey := parsePublicKey(string(senderPubBytes))
+// 	log.Debug("Finished Parsing.")
 
-	log.Debug("Started Parsing.")
-	myPrivKey := parsePrivateKey(string(myPrivBytes))
-	senderPubKey := parsePublicKey(string(senderPubBytes))
-	log.Debug("Finished Parsing.")
+// 	log.Info("Reading incoming encrypted data...")
+// 	encryptedData, err := os.ReadFile("encrypted_payload.bin")
+// 	if err != nil {
+// 		log.Error(fmt.Sprintf("Failed to read encrypted_payload.bin: %v", err))
+// 		return false
+// 	}
 
-	log.Info("Reading incoming encrypted data...")
-	encryptedData, err := os.ReadFile("encrypted_payload.bin")
-	if err != nil {
-		log.Error(fmt.Sprintf("Failed to read encrypted_payload.bin: %v", err))
-		return false
-	}
+// 	log.Info("Passing data to ProcessMessage()...")
+// 	_, ok := ProcessMessage(encryptedData, myPrivKey, senderPubKey) // to be used final message
 
-	log.Info("Passing data to ProcessMessage()...")
-	_, ok := ProcessMessage(encryptedData, myPrivKey, senderPubKey) // to be used final message
+// 	if ok {
+// 		log.Info("SUCCESS! Message verified, decrypted, and timely.")
+// 	} else {
+// 		log.Debug("SECURITY ALERT: Pipeline failed!")
+// 		return false
+// 	}
 
-	if ok {
-		log.Info("SUCCESS! Message verified, decrypted, and timely.")
-	} else {
-		log.Debug("SECURITY ALERT: Pipeline failed!")
-		return false
-	}
-
-	return true
-}
+// 	return true
+// }

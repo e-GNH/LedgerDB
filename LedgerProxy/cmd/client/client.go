@@ -110,7 +110,7 @@ func main() {
 	// req := &pb.SecureRequest{EncryptedData: []byte("this is not valid encrypted data")}}
 
 	
-	res, err := client.Secure(ctx, req)
+	res, err := client.Execute(ctx, req)
 	if err != nil {
 		panic(fmt.Sprintf("Error calling Secure RPC: %v", err))
 	}

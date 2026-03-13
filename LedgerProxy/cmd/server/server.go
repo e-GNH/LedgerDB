@@ -8,16 +8,18 @@ import (
 	"fmt"
 	"net"
 	"os"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"LedgerProxy/api"           
-	"LedgerProxy/modules/security" 
 	"LedgerDB/services/logging"
-	kernelpb "LedgerDB/proto/worldstate"
+	pb "LedgerProxy/api"
+	"LedgerProxy/modules/security"
+	kernelpb "StorageKernel/proto/worldstate"
 )
 
 var log = logging.New("server", "./")
+
 
 type securityServer struct {
 	pb.UnimplementedSecurityServiceServer
@@ -26,10 +28,10 @@ type securityServer struct {
 	kernelClient kernelpb.WorldStateServiceClient
 }
 
-func (s *securityServer) Secure(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
+func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
 
 	log.Info("--> Received gRPC Secure() request")
-	msg, ok := security.ProcessMessage(req.EncryptedData, s.myPrivKey, s.senderPubKey)
+	msg, ok := security.VerifySecurity(req.EncryptedData, s.myPrivKey, s.senderPubKey)
 
 	if !ok {
 		log.Error("Security pipeline rejected the message")
@@ -47,19 +49,18 @@ func (s *securityServer) Secure(ctx context.Context, req *pb.SecureRequest) (*pb
 		ToId:   msg.To,
 		Amount: int64(msg.Amount),
 	})
-    if err != nil {
-        log.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
-        return &pb.SecureResponse{
-            Success: false,
-            Message: fmt.Sprintf("transfer failed: %v", err),
-        }, nil
-    }
+	if err != nil {
+		log.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+		return &pb.SecureResponse{
+			Success: false,
+			Message: fmt.Sprintf("transfer failed: %v", err),
+		}, nil
+	}
 	return &pb.SecureResponse{
 		Success: true,
 		Message: "Transaction validated & successfully added to world state",
 	}, nil
 }
-
 
 func parsePrivateKey(pemBytes []byte) *rsa.PrivateKey {
 	log.Debug("Parsing private key...")
@@ -100,7 +101,7 @@ func main() {
 	if err != nil {
 		panic("Could not read my_key file")
 	}
-	
+
 	senderPubBytes, err := os.ReadFile("modules/security/keys/sender_key_pub.pem")
 	if err != nil {
 		panic("Could not read sender_key_pub.pem file")
@@ -112,19 +113,19 @@ func main() {
 		log.Error(fmt.Sprintf("Failed to listen: %v", err))
 		panic(fmt.Sprintf("Failed to listen: %v", err))
 	}
-    kernelConn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
-    if err != nil {
-        panic(fmt.Sprintf("failed to connect to kernel: %v", err))
-    }
-    defer kernelConn.Close()
+	kernelConn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic(fmt.Sprintf("failed to connect to kernel: %v", err))
+	}
+	defer kernelConn.Close()
 	grpcServer := grpc.NewServer()
-	
+
 	myServerInstance := &securityServer{
 		myPrivKey:    parsePrivateKey(myPrivBytes),
 		senderPubKey: parsePublicKey(senderPubBytes),
 		kernelClient: kernelpb.NewWorldStateServiceClient(kernelConn),
 	}
-	
+
 	pb.RegisterSecurityServiceServer(grpcServer, myServerInstance)
 
 	log.Info("gRPC Security Server is running on port 50051...")
