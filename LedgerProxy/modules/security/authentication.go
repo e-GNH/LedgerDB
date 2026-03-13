@@ -118,9 +118,15 @@ func VerifySecurity(encryptedData []byte, myPrivKey *rsa.PrivateKey, trustedKeys
 		return nil, false
 	}
 	log.Debug("Unpacked data")
-	receivedPubKey := ParsePublicKeyBytes(unpacked.BankPubKey)
-    if receivedPubKey == nil {
-        log.Error("Received invalid public key format")
+	pub, err := x509.ParsePKIXPublicKey(unpacked.BankPubKey)
+    if err != nil {
+        log.Error(fmt.Sprintf("Received invalid public key format: %v", err))
+        return nil, false
+    }
+    
+    receivedPubKey, ok := pub.(*rsa.PublicKey)
+    if !ok {
+        log.Error("Public key is not an RSA key")
         return nil, false
     }
 

@@ -18,13 +18,13 @@ var (
 
 var logger = logging.New("batching/batch", "./")
 
-func SaveBatchItem(item types.BatchItem) error {
+func SaveBatchItem(item *types.SecureMessage) error {
 	mu.Lock()
 	defer mu.Unlock()
 
 	const filename = "ledger_batches.jsonl"
 
-	jsonData, err := json.Marshal(item)
+	jsonData, err := json.Marshal(*item)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to marshal batch item: %v", err))
 		return err
@@ -49,15 +49,7 @@ func SaveBatchItem(item types.BatchItem) error {
 		return err
 	}
 
-	batch , err := GetBatch()
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to get batch: %v", err))
-		return err
-	}
-
-	// TODO: Call your gRPC sendToHDFS(batch) here
-	fmt.Print(batch)
-
+	
 	if count >= batch_size {
 		batch , err := GetBatch()
 		if err != nil {
@@ -65,7 +57,7 @@ func SaveBatchItem(item types.BatchItem) error {
 			return err
 		}
 
-		// TODO: Call your gRPC sendToHDFS(batch) here
+		// TODO: Call your gRPC send to server here
 		fmt.Print(batch)
 
 		if err := os.Truncate(filename, 0); err != nil {
@@ -108,7 +100,7 @@ func GetBatch() (types.Batch, error) {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		var item types.BatchItem
+		var item types.SecureMessage
 		line := scanner.Bytes()
 
 		if err := json.Unmarshal(line, &item); err != nil {
