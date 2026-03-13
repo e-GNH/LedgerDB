@@ -1,19 +1,19 @@
 package main
 
 import (
+	ts "StorageKernel/proto/TransactionsStore"
 	pb "StorageKernel/proto/worldstate"
-    ts "StorageKernel/proto/TransactionsStore"
-    
-    "context"
-    "encoding/json"
-    "fmt"
-    "time"
 
-    "github.com/redis/go-redis/v9"
-    "github.com/colinmarc/hdfs/v2"
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
 
-    "google.golang.org/grpc/codes"
-    "google.golang.org/grpc/status"
+	"github.com/colinmarc/hdfs/v2"
+	"github.com/redis/go-redis/v9"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type KernelHandler struct {
@@ -30,15 +30,20 @@ func (h *KernelHandler) CreateAccount(ctx context.Context, id string, balance in
     ).Err()
 }
 func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
+    file_name = "handler.go"
     keys := []string{
         "nonce:"   + req.Nonce,
         "account:" + req.FromId,
         "account:" + req.ToId,
     }
+    logger.Info(" - [" + file_name + "] - Transferring " + fmt.Sprint(req.Amount) + " from " + req.FromId + " to " + req.ToId)
+
     err := transferScript.Run(ctx, h.rdb, keys, req.Amount).Err()
     if err != nil {
+        logger.Error(" - [" + file_name + "] - " + err.Error())
         return nil, mapGrpcError(err)
     }
+    logger.Info(" - [" + file_name + "] - Transfer committed")
     return &pb.TransferResponse{Ok: true, Message: "transfer committed"}, nil
 }
 func (h *KernelHandler) Transfer_Test(ctx context.Context, nonce, from, to string, amount int64) error {

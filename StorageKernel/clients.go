@@ -29,6 +29,7 @@ func newRedisClient() *redis.Client {
 
 
 func newHDFSClient() (*hdfs.Client, error) {
+	file_name = "client.go"
 	logger.Info(" - [" + file_name + "] - Creating HDFS Client")
 	client, err := hdfs.New("localhost:9000")
 	if err != nil {
