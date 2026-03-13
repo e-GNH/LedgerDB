@@ -33,40 +33,40 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	logger.Info("--> Received gRPC Secure() request")
 	msg, ok := sec.VerifySecurity(req.EncryptedData, s.myPrivKey, s.bankKeys)
 
-	if !ok {
-		logger.Error("Security pipeline rejected the message")
-		return &pb.SecureResponse{
-			Success: false,
-			Message: "Security pipeline rejected the message",
-		}, nil
+	if ok {
+		logger.Info("SECURITY SUCCESS: Pipeline passed!")
 	}
+	message := "Transaction rejected due to security"
 
-	logger.Debug("SECURITY SUCCESS: Pipeline passed!")
 
 	logger.Info("WAL in the local disk")
 	batching.SaveBatchItem(msg)
 
-	logger.Info("Adding transaction to world state...")
-	// TODO: uncomment these
-	// _, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
-	// 	Nonce:  msg.Nonce,
-	// 	FromId: msg.From,
-	// 	ToId:   msg.To,
-	// 	Amount: int64(msg.Amount),
-	// })
-	// if err != nil {
-	// 	logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
-	// 	return &pb.SecureResponse{
-	// 		Success: false,
-	// 		Message: fmt.Sprintf("transfer failed: %v", err),
-	// 	}, nil
-	// }
+	if ok {
+		logger.Info("Passing transaction to world state...")
+		// TODO: tell zeyad that even if fail, it has to be committed
+		// TODO: uncomment these
+		// _, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
+		// 	Nonce:  msg.Nonce,
+		// 	FromId: msg.From,
+		// 	ToId:   msg.To,
+		// 	Amount: int64(msg.Amount),
+		// })
+		// if err != nil {
+		// 	logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+		// 	return &pb.SecureResponse{
+		// 		Success: false,
+		// 		Message: fmt.Sprintf("transfer failed: %v", err),
+		// 	}, nil
+		// }
+		message = "Transaction validated & successfully added to world state"
+	}
+
 	return &pb.SecureResponse{
-		Success: true,
-		Message: "Transaction validated & successfully added to world state",
+		Success: ok,
+		Message: message, 
 	}, nil
 }
-
 
 func loadBankKeysFromDir(dirPath string) map[string]*rsa.PublicKey {
     bankMap := make(map[string]*rsa.PublicKey)
