@@ -22,4 +22,5 @@ type UnpackedMessage struct {
 	Data      []byte `json:"data"`      // The raw JSON bytes of the actual payload
 	Signature []byte `json:"signature"` // The sender's signature of the hash
 	Hash      []byte `json:"hash"`      // The hash provided by the sender
+	BankPubKey []byte `json:"bank_pub_key"` // The public key of the bank
 }
