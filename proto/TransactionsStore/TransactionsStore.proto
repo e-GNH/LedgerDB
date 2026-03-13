@@ -1,0 +1,36 @@
+
+syntax = "proto3";
+
+package TransactionsStore;
+
+option go_package = "ledgerdb/proto/TransactionsStore";
+
+// TransactionsStoreService defines the gRPC service for storing transactions in
+// the transactions store, which is our main ledger
+service TransactionsStoreService {
+  // Store is a gRPC method that takes a TransactionRequest and returns a TransactionResponse
+  // It is used to store a transaction in the transactions store
+  rpc Store(TransactionRequest) returns (TransactionResponse);
+}
+
+// TransactionRequest represents a request to store a transaction in the transactions store
+message TransactionRequest {
+  bool   status      = 1;
+  string from_wallet = 2;
+  string to_wallet   = 3;
+  float  amount      = 4;
+  string message     = 5;
+  string nonce       = 6;
+  string hash        = 7;
+}
+
+// The server responds with a receipt
+// then it will start the indexing process
+message TransactionResponse {
+  string transaction_id = 1;
+  bool status = 2;
+  string from_wallet = 3;
+  string to_wallet = 4;
+  float amount = 5;
+  string message = 6;
+}

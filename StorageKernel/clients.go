@@ -1,6 +1,9 @@
 package main
+
 import (
-    "github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9"
+	"github.com/colinmarc/hdfs/v2"
+	
 )
 
 func newRedisClient() *redis.Client {
@@ -11,4 +14,13 @@ func newRedisClient() *redis.Client {
 		Protocol: 2,
 	})
 	return rdb
+}
+
+
+func newHDFSClient() (*hdfs.Client, error) {
+	client, err := hdfs.New("localhost:9000")
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
