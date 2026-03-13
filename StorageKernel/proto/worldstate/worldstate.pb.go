@@ -7,11 +7,15 @@
 package worldstate
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -156,7 +160,7 @@ const file_proto_worldstate_worldstate_proto_rawDesc = "" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage2Z\n" +
 	"\x11WorldStateService\x12E\n" +
-	"\bTransfer\x12\x1b.worldstate.TransferRequest\x1a\x1c.worldstate.TransferResponseB\x1bZ\x19ledgerdb/proto/worldstateb\x06proto3"
+	"\bTransfer\x12\x1b.worldstate.TransferRequest\x1a\x1c.worldstate.TransferResponseB\x1bZ\x19StorageKernel/proto/worldstateb\x06proto3"
 
 var (
 	file_proto_worldstate_worldstate_proto_rawDescOnce sync.Once

@@ -1,6 +1,14 @@
 module LedgerDB
 
-go 1.24.4
+go 1.24.0
+
+toolchain go1.24.4
+
+require (
+	github.com/redis/go-redis/v9 v9.18.0
+	google.golang.org/grpc v1.79.2
+	google.golang.org/protobuf v1.36.11
+)
 
 require (
 	github.com/colinmarc/hdfs/v2 v2.4.0

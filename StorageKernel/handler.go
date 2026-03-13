@@ -23,11 +23,11 @@ type KernelHandler struct {
     hdfs *hdfs.Client
 }
 
-func (h *KernelHandler) CreateAccount(ctx context.Context, id string, balance int64) error {	// TODO FINISH AFTER ONBOARDING
-    return h.rdb.HSet(ctx, "account:"+id,
-        "balance", balance,
-        "pending", 0,
-    ).Err()
+func (h *KernelHandler) CreateAccount(ctx context.Context, id string, balance int64) error { // TODO FINISH AFTER ONBOARDING
+	return h.rdb.HSet(ctx, "account:"+id,
+		"balance", balance,
+		"pending", 0,
+	).Err()
 }
 func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
     file_name = "handler.go"
@@ -47,12 +47,12 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
     return &pb.TransferResponse{Ok: true, Message: "transfer committed"}, nil
 }
 func (h *KernelHandler) Transfer_Test(ctx context.Context, nonce, from, to string, amount int64) error {
-    keys := []string{
-        "nonce:"   + nonce,
-        "account:" + from,
-        "account:" + to,
-    }
-    err:= transferScript.Run(ctx, h.rdb, keys, amount).Err()
+	keys := []string{
+		"nonce:" + nonce,
+		"account:" + from,
+		"account:" + to,
+	}
+	err := transferScript.Run(ctx, h.rdb, keys, amount).Err()
 	return mapLuaError(err)
 }
 
