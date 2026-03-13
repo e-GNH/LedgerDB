@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package TransactionsStore;
 
-option go_package = "ledgerdb/proto/TransactionsStore";
+option go_package = "StorageKernel/proto/TransactionsStore";
 
 // TransactionsStoreService defines the gRPC service for storing transactions in
 // the transactions store, which is our main ledger
