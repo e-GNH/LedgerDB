@@ -23,6 +23,7 @@ message Transaction {
   string message     = 5;
   string nonce       = 6;
   string hash        = 7;
+  string time_stamp = 8;
 }
 
 // I will receive a batch of transcations
@@ -39,6 +40,7 @@ message TransactionReceipt {
   string to_wallet = 4;
   float amount = 5;
   string message = 6;
+  string time_stamp = 7;
 }
 // I will return a batch of receipts
 message TransactionBatchResponse {

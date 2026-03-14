@@ -6,32 +6,40 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
 	"path/filepath"
+	"strings"
 
 	"google.golang.org/grpc"
-	// "google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"LedgerDB/services/logging"
 	pb "LedgerProxy/api"
-	sec "LedgerProxy/modules/security"
-	kernelpb "StorageKernel/proto/worldstate"
 	batching "LedgerProxy/modules/batching"
+	sec "LedgerProxy/modules/security"
+	// ts_store "StorageKernel/proto/TransactionsStore"
+	kernelpb "StorageKernel/proto/worldstate"
+	ledgerserverpb "LedgerServer/api"
 )
 
-var logger = logging.New("server", "./")
+var logger = logging.New("server", "../../")
 
 type securityServer struct {
 	pb.UnimplementedSecurityServiceServer
-	myPrivKey    *rsa.PrivateKey
-	bankKeys     map[string]*rsa.PublicKey // TODO: make it a list of public keys
-	kernelClient kernelpb.WorldStateServiceClient
+	myPrivKey               *rsa.PrivateKey
+	bankKeys                map[string]*rsa.PublicKey // TODO: make it a list of public keys
+	kernelClient            kernelpb.WorldStateServiceClient
+	LedgerServerClient ledgerserverpb.TransactionsServiceClient
 }
 
 func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
 
 	logger.Info("--> Received gRPC Secure() request")
 	msg, ok := sec.VerifySecurity(req.EncryptedData, s.myPrivKey, s.bankKeys)
+	
+	if msg != nil {
+		msg.Status = ok
+	}
+	
 
 	if !ok {
 		logger.Error("Security pipeline rejected the message")
@@ -44,7 +52,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	logger.Debug("SECURITY SUCCESS: Pipeline passed!")
 
 	logger.Info("WAL in the local disk")
-	batching.SaveBatchItem(msg)
+	batching.SaveBatchItem(msg, s.LedgerServerClient)
 
 	logger.Info("Adding transaction to world state...")
 	// TODO: uncomment these
@@ -67,40 +75,39 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	}, nil
 }
 
-
 func loadBankKeysFromDir(dirPath string) map[string]*rsa.PublicKey {
-    bankMap := make(map[string]*rsa.PublicKey)
+	bankMap := make(map[string]*rsa.PublicKey)
 
-    files, err := os.ReadDir(dirPath)
-    if err != nil {
-        logger.Error(fmt.Sprintf("Failed to read keys directory: %v", err))
-        return bankMap
-    }
+	files, err := os.ReadDir(dirPath)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to read keys directory: %v", err))
+		return bankMap
+	}
 
-    for _, file := range files {
-        if !file.IsDir() && strings.HasSuffix(file.Name(), ".pem") {
-            path := filepath.Join(dirPath, file.Name())
-            keyBytes, err := os.ReadFile(path)
-            if err != nil {
-                logger.Error(fmt.Sprintf("Failed to read key file %s: %v", file.Name(), err))
-                continue
-            }
+	for _, file := range files {
+		if !file.IsDir() && strings.HasSuffix(file.Name(), ".pem") {
+			path := filepath.Join(dirPath, file.Name())
+			keyBytes, err := os.ReadFile(path)
+			if err != nil {
+				logger.Error(fmt.Sprintf("Failed to read key file %s: %v", file.Name(), err))
+				continue
+			}
 
-            pubKey := sec.ParsePublicKeyBytes(keyBytes)
-            if pubKey != nil {
-                bankName := strings.TrimSuffix(file.Name(), ".pem")
-                bankMap[bankName] = pubKey
-                logger.Info(fmt.Sprintf("Successfully loaded trusted key for bank: %s", bankName))
-            }
-        }
-    }
+			pubKey := sec.ParsePublicKeyBytes(keyBytes)
+			if pubKey != nil {
+				bankName := strings.TrimSuffix(file.Name(), ".pem")
+				bankMap[bankName] = pubKey
+				logger.Info(fmt.Sprintf("Successfully loaded trusted key for bank: %s", bankName))
+			}
+		}
+	}
 
-    return bankMap
+	return bankMap
 }
 
 func main() {
 
-	logger.Debug("Reading keys...")
+	logger.Info("Reading keys...")
 	myPrivBytes, err := os.ReadFile("modules/security/keys/my_key")
 	if err != nil {
 		panic("Could not read my_key file")
@@ -119,13 +126,19 @@ func main() {
 	// 	panic(fmt.Sprintf("failed to connect to kernel: %v", err))
 	// }
 	// defer kernelConn.Close()
+	StoreConn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic(fmt.Sprintf("failed to connect to kernel: %v", err))
+	}
+	defer StoreConn.Close()
 	grpcServer := grpc.NewServer()
 
 	myServerInstance := &securityServer{
-		myPrivKey:    sec.ParsePrivateKeyBytes(myPrivBytes),
-		bankKeys: trustedBankKeys,
+		myPrivKey: sec.ParsePrivateKeyBytes(myPrivBytes),
+		bankKeys:  trustedBankKeys,
 		// kernelClient: kernelpb.NewWorldStateServiceClient(kernelConn),
-		kernelClient: nil,
+		kernelClient:            nil,
+		LedgerServerClient: ledgerserverpb.NewTransactionsServiceClient(StoreConn),
 	}
 
 	pb.RegisterSecurityServiceServer(grpcServer, myServerInstance)

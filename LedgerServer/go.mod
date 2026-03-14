@@ -1,10 +1,9 @@
-module LedgerProxy
+module LedgerServer
 
 go 1.25.0
 
 require (
 	LedgerDB v0.0.0-00010101000000-000000000000
-	LedgerServer v0.0.0-00010101000000-000000000000
 	StorageKernel v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.79.2
 	google.golang.org/protobuf v1.36.11
@@ -21,4 +20,4 @@ replace LedgerDB => ../
 
 replace StorageKernel => ../StorageKernel
 
-replace LedgerServer => ../LedgerServer
+replace LedgerProxy => ../LedgerProxy
