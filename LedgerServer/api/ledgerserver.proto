@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option go_package = "LedgerServer/api/ledgerserver";
+
+package LedgerServer;
+
+// TransactionsService handles the addition, deletion of transactions
+service TransactionsService {
+    // Execute accepts a hybrid-encrypted payload, decrypts it, and 
+    // verifies the sender's signature, data hash, and timeliness.
+    rpc BatchAppend(TransactionsBatch) returns (ServerResponse) {}
+}
+
+
+// Single transaction payload
+message Transaction {
+    bool status = 1;
+    string time_stamp = 2;
+    string from_wallet = 3;
+    string to_wallet  = 4;
+    float amount = 5;
+    string message = 6;
+    string nonce = 7;
+    string hash = 8; 
+
+}
+
+// batch of transactions
+message TransactionsBatch {
+    repeated Transaction transactions = 1; 
+}
+
+// success or not 
+message ServerResponse {
+    bool success = 1;
+}

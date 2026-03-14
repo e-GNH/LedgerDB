@@ -31,6 +31,7 @@ type Transaction struct {
 	Message       string                 `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
 	Nonce         string                 `protobuf:"bytes,6,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	Hash          string                 `protobuf:"bytes,7,opt,name=hash,proto3" json:"hash,omitempty"`
+	TimeStamp     string                 `protobuf:"bytes,8,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -114,6 +115,13 @@ func (x *Transaction) GetHash() string {
 	return ""
 }
 
+func (x *Transaction) GetTimeStamp() string {
+	if x != nil {
+		return x.TimeStamp
+	}
+	return ""
+}
+
 // I will receive a batch of transcations
 type TransactionBatchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -169,6 +177,7 @@ type TransactionReceipt struct {
 	ToWallet      string                 `protobuf:"bytes,4,opt,name=to_wallet,json=toWallet,proto3" json:"to_wallet,omitempty"`
 	Amount        float32                `protobuf:"fixed32,5,opt,name=amount,proto3" json:"amount,omitempty"`
 	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
+	TimeStamp     string                 `protobuf:"bytes,7,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -245,6 +254,13 @@ func (x *TransactionReceipt) GetMessage() string {
 	return ""
 }
 
+func (x *TransactionReceipt) GetTimeStamp() string {
+	if x != nil {
+		return x.TimeStamp
+	}
+	return ""
+}
+
 // I will return a batch of receipts
 type TransactionBatchResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -294,7 +310,7 @@ var File_TransactionsStore_proto protoreflect.FileDescriptor
 
 const file_TransactionsStore_proto_rawDesc = "" +
 	"\n" +
-	"\x17TransactionsStore.proto\x12\x11TransactionsStore\"\xbf\x01\n" +
+	"\x17TransactionsStore.proto\x12\x11TransactionsStore\"\xde\x01\n" +
 	"\vTransaction\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\bR\x06status\x12\x1f\n" +
 	"\vfrom_wallet\x18\x02 \x01(\tR\n" +
@@ -303,9 +319,11 @@ const file_TransactionsStore_proto_rawDesc = "" +
 	"\x06amount\x18\x04 \x01(\x02R\x06amount\x12\x18\n" +
 	"\amessage\x18\x05 \x01(\tR\amessage\x12\x14\n" +
 	"\x05nonce\x18\x06 \x01(\tR\x05nonce\x12\x12\n" +
-	"\x04hash\x18\a \x01(\tR\x04hash\"]\n" +
+	"\x04hash\x18\a \x01(\tR\x04hash\x12\x1d\n" +
+	"\n" +
+	"time_stamp\x18\b \x01(\tR\ttimeStamp\"]\n" +
 	"\x17TransactionBatchRequest\x12B\n" +
-	"\ftransactions\x18\x01 \x03(\v2\x1e.TransactionsStore.TransactionR\ftransactions\"\xc3\x01\n" +
+	"\ftransactions\x18\x01 \x03(\v2\x1e.TransactionsStore.TransactionR\ftransactions\"\xe2\x01\n" +
 	"\x12TransactionReceipt\x12%\n" +
 	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\bR\x06status\x12\x1f\n" +
@@ -313,11 +331,13 @@ const file_TransactionsStore_proto_rawDesc = "" +
 	"fromWallet\x12\x1b\n" +
 	"\tto_wallet\x18\x04 \x01(\tR\btoWallet\x12\x16\n" +
 	"\x06amount\x18\x05 \x01(\x02R\x06amount\x12\x18\n" +
-	"\amessage\x18\x06 \x01(\tR\amessage\"]\n" +
+	"\amessage\x18\x06 \x01(\tR\amessage\x12\x1d\n" +
+	"\n" +
+	"time_stamp\x18\a \x01(\tR\ttimeStamp\"]\n" +
 	"\x18TransactionBatchResponse\x12A\n" +
 	"\breceipts\x18\x01 \x03(\v2%.TransactionsStore.TransactionReceiptR\breceipts2|\n" +
 	"\x18TransactionsStoreService\x12`\n" +
-	"\x05Store\x12*.TransactionsStore.TransactionBatchRequest\x1a+.TransactionsStore.TransactionBatchResponseB\"Z ledgerdb/proto/TransactionsStoreb\x06proto3"
+	"\x05Store\x12*.TransactionsStore.TransactionBatchRequest\x1a+.TransactionsStore.TransactionBatchResponseB'Z%StorageKernel/proto/TransactionsStoreb\x06proto3"
 
 var (
 	file_TransactionsStore_proto_rawDescOnce sync.Once

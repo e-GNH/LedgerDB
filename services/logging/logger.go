@@ -9,7 +9,7 @@ import (
 
 type Logger struct {
 	moduleName string
-	pathName string
+	pathName   string
 }
 
 func New(module string, path string) *Logger {
@@ -18,8 +18,8 @@ func New(module string, path string) *Logger {
 
 func (l *Logger) log(level, message string) {
 	now := time.Now()
-	timestamp := now.Format("15:04:05") 
-	dateFile := now.Format("02-01-2006") 
+	timestamp := now.Format("15:04:05")
+	dateFile := now.Format("02-01-2006")
 
 	logDir := filepath.Join(l.pathName, "logs")
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {

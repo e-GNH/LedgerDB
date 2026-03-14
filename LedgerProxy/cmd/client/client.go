@@ -18,37 +18,41 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"LedgerProxy/api"
+	pb "LedgerProxy/api"
 	"LedgerProxy/types"
+	"LedgerDB/services/logging"
 )
+
+var logger = logging.New("client", "./")
 
 func main() {
 	fmt.Println("=== Starting gRPC Security Client ===")
 
 	// =========================================================================
 	// 1. READ REQUIRED KEYS
-	// The client needs THEIR private key (to sign) and YOUR public key (to encrypt)
 	// =========================================================================
-	senderPrivBytes, err := os.ReadFile("modules/security/keys/sender_key")
+	
+	// A. Read the Client's OWN Private Key (used to SIGN the message)
+	senderPrivBytes, err := os.ReadFile("modules/security/keys/banks/CIB")
 	if err != nil {
-		panic("Could not read sender_key file")
+		panic("Could not read CIB file. Make sure it exists!")
 	}
-	receiverPubBytes, err := os.ReadFile("modules/security/keys/my_key_pub.pem")
-	if err != nil {
-		panic("Could not read my_key_pub.pem file")
-	}
-
 	senderPrivKey := parsePrivateKey(string(senderPrivBytes))
-	receiverPubKey := parsePublicKey(string(receiverPubBytes))
 
-	// =========================================================================
-	// 2. CREATE AND SIGN THE PAYLOAD
-	// =========================================================================
+	receiverPubBytes, err := os.ReadFile("modules/security/keys/my_key.pem")
+	if err != nil {
+		panic("Could not read my_key.pem file. Make sure it exists!")
+	}
+	receiverPubKey := parsePublicKey(receiverPubBytes)
+
+	fmt.Println("Successfully loaded Client Private Key and Server Public Key.")
+
+	
 	payload := types.SecureMessage{
 		Timestamp: time.Now(),
 		From:      "A",
 		To:        "B",
-		Amount:    12, // Let's send a new amount to prove it works!
+		Amount:    12,
 		Message:   "Payment for cloud infrastructure",
 		Nonce:     "unique-txn-12345",
 	}
@@ -57,18 +61,26 @@ func main() {
 	hashRaw := sha256.Sum256(payloadBytes)
 	hash := hashRaw[:]
 
-	signature, _ := rsa.SignPKCS1v15(rand.Reader, senderPrivKey, crypto.SHA256, hash)
+	signature, err := rsa.SignPKCS1v15(rand.Reader, senderPrivKey, crypto.SHA256, hash)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to sign payload: %v", err))
+	}
 
+	clientPubKey := &senderPrivKey.PublicKey
+	pubBytes, err := x509.MarshalPKIXPublicKey(clientPubKey)
+	if err != nil {
+		panic("failed to serialize public key")
+	}
+
+	// Pack the message
 	unpackedMsg := types.UnpackedMessage{
-		Data:      payloadBytes,
-		Signature: signature,
-		Hash:      hash,
+		Data:       payloadBytes,
+		Signature:  signature,
+		Hash:       hash,
+		BankPubKey: pubBytes, // The client's public key (to prove who signed it)
 	}
 	unpackedBytes, _ := json.Marshal(unpackedMsg)
 
-	// =========================================================================
-	// 3. HYBRID ENCRYPTION (AES + RSA)
-	// =========================================================================
 	fmt.Println("Encrypting payload...")
 
 	aesKey := make([]byte, 32)
@@ -80,16 +92,19 @@ func main() {
 	rand.Read(nonce)
 	aesCiphertext := gcm.Seal(nonce, nonce, unpackedBytes, nil)
 
-	encryptedAESKey, _ := rsa.EncryptOAEP(sha256.New(), rand.Reader, receiverPubKey, aesKey, nil)
+	// Encrypt the AES key using the SERVER'S Public Key
+	encryptedAESKey, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, receiverPubKey, aesKey, nil)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to encrypt AES key: %v", err))
+	}
+	
 	encryptedData := append(encryptedAESKey, aesCiphertext...)
 
 	fmt.Printf("Encrypted payload size: %d bytes\n", len(encryptedData))
-	// =========================================================================
-	// 4. SEND VIA gRPC
-	// =========================================================================
+	
+
 	fmt.Println("Connecting to gRPC server at localhost:50051...")
 
-	// Create an insecure connection (since we are on localhost and already encrypting the payload)
 	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(fmt.Sprintf("Did not connect: %v", err))
@@ -98,26 +113,18 @@ func main() {
 
 	client := pb.NewSecurityServiceClient(conn)
 
-	// Create a context with a 5-second timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	fmt.Println("Sending Secure() request over the network...")
-	// corruptedData := append([]byte(nil), encryptedData...) 
-	// corruptedData[len(corruptedData)-1] ^= 0xff
-	// Send completely invalid bytes
 	req := &pb.SecureRequest{EncryptedData: encryptedData}
-	// req := &pb.SecureRequest{EncryptedData: []byte("this is not valid encrypted data")}}
 
-	
 	res, err := client.Execute(ctx, req)
 	if err != nil {
 		panic(fmt.Sprintf("Error calling Secure RPC: %v", err))
 	}
 
-	// =========================================================================
-	// 5. PRINT THE SERVER'S RESPONSE
-	// =========================================================================
+	
 	fmt.Println("\n--- Server Response ---")
 	if res.Success {
 		fmt.Println("✅ Transaction Validated by Server!")
@@ -127,7 +134,6 @@ func main() {
 	}
 }
 
-// --- Helper Functions (Same as before) ---
 
 func parsePrivateKey(pemStr string) *rsa.PrivateKey {
 	block, _ := pem.Decode([]byte(pemStr))
@@ -141,8 +147,8 @@ func parsePrivateKey(pemStr string) *rsa.PrivateKey {
 	return priv
 }
 
-func parsePublicKey(pemStr string) *rsa.PublicKey {
-	block, _ := pem.Decode([]byte(pemStr))
+func parsePublicKey(pemBytes []byte) *rsa.PublicKey {
+	block, _ := pem.Decode(pemBytes)
 	if block == nil {
 		panic("failed to parse PEM block containing the public key")
 	}

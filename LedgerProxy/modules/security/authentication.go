@@ -19,7 +19,7 @@ import (
 
 var log = logging.New("security/authentication", "./")
 
-func parsePrivateKey(pemStr string) *rsa.PrivateKey {
+func ParsePrivateKey(pemStr string) *rsa.PrivateKey {
 	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil {
 		panic("failed to parse PEM block containing the private key")
@@ -32,7 +32,22 @@ func parsePrivateKey(pemStr string) *rsa.PrivateKey {
 	return priv
 }
 
-func parsePublicKey(pemStr string) *rsa.PublicKey {
+func ParsePrivateKeyBytes(pemStr []byte) *rsa.PrivateKey {
+	block, _ := pem.Decode(pemStr)
+	if block == nil {
+		panic("failed to parse PEM block containing the private key")
+	}
+
+	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse private key: %v", err))
+	}
+	return priv
+}
+
+
+
+func ParsePublicKey(pemStr string) *rsa.PublicKey {
 	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil {
 		panic("failed to parse PEM block containing the public key")
@@ -54,7 +69,40 @@ func parsePublicKey(pemStr string) *rsa.PublicKey {
 
 	return rsaPub
 }
-func VerifySecurity(encryptedData []byte, myPrivKey *rsa.PrivateKey, senderPubKey *rsa.PublicKey) (*types.SecureMessage, bool) {
+
+func ParsePublicKeyBytes(pemStr []byte) *rsa.PublicKey {
+	block, _ := pem.Decode(pemStr)
+	if block == nil {
+		panic("failed to parse PEM block containing the public key")
+	}
+
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err == nil {
+		rsaPub, ok := pub.(*rsa.PublicKey)
+		if !ok {
+			panic("public key is not of type RSA")
+		}
+		return rsaPub
+	}
+
+	rsaPub, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse public key as either PKIX or PKCS1: %v", err))
+	}
+
+	return rsaPub
+}
+
+func isKeyTrusted(received *rsa.PublicKey, trusted map[string]*rsa.PublicKey) bool {
+    for _, trustedKey := range trusted {
+        if received.N.Cmp(trustedKey.N) == 0 && received.E == trustedKey.E {
+            return true
+        }
+    }
+    return false
+}
+
+func VerifySecurity(encryptedData []byte, myPrivKey *rsa.PrivateKey, trustedKeys map[string]*rsa.PublicKey) (*types.SecureMessage, bool) {
 	log.Debug("Started Processing")
 
 	decryptedBytes, err := HybridDecrypt(encryptedData, myPrivKey)
@@ -70,8 +118,25 @@ func VerifySecurity(encryptedData []byte, myPrivKey *rsa.PrivateKey, senderPubKe
 		return nil, false
 	}
 	log.Debug("Unpacked data")
+	pub, err := x509.ParsePKIXPublicKey(unpacked.BankPubKey)
+    if err != nil {
+        log.Error(fmt.Sprintf("Received invalid public key format: %v", err))
+        return nil, false
+    }
+    
+    receivedPubKey, ok := pub.(*rsa.PublicKey)
+    if !ok {
+        log.Error("Public key is not an RSA key")
+        return nil, false
+    }
 
-	if !VerifyUserSignature(unpacked.Hash, unpacked.Signature, senderPubKey) {
+	if !isKeyTrusted(receivedPubKey, trustedKeys) {
+        log.Error("Access Denied: The public key provided in the request is not in the trusted list.")
+        return nil, false
+    }
+    log.Debug("Sender's public key is verified and trusted")
+
+	if !VerifyUserSignature(unpacked.Hash, unpacked.Signature, receivedPubKey) {
 		log.Error("Failed to verify user signature")
 		return nil, false
 	}
@@ -151,42 +216,3 @@ func VerifyTimeliness(msgTimestamp time.Time) bool {
 
 	return diff <= 5*time.Minute
 }
-
-// func secure() bool {
-
-// 	log.Info("Reading keys...")
-// 	myPrivBytes, err := os.ReadFile("keys/my_key")
-// 	if err != nil {
-// 		log.Error(fmt.Sprintf("Could not read my_key file: %v", err))
-// 		return false
-// 	}
-// 	senderPubBytes, err := os.ReadFile("keys/sender_key_pub.pem")
-// 	if err != nil {
-// 		log.Error(fmt.Sprintf("Could not read sender_key_pub.pem file: %v", err))
-// 		return false
-// 	}
-
-// 	log.Debug("Started Parsing.")
-// 	myPrivKey := parsePrivateKey(string(myPrivBytes))
-// 	senderPubKey := parsePublicKey(string(senderPubBytes))
-// 	log.Debug("Finished Parsing.")
-
-// 	log.Info("Reading incoming encrypted data...")
-// 	encryptedData, err := os.ReadFile("encrypted_payload.bin")
-// 	if err != nil {
-// 		log.Error(fmt.Sprintf("Failed to read encrypted_payload.bin: %v", err))
-// 		return false
-// 	}
-
-// 	log.Info("Passing data to ProcessMessage()...")
-// 	_, ok := ProcessMessage(encryptedData, myPrivKey, senderPubKey) // to be used final message
-
-// 	if ok {
-// 		log.Info("SUCCESS! Message verified, decrypted, and timely.")
-// 	} else {
-// 		log.Debug("SECURITY ALERT: Pipeline failed!")
-// 		return false
-// 	}
-
-// 	return true
-// }
