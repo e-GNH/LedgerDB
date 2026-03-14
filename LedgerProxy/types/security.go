@@ -4,6 +4,7 @@ import "time"
 
 // SecureMessage represents the structure of our data AFTER decryption
 type SecureMessage struct {
+	Status bool        `json:"status"`
 	Timestamp time.Time `json:"timestamp"`
 	From      string    `json:"from"`
 	To        string    `json:"to"`

@@ -6,21 +6,33 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"context"
+	"encoding/hex"
+	"time"
 
 	types "LedgerProxy/types"
 	"LedgerDB/services/logging"
+	ledgerserverpb "LedgerServer/api"
+	// ledgerserver "LedgerServer/api/ledgerserver"
 )
 
 var (
 	batch_size = 10
 	mu         sync.Mutex 
+	LedgerServerClient ledgerserverpb.TransactionsServiceClient = nil
+
 );
 
 var logger = logging.New("batching/batch", "./")
 
-func SaveBatchItem(item *types.SecureMessage) error {
+func SaveBatchItem(item *types.SecureMessage, client ledgerserverpb.TransactionsServiceClient) error {
 	mu.Lock()
 	defer mu.Unlock()
+
+	// TODO: Improvement, Implement a singleton
+	if LedgerServerClient == nil {
+		LedgerServerClient = client
+	}
 
 	const filename = "ledger_batches.jsonl"
 
@@ -59,7 +71,27 @@ func SaveBatchItem(item *types.SecureMessage) error {
 
 		// TODO: Call your gRPC send to server here
 		fmt.Print(batch)
+		grpcBatch := &ledgerserverpb.TransactionsBatch{}
 
+		for _, item := range batch.Items {
+			grpcBatch.Transactions = append(grpcBatch.Transactions, &ledgerserverpb.Transaction{
+				Status:     item.Status,
+				TimeStamp:  item.Timestamp.Format(time.RFC3339), 
+				FromWallet: item.From,
+				ToWallet:   item.To,
+				Amount:     float32(item.Amount), 
+				Message:    item.Message,
+				Nonce:      item.Nonce,
+				Hash:       hex.EncodeToString(item.Hash), 
+			})
+		}
+
+		res, err := LedgerServerClient.BatchAppend(context.Background(), grpcBatch)
+
+		if res.Success && err != nil {
+			logger.Error(fmt.Sprintf("failed to send batch: %v", err))
+			return err
+		}
 		if err := os.Truncate(filename, 0); err != nil {
 			logger.Error(fmt.Sprintf("failed to clear batch file: %v", err))
 			return fmt.Errorf("failed to clear batch file: %v", err)

@@ -105,6 +105,7 @@ func (h *KernelHandler) GenerateReceipts(transactions []*ts.Transaction, fileNam
             ToWallet:      tx.ToWallet,
             Amount:        tx.Amount,
             Message:       tx.Message,
+            TimeStamp:     tx.TimeStamp,
         }
         receipts = append(receipts, receipt)
 
