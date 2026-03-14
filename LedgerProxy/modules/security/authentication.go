@@ -160,6 +160,7 @@ func VerifySecurity(encryptedData []byte, myPrivKey *rsa.PrivateKey, trustedKeys
 		return nil, false
 	}
 	log.Debug("Message is timely")
+	msg.Hash = unpacked.Hash
 
 	return &msg, true
 }
