@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -20,9 +19,9 @@ var ctx = context.Background()
 var logger = logging.New("StorageKernel", "./")
 var file_name = "main.go"
 
-func test_transfer(rdb *redis.Client, h *KernelHandler) {
+func test_transfer(h *KernelHandler) {
 	logger.Info(" - [" + file_name + "] - Testing Transfer")
-	err := h.Transfer_Test(ctx, "nonce:1211123122", "A", "B", 1)
+	err := h.Transfer_Test(ctx, "nonce:123", "A", "B", 100)
 	switch {
 	case err == nil:
 		logger.Info(" - [" + file_name + "] - Test Transfer OK")
@@ -43,7 +42,9 @@ func main() {
 
 	logger.Info(" - [" + file_name + "] - Creating Redis Client")
 
-	// rdb := newRedisClient()
+	rdb := newRedisClient()
+	// TODO REMOVE after testing
+	rdb.FlushAll(ctx) // Delete Everything
 	ts_server, err := newHDFSClient()
 
 	if err != nil {
@@ -51,15 +52,15 @@ func main() {
 		return
 	}
 
-	h := &KernelHandler{hdfs: ts_server}
+	h := &KernelHandler{hdfs: ts_server, rdb: rdb}
 
-	// test_transfer(rdb, h) // TODO: remove after onboarding
-	// if err := h.CreateAccount(ctx, "A", 100); err != nil { // Shall be from onboarding
-	//     logger.Error(" - [" + file_name + "] - " + err.Error())
-	// }
-	// if err := h.CreateAccount(ctx, "B", 100); err != nil {
-	//     logger.Error(" - [" + file_name + "] - " + err.Error())
-	// }
+	if err := h.CreateAccount(ctx, "A", 100); err != nil { // Shall be from onboarding
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if err := h.CreateAccount(ctx, "B", 100); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	test_transfer(h) // TODO: remove after onboarding
 
 	// ==========================================
 	// 🧪 HDFS BATCH TEST
@@ -114,7 +115,5 @@ func main() {
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-	// TODO REMOVE after testing
-	// rdb.FlushAll(ctx) // Delete Everything
 
 }
