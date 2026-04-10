@@ -16,18 +16,19 @@ import (
 	pb "LedgerProxy/api"
 	batching "LedgerProxy/modules/batching"
 	sec "LedgerProxy/modules/security"
+
 	// ts_store "StorageKernel/proto/TransactionsStore"
-	kernelpb "StorageKernel/proto/worldstate"
 	ledgerserverpb "LedgerServer/api"
+	kernelpb "StorageKernel/proto/worldstate"
 )
 
 var logger = logging.New("server", "../../")
 
 type securityServer struct {
 	pb.UnimplementedSecurityServiceServer
-	myPrivKey               *rsa.PrivateKey
-	bankKeys                map[string]*rsa.PublicKey // TODO: make it a list of public keys
-	kernelClient            kernelpb.WorldStateServiceClient
+	myPrivKey          *rsa.PrivateKey
+	bankKeys           map[string]*rsa.PublicKey // TODO: make it a list of public keys
+	kernelClient       kernelpb.WorldStateServiceClient
 	LedgerServerClient ledgerserverpb.TransactionsServiceClient
 }
 
@@ -35,17 +36,15 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 
 	logger.Info("--> Received gRPC Secure() request")
 	msg, ok := sec.VerifySecurity(req.EncryptedData, s.myPrivKey, s.bankKeys)
-	
+
 	if msg != nil {
 		msg.Status = ok
 	}
-	
 
 	if ok {
 		logger.Info("SECURITY SUCCESS: Pipeline passed!")
 	}
 	message := "Transaction rejected due to security"
-
 
 	logger.Info("WAL in the local disk")
 	batching.SaveBatchItem(msg, s.LedgerServerClient)
@@ -54,25 +53,25 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		logger.Info("Passing transaction to world state...")
 		// TODO: tell zeyad that even if fail, it has to be committed
 		// TODO: uncomment these
-		// _, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
-		// 	Nonce:  msg.Nonce,
-		// 	FromId: msg.From,
-		// 	ToId:   msg.To,
-		// 	Amount: int64(msg.Amount),
-		// })
-		// if err != nil {
-		// 	logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
-		// 	return &pb.SecureResponse{
-		// 		Success: false,
-		// 		Message: fmt.Sprintf("transfer failed: %v", err),
-		// 	}, nil
-		// }
+		_, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
+			Nonce:  msg.Nonce,
+			FromId: msg.From,
+			ToId:   msg.To,
+			Amount: int64(msg.Amount),
+		})
+		if err != nil {
+			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+			return &pb.SecureResponse{
+				Success: false,
+				Message: fmt.Sprintf("transfer failed: %v", err),
+			}, nil
+		}
 		message = "Transaction validated & successfully added to world state"
 	}
 
 	return &pb.SecureResponse{
 		Success: ok,
-		Message: message, 
+		Message: message,
 	}, nil
 }
 
@@ -122,11 +121,12 @@ func main() {
 		logger.Error(fmt.Sprintf("Failed to listen: %v", err))
 		panic(fmt.Sprintf("Failed to listen: %v", err))
 	}
-	// kernelConn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	// if err != nil {
-	// 	panic(fmt.Sprintf("failed to connect to kernel: %v", err))
-	// }
-	// defer kernelConn.Close()
+	port := "50058"
+	kernelConn, err := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic(fmt.Sprintf("failed to connect to kernel: %v", err))
+	}
+	defer kernelConn.Close()
 	StoreConn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect to kernel: %v", err))
@@ -135,10 +135,10 @@ func main() {
 	grpcServer := grpc.NewServer()
 
 	myServerInstance := &securityServer{
-		myPrivKey: sec.ParsePrivateKeyBytes(myPrivBytes),
-		bankKeys:  trustedBankKeys,
-		// kernelClient: kernelpb.NewWorldStateServiceClient(kernelConn),
-		kernelClient:            nil,
+		myPrivKey:    sec.ParsePrivateKeyBytes(myPrivBytes),
+		bankKeys:     trustedBankKeys,
+		kernelClient: kernelpb.NewWorldStateServiceClient(kernelConn),
+		// kernelClient:       nil,
 		LedgerServerClient: ledgerserverpb.NewTransactionsServiceClient(StoreConn),
 	}
 

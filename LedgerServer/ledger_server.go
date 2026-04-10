@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+
 	"google.golang.org/grpc/reflection"
 
 	"google.golang.org/grpc"
@@ -14,12 +15,9 @@ import (
 	ts_store "StorageKernel/proto/TransactionsStore"
 )
 
-
 var logger = logging.New("server", "./")
 
-
 func main() {
-
 
 	logger.Info("Starting gRPC Security Server on port 50053...")
 	lis, err := net.Listen("tcp", ":50053")
@@ -28,7 +26,7 @@ func main() {
 		panic(fmt.Sprintf("Failed to listen: %v", err))
 	}
 
-	TsStoreConn, err := grpc.Dial("localhost:50055", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	TsStoreConn, err := grpc.Dial("localhost:50058", grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	grpcServer := grpc.NewServer()
 

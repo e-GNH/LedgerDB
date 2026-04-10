@@ -18,9 +18,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"LedgerDB/services/logging"
 	pb "LedgerProxy/api"
 	"LedgerProxy/types"
-	"LedgerDB/services/logging"
 )
 
 var logger = logging.New("client", "./")
@@ -31,7 +31,7 @@ func main() {
 	// =========================================================================
 	// 1. READ REQUIRED KEYS
 	// =========================================================================
-	
+
 	// A. Read the Client's OWN Private Key (used to SIGN the message)
 	senderPrivBytes, err := os.ReadFile("modules/security/keys/banks/CIB")
 	if err != nil {
@@ -47,14 +47,13 @@ func main() {
 
 	fmt.Println("Successfully loaded Client Private Key and Server Public Key.")
 
-	
 	payload := types.SecureMessage{
 		Timestamp: time.Now(),
 		From:      "A",
 		To:        "B",
-		Amount:    12,
+		Amount:    11,
 		Message:   "Payment for cloud infrastructure",
-		Nonce:     "unique-txn-12345",
+		Nonce:     "unique-txn-123s245",
 	}
 	payloadBytes, _ := json.Marshal(payload)
 
@@ -97,11 +96,10 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Failed to encrypt AES key: %v", err))
 	}
-	
+
 	encryptedData := append(encryptedAESKey, aesCiphertext...)
 
 	fmt.Printf("Encrypted payload size: %d bytes\n", len(encryptedData))
-	
 
 	fmt.Println("Connecting to gRPC server at localhost:50051...")
 
@@ -124,7 +122,6 @@ func main() {
 		panic(fmt.Sprintf("Error calling Secure RPC: %v", err))
 	}
 
-	
 	fmt.Println("\n--- Server Response ---")
 	if res.Success {
 		fmt.Println("✅ Transaction Validated by Server!")
@@ -133,7 +130,6 @@ func main() {
 		fmt.Printf("   Reason: %s\n", res.Message)
 	}
 }
-
 
 func parsePrivateKey(pemStr string) *rsa.PrivateKey {
 	block, _ := pem.Decode([]byte(pemStr))

@@ -8,6 +8,7 @@ import (
 	// pb "StorageKernel/proto/worldstate"
 	"LedgerDB/services/logging"
 	ts "StorageKernel/proto/TransactionsStore"
+	pb "StorageKernel/proto/worldstate"
 	"fmt"
 	"log"
 
@@ -21,7 +22,7 @@ var file_name = "main.go"
 
 func test_transfer(h *KernelHandler) {
 	logger.Info(" - [" + file_name + "] - Testing Transfer")
-	err := h.Transfer_Test(ctx, "nonce:123", "A", "B", 100)
+	err := h.Transfer_Test(ctx, "nonce:123", "A", "B", 1)
 	switch {
 	case err == nil:
 		logger.Info(" - [" + file_name + "] - Test Transfer OK")
@@ -96,8 +97,8 @@ func main() {
 	// 	logger.Info(" - [" + file_name + "] - HDFS Test PASSED! Batch written successfully.")
 	// }
 	// ==========================================
-
-	lis, err := net.Listen("tcp", ":50055")
+	port := "50058"
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 		return
@@ -106,12 +107,12 @@ func main() {
 	logger.Info(" - [" + file_name + "] - Starting StorageKernel GRPC Server")
 	grpcServer := grpc.NewServer()
 
-	// pb.RegisterWorldStateServiceServer(grpcServer, h)
+	pb.RegisterWorldStateServiceServer(grpcServer, h)
 	ts.RegisterTransactionsStoreServiceServer(grpcServer, h)
 
 	reflection.Register(grpcServer)
 
-	logger.Info(" - [" + file_name + "] - Storage kernel listening on port 50055")
+	logger.Info(" - [" + file_name + "] - Storage kernel listening on port " + port)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

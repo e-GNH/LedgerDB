@@ -2,26 +2,25 @@ package batching
 
 import (
 	"bufio"
+	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"sync"
-	"context"
-	"encoding/hex"
 	"time"
 
-	types "LedgerProxy/types"
 	"LedgerDB/services/logging"
+	types "LedgerProxy/types"
 	ledgerserverpb "LedgerServer/api"
 	// ledgerserver "LedgerServer/api/ledgerserver"
 )
 
 var (
-	batch_size = 10
-	mu         sync.Mutex 
+	batch_size         = 10
+	mu                 sync.Mutex
 	LedgerServerClient ledgerserverpb.TransactionsServiceClient = nil
-
-);
+)
 
 var logger = logging.New("batching/batch", "./")
 
@@ -61,9 +60,8 @@ func SaveBatchItem(item *types.SecureMessage, client ledgerserverpb.Transactions
 		return err
 	}
 
-	
 	if count >= batch_size {
-		batch , err := GetBatch()
+		batch, err := GetBatch()
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to get batch: %v", err))
 			return err
@@ -76,13 +74,13 @@ func SaveBatchItem(item *types.SecureMessage, client ledgerserverpb.Transactions
 		for _, item := range batch.Items {
 			grpcBatch.Transactions = append(grpcBatch.Transactions, &ledgerserverpb.Transaction{
 				Status:     item.Status,
-				TimeStamp:  item.Timestamp.Format(time.RFC3339), 
+				TimeStamp:  item.Timestamp.Format(time.RFC3339),
 				FromWallet: item.From,
 				ToWallet:   item.To,
-				Amount:     float32(item.Amount), 
+				Amount:     float32(item.Amount),
 				Message:    item.Message,
 				Nonce:      item.Nonce,
-				Hash:       hex.EncodeToString(item.Hash), 
+				Hash:       hex.EncodeToString(item.Hash),
 			})
 		}
 
