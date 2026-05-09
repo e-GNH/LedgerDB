@@ -1,0 +1,18 @@
+{
+    "individual": {
+        "tx_threshold": 10000,
+        "daily_limit": 50000,
+        "structuring_percentage": 0.9,
+        "structuring_limit":5,
+        "velocity_limit": 5,
+        "velocity_window_minutes": 1
+    },
+    "business": {
+        "tx_threshold": 100000,
+        "daily_limit": 1000000,
+        "structuring_percentage": 0.9,
+        "structuring_limit":5,
+        "velocity_limit": 1000,
+        "velocity_window_minutes": 60
+    }
+}
