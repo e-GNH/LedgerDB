@@ -1,8 +1,11 @@
 import json
 from datetime import datetime, timedelta
 from collections import defaultdict
+import os
 
-with open('aml_service/config/thresholds.json') as f:
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # two dirname to get to aml_service path 
+
+with open(os.path.join(BASE_DIR, 'config', 'thresholds.json')) as f:
     THRESHOLDS = json.load(f)
 
 # { sender_id: [{ amount, timestamp }, ...] }
