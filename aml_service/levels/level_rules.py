@@ -41,9 +41,11 @@ def check_transaction(transaction):
                 return False, "Too many transactions nearing limit"
         ## rapid transactions
         count_near_interval = sum([1 for tx in daily_window[sender] if timestamp - tx[1] <= timedelta(minutes=limits["velocity_window_minutes"])])
-        if count_near_interval >= limits["velocity_limit"]:
+        if count_near_interval + 1 >= limits["velocity_limit"]:
             return False, "Too many transactions in short time"
+        
         daily_window[sender].append([amount, timestamp])
+        
         return True, ""
     except Exception as e:
         return False, f"invalid transaction: {e}"
