@@ -38,13 +38,18 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 	}
 	logger.Info(" - [" + file_name + "] - Transferring " + fmt.Sprint(req.Amount) + " from " + req.FromId + " to " + req.ToId)
 
-	err := transferScript.Run(ctx, h.rdb, keys, req.Amount).Err()
+	res, err := transferScript.Run(ctx, h.rdb, keys, req.Amount).Slice()
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 		return nil, mapGrpcError(err)
 	}
-	logger.Info(" - [" + file_name + "] - Transfer committed")
-	return &pb.TransferResponse{Ok: true, Message: "transfer committed"}, nil
+	if len(res) != 2 {
+		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
+		return nil, status.Error(codes.Internal, "unexpected script result")
+	}
+	sequence := res[1]
+	logger.Info(" - [" + file_name + "] - Transfer committed " + fmt.Sprint(sequence))
+	return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
 }
 func (h *KernelHandler) Transfer_Test(ctx context.Context, nonce, from, to string, amount int64) error {
 	keys := []string{
@@ -52,7 +57,13 @@ func (h *KernelHandler) Transfer_Test(ctx context.Context, nonce, from, to strin
 		"account:" + from,
 		"account:" + to,
 	}
-	err := transferScript.Run(ctx, h.rdb, keys, amount).Err()
+	res, err := transferScript.Run(ctx, h.rdb, keys, amount).Slice()
+
+	if err == nil {
+		sequence := res[1]
+		logger.Info(" - [" + file_name + "] - Transfer committed " + fmt.Sprint(sequence))
+	}
+
 	return mapLuaError(err)
 }
 
@@ -119,19 +130,19 @@ func (h *KernelHandler) Transfer_Test(ctx context.Context, nonce, from, to strin
 // %%%%%%%%%%% END JUST TESTING %%%%%%%%%%%%
 
 func (h *KernelHandler) Store(ctx context.Context, req *ts.TransactionBatchRequest) (*ts.StoreAck, error) {
-    fileName := "handler.go"
-    logger.Info(" - [" + fileName + "] - Storing Transaction Batch")
+	fileName := "handler.go"
+	logger.Info(" - [" + fileName + "] - Storing Transaction Batch")
 
-    batchId, err := h.writeBatchToHDFS(req.Transactions, fileName)
-    if err != nil {
-        return nil, err
-    }
+	batchId, err := h.writeBatchToHDFS(req.Transactions, fileName)
+	if err != nil {
+		return nil, err
+	}
 
-    logger.Info(" - [" + fileName + "] - Successfully stored batch: " + batchId)
-    return &ts.StoreAck{
-        Success: true,
-        BatchId: batchId,
-    }, nil
+	logger.Info(" - [" + fileName + "] - Successfully stored batch: " + batchId)
+	return &ts.StoreAck{
+		Success: true,
+		BatchId: batchId,
+	}, nil
 }
 
 func (h *KernelHandler) writeBatchToHDFS(transactions []*ts.Transaction, fileName string) (string, error) {
