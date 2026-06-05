@@ -57,82 +57,81 @@ func (h *KernelHandler) Transfer_Test(ctx context.Context, nonce, from, to strin
 }
 
 // %%%%%%%%%%%% JUST TESTING %%%%%%%%%%%%%
-func (h *KernelHandler) StoreBatch(transactions []*ts.Transaction, fileName string) ([]*ts.TransactionReceipt, bool, error) {
-	txData, err := json.Marshal(transactions)
-	if err != nil {
-		logger.Error(" - [" + fileName + "] - " + err.Error())
-		return nil, false, err
-	}
+// func (h *KernelHandler) StoreBatch(transactions []*ts.Transaction, fileName string) ([]*ts.TransactionReceipt, bool, error) {
+// 	txData, err := json.Marshal(transactions)
+// 	if err != nil {
+// 		logger.Error(" - [" + fileName + "] - " + err.Error())
+// 		return nil, false, err
+// 	}
 
-	ledgerDir := "/ledger/transactions"
-	err = h.hdfs.MkdirAll(ledgerDir, 0755)
-	if err != nil {
-		logger.Error(" - [" + fileName + "] - failed to create hdfs dir: " + err.Error())
-		return nil, false, err
-	}
+// 	ledgerDir := "/ledger/transactions"
+// 	err = h.hdfs.MkdirAll(ledgerDir, 0755)
+// 	if err != nil {
+// 		logger.Error(" - [" + fileName + "] - failed to create hdfs dir: " + err.Error())
+// 		return nil, false, err
+// 	}
 
-	batchId := fmt.Sprintf("batch_%d", time.Now().UnixNano())
-	filePath := fmt.Sprintf("%s/%s.json", ledgerDir, batchId)
+// 	batchId := fmt.Sprintf("batch_%d", time.Now().UnixNano())
+// 	filePath := fmt.Sprintf("%s/%s.json", ledgerDir, batchId)
 
-	writer, err := h.hdfs.Create(filePath)
-	if err != nil {
-		logger.Error(" - [" + fileName + "] - failed to create file: " + err.Error())
-		return nil, false, err
-	}
-	defer writer.Close()
+// 	writer, err := h.hdfs.Create(filePath)
+// 	if err != nil {
+// 		logger.Error(" - [" + fileName + "] - failed to create file: " + err.Error())
+// 		return nil, false, err
+// 	}
+// 	defer writer.Close()
 
-	_, err = writer.Write(txData)
-	if err != nil {
-		logger.Error(" - [" + fileName + "] - failed to write data: " + err.Error())
-		return nil, false, err
-	}
+// 	_, err = writer.Write(txData)
+// 	if err != nil {
+// 		logger.Error(" - [" + fileName + "] - failed to write data: " + err.Error())
+// 		return nil, false, err
+// 	}
 
-	logger.Info(" - [" + fileName + "] - Successfully stored batch: " + batchId)
+// 	logger.Info(" - [" + fileName + "] - Successfully stored batch: " + batchId)
 
-	receipts := h.GenerateReceipts(transactions, fileName)
+// 	// receipts := h.GenerateReceipts(transactions, fileName)
 
-	return receipts, true, nil
-}
+// 	return true, nil
+// }
 
-func (h *KernelHandler) GenerateReceipts(transactions []*ts.Transaction, fileName string) []*ts.TransactionReceipt {
-	var receipts []*ts.TransactionReceipt
-	for _, tx := range transactions {
-		receipt := &ts.TransactionReceipt{
-			TransactionId: tx.Hash,
-			Status:        tx.Status,
-			FromWallet:    tx.FromWallet,
-			ToWallet:      tx.ToWallet,
-			Amount:        tx.Amount,
-			Message:       tx.Message,
-			TimeStamp:     tx.TimeStamp,
-		}
-		receipts = append(receipts, receipt)
+// func (h *KernelHandler) GenerateReceipts(transactions []*ts.Transaction, fileName string) []*ts.TransactionReceipt {
+// 	var receipts []*ts.TransactionReceipt
+// 	for _, tx := range transactions {
+// 		receipt := &ts.TransactionReceipt{
+// 			TransactionId: tx.Hash,
+// 			Status:        tx.Status,
+// 			FromWallet:    tx.FromWallet,
+// 			ToWallet:      tx.ToWallet,
+// 			Amount:        tx.Amount,
+// 			Message:       tx.Message,
+// 			TimeStamp:     tx.TimeStamp,
+// 		}
+// 		receipts = append(receipts, receipt)
 
-		receiptJson, err := json.MarshalIndent(receipt, "", "  ")
-		if err == nil {
-			fmt.Printf("--- RECEIPT GENERATED ---\n%s\n-------------------------\n", string(receiptJson))
-		}
-	}
-	return receipts
-}
+// 		receiptJson, err := json.MarshalIndent(receipt, "", "  ")
+// 		if err == nil {
+// 			fmt.Printf("--- RECEIPT GENERATED ---\n%s\n-------------------------\n", string(receiptJson))
+// 		}
+// 	}
+// 	return receipts
+// }
 
 // %%%%%%%%%%% END JUST TESTING %%%%%%%%%%%%
 
-func (h *KernelHandler) Store(ctx context.Context, req *ts.TransactionBatchRequest) (*ts.TransactionBatchResponse, error) {
-	fileName := "handler.go"
-	logger.Info(" - [" + fileName + "] - Storing Transaction Batch")
+func (h *KernelHandler) Store(ctx context.Context, req *ts.TransactionBatchRequest) (*ts.StoreAck, error) {
+    fileName := "handler.go"
+    logger.Info(" - [" + fileName + "] - Storing Transaction Batch")
 
-	batchId, err := h.writeBatchToHDFS(req.Transactions, fileName)
-	if err != nil {
-		return nil, err
-	}
+    batchId, err := h.writeBatchToHDFS(req.Transactions, fileName)
+    if err != nil {
+        return nil, err
+    }
 
-	receipts := h.generateReceipts(req.Transactions, fileName)
-
-	logger.Info(" - [" + fileName + "] - Successfully stored batch: " + batchId)
-	return &ts.TransactionBatchResponse{
-		Receipts: receipts,
-	}, nil
+    logger.Info(" - [" + fileName + "] - Successfully stored batch: " + batchId)
+    return &ts.StoreAck{
+        Success: true,
+        BatchId: batchId,
+    }, nil
 }
 
 func (h *KernelHandler) writeBatchToHDFS(transactions []*ts.Transaction, fileName string) (string, error) {
@@ -169,18 +168,18 @@ func (h *KernelHandler) writeBatchToHDFS(transactions []*ts.Transaction, fileNam
 	return batchId, nil
 }
 
-func (h *KernelHandler) generateReceipts(transactions []*ts.Transaction, fileName string) []*ts.TransactionReceipt {
-	var receipts []*ts.TransactionReceipt
-	for _, tx := range transactions {
-		logger.Info(" - [" + fileName + "] - Generating receipt: " + tx.Hash)
-		receipts = append(receipts, &ts.TransactionReceipt{
-			TransactionId: tx.Hash,
-			Status:        tx.Status,
-			FromWallet:    tx.FromWallet,
-			ToWallet:      tx.ToWallet,
-			Amount:        tx.Amount,
-			Message:       tx.Message,
-		})
-	}
-	return receipts
-}
+// func (h *KernelHandler) generateReceipts(transactions []*ts.Transaction, fileName string) []*ts.TransactionReceipt {
+// 	var receipts []*ts.TransactionReceipt
+// 	for _, tx := range transactions {
+// 		logger.Info(" - [" + fileName + "] - Generating receipt: " + tx.Hash)
+// 		receipts = append(receipts, &ts.TransactionReceipt{
+// 			TransactionId: tx.Hash,
+// 			Status:        tx.Status,
+// 			FromWallet:    tx.FromWallet,
+// 			ToWallet:      tx.ToWallet,
+// 			Amount:        tx.Amount,
+// 			Message:       tx.Message,
+// 		})
+// 	}
+// 	return receipts
+// }

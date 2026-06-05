@@ -4,33 +4,50 @@ option go_package = "LedgerServer/api/ledgerserver";
 
 package LedgerServer;
 
-// TransactionsService handles the addition, deletion of transactions
+// TransactionsService handles appending transaction batches from LedgerProxy
 service TransactionsService {
-    // Execute accepts a hybrid-encrypted payload, decrypts it, and 
-    // verifies the sender's signature, data hash, and timeliness.
     rpc BatchAppend(TransactionsBatch) returns (ServerResponse) {}
 }
 
+// ReceiptService allows banks to subscribe to their transaction receipts
+// Banks hold a persistent open stream identified by their wallet prefix
+service ReceiptService {
+    // Subscribe opens a long-lived server-streaming connection.
+    // The bank sends its prefix (e.g. "000") and receives receipts
+    // whenever a transaction involving one of its wallets is committed.
+    rpc Subscribe(SubscribeRequest) returns (stream TransactionReceipt) {}
+}
 
-// Single transaction payload
-message Transaction {
-    bool status = 1;
-    string time_stamp = 2;
+message SubscribeRequest {
+    string bank_prefix = 1; // e.g. "000", "001"
+}
+
+message TransactionReceipt {
+    string hash        = 1;
+    bool   status      = 2;
     string from_wallet = 3;
-    string to_wallet  = 4;
-    float amount = 5;
-    string message = 6;
-    string nonce = 7;
-    string hash = 8; 
-
+    string to_wallet   = 4;
+    float  amount      = 5;
+    string message     = 6;
+    string nonce       = 7;
+    string time_stamp  = 8;
 }
 
-// batch of transactions
+message Transaction {
+    bool   status      = 1;
+    string time_stamp  = 2;
+    string from_wallet = 3;
+    string to_wallet   = 4;
+    float  amount      = 5;
+    string message     = 6;
+    string nonce       = 7;
+    string hash        = 8;
+}
+
 message TransactionsBatch {
-    repeated Transaction transactions = 1; 
+    repeated Transaction transactions = 1;
 }
 
-// success or not 
 message ServerResponse {
     bool success = 1;
 }

@@ -47,7 +47,8 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	message := "Transaction rejected due to security"
 
 	logger.Info("WAL in the local disk")
-	batching.SaveBatchItem(msg, s.LedgerServerClient)
+	// TODO: erronous code, if failed, it is still logged as success
+	batching.SaveBatchItem(msg, s.LedgerServerClient) 
 
 	if ok {
 		logger.Info("Passing transaction to world state...")
@@ -61,6 +62,16 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		})
 		if err != nil {
 			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+			if msg != nil {
+                undoMsg := *msg
+                undoMsg.Message = "undo the last transaction"
+                undoMsg.Status = false 
+                
+                undoErr := batching.SaveBatchItem(&undoMsg, s.LedgerServerClient)
+                if undoErr != nil {
+                    logger.Error(fmt.Sprintf("Failed to save undo batch item: %v", undoErr))
+                }
+            }
 			return &pb.SecureResponse{
 				Success: false,
 				Message: fmt.Sprintf("transfer failed: %v", err),

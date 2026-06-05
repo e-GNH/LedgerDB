@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"github.com/redis/go-redis/v9"
-	"github.com/colinmarc/hdfs/v2"
-)
 
+	"github.com/colinmarc/hdfs/v2"
+	"github.com/redis/go-redis/v9"
+)
 
 func newRedisClient() *redis.Client {
 	file_name = "client.go"
@@ -18,15 +18,14 @@ func newRedisClient() *redis.Client {
 	})
 
 	ctx := context.Background()
-    _, err := rdb.Ping(ctx).Result()
-    if err != nil {
+	_, err := rdb.Ping(ctx).Result()
+	if err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
-        return nil
-    }
+		return nil
+	}
 	logger.Info(" - [" + file_name + "] - Redis Client Created")
 	return rdb
 }
-
 
 func newHDFSClient() (*hdfs.Client, error) {
 	file_name = "client.go"
