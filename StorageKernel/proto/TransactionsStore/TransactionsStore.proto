@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package TransactionsStore;
+
+option go_package = "StorageKernel/proto/TransactionsStore";
+
+service TransactionsStoreService {
+  rpc Store(TransactionBatchRequest) returns (StoreAck);
+}
+
+message Transaction {
+  bool   status      = 1;
+  string from_wallet = 2;
+  string to_wallet   = 3;
+  float  amount      = 4;
+  string message     = 5;
+  string nonce       = 6;
+  string hash        = 7;
+  string time_stamp  = 8;
+}
+
+message TransactionBatchRequest {
+  repeated Transaction transactions = 1;
+}
+
+// Simple ack 
+message StoreAck {
+  bool   success  = 1;
+  string batch_id = 2;
+}
