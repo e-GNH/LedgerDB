@@ -13,6 +13,8 @@ class TransactionsGraph:
                                self.graph.edges(keys=True, data=True) 
                                if data['timestamp'] < cutoff_time]
         self.graph.remove_edges_from(edges_to_be_deleted)
+        ## remove isolated nodes (has no edges into or out of)
+        self.graph.remove_nodes_from(list(nx.isolates(self.graph)))
     
     def get_indegree(self, account):
         return self.graph.in_degree(account)
@@ -20,4 +22,8 @@ class TransactionsGraph:
     def get_outdegree(self, account):
         return self.graph.out_degree(account)
     
+    def get_input_money(self, account):
+        return sum(data['amount'] for _, _, data in self.graph.in_edges(account, data=True))
     
+    def get_output_money(self, account):
+        return sum(data['amount'] for _, _, data in self.graph.out_edges(account, data=True))
