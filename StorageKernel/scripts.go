@@ -31,5 +31,5 @@ var transferScript = redis.NewScript(`
 	redis.call("HINCRBY", KEYS[3], "pending",  amount)
 	redis.call("SET",     KEYS[1], 1)
 
-	return "OK"
-`)
+	return "OK" 
+`) // TODO: Return Ok + Sequence Number
