@@ -117,6 +117,150 @@ func (x *SecureResponse) GetMessage() string {
 	return ""
 }
 
+type SubscribeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BankPrefix    string                 `protobuf:"bytes,1,opt,name=bank_prefix,json=bankPrefix,proto3" json:"bank_prefix,omitempty"` // e.g. "000", "001"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubscribeRequest) Reset() {
+	*x = SubscribeRequest{}
+	mi := &file_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubscribeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubscribeRequest) ProtoMessage() {}
+
+func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubscribeRequest.ProtoReflect.Descriptor instead.
+func (*SubscribeRequest) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SubscribeRequest) GetBankPrefix() string {
+	if x != nil {
+		return x.BankPrefix
+	}
+	return ""
+}
+
+type TransactionReceipt struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Hash          string                 `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Status        bool                   `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
+	FromWallet    string                 `protobuf:"bytes,3,opt,name=from_wallet,json=fromWallet,proto3" json:"from_wallet,omitempty"`
+	ToWallet      string                 `protobuf:"bytes,4,opt,name=to_wallet,json=toWallet,proto3" json:"to_wallet,omitempty"`
+	Amount        float32                `protobuf:"fixed32,5,opt,name=amount,proto3" json:"amount,omitempty"`
+	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
+	Nonce         string                 `protobuf:"bytes,7,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	TimeStamp     string                 `protobuf:"bytes,8,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TransactionReceipt) Reset() {
+	*x = TransactionReceipt{}
+	mi := &file_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransactionReceipt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransactionReceipt) ProtoMessage() {}
+
+func (x *TransactionReceipt) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransactionReceipt.ProtoReflect.Descriptor instead.
+func (*TransactionReceipt) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *TransactionReceipt) GetHash() string {
+	if x != nil {
+		return x.Hash
+	}
+	return ""
+}
+
+func (x *TransactionReceipt) GetStatus() bool {
+	if x != nil {
+		return x.Status
+	}
+	return false
+}
+
+func (x *TransactionReceipt) GetFromWallet() string {
+	if x != nil {
+		return x.FromWallet
+	}
+	return ""
+}
+
+func (x *TransactionReceipt) GetToWallet() string {
+	if x != nil {
+		return x.ToWallet
+	}
+	return ""
+}
+
+func (x *TransactionReceipt) GetAmount() float32 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+func (x *TransactionReceipt) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *TransactionReceipt) GetNonce() string {
+	if x != nil {
+		return x.Nonce
+	}
+	return ""
+}
+
+func (x *TransactionReceipt) GetTimeStamp() string {
+	if x != nil {
+		return x.TimeStamp
+	}
+	return ""
+}
+
 var File_service_proto protoreflect.FileDescriptor
 
 const file_service_proto_rawDesc = "" +
@@ -126,9 +270,25 @@ const file_service_proto_rawDesc = "" +
 	"\x0eencrypted_data\x18\x01 \x01(\fR\rencryptedData\"D\n" +
 	"\x0eSecureResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2W\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"3\n" +
+	"\x10SubscribeRequest\x12\x1f\n" +
+	"\vbank_prefix\x18\x01 \x01(\tR\n" +
+	"bankPrefix\"\xe5\x01\n" +
+	"\x12TransactionReceipt\x12\x12\n" +
+	"\x04hash\x18\x01 \x01(\tR\x04hash\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\bR\x06status\x12\x1f\n" +
+	"\vfrom_wallet\x18\x03 \x01(\tR\n" +
+	"fromWallet\x12\x1b\n" +
+	"\tto_wallet\x18\x04 \x01(\tR\btoWallet\x12\x16\n" +
+	"\x06amount\x18\x05 \x01(\x02R\x06amount\x12\x18\n" +
+	"\amessage\x18\x06 \x01(\tR\amessage\x12\x14\n" +
+	"\x05nonce\x18\a \x01(\tR\x05nonce\x12\x1d\n" +
+	"\n" +
+	"time_stamp\x18\b \x01(\tR\ttimeStamp2W\n" +
 	"\x0fSecurityService\x12D\n" +
-	"\aExecute\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00B\x14Z\x12LedgerProxy/api/pbb\x06proto3"
+	"\aExecute\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x002a\n" +
+	"\x0eReceiptService\x12O\n" +
+	"\tSubscribe\x12\x1d.LedgerProxy.SubscribeRequest\x1a\x1f.LedgerProxy.TransactionReceipt\"\x000\x01B\x14Z\x12LedgerProxy/api/pbb\x06proto3"
 
 var (
 	file_service_proto_rawDescOnce sync.Once
@@ -142,16 +302,20 @@ func file_service_proto_rawDescGZIP() []byte {
 	return file_service_proto_rawDescData
 }
 
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_service_proto_goTypes = []any{
-	(*SecureRequest)(nil),  // 0: LedgerProxy.SecureRequest
-	(*SecureResponse)(nil), // 1: LedgerProxy.SecureResponse
+	(*SecureRequest)(nil),      // 0: LedgerProxy.SecureRequest
+	(*SecureResponse)(nil),     // 1: LedgerProxy.SecureResponse
+	(*SubscribeRequest)(nil),   // 2: LedgerProxy.SubscribeRequest
+	(*TransactionReceipt)(nil), // 3: LedgerProxy.TransactionReceipt
 }
 var file_service_proto_depIdxs = []int32{
 	0, // 0: LedgerProxy.SecurityService.Execute:input_type -> LedgerProxy.SecureRequest
-	1, // 1: LedgerProxy.SecurityService.Execute:output_type -> LedgerProxy.SecureResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: LedgerProxy.ReceiptService.Subscribe:input_type -> LedgerProxy.SubscribeRequest
+	1, // 2: LedgerProxy.SecurityService.Execute:output_type -> LedgerProxy.SecureResponse
+	3, // 3: LedgerProxy.ReceiptService.Subscribe:output_type -> LedgerProxy.TransactionReceipt
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -168,9 +332,9 @@ func file_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_service_proto_goTypes,
 		DependencyIndexes: file_service_proto_depIdxs,

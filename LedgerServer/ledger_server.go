@@ -34,15 +34,11 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	registry := ts.NewBankRegistry()
-
 	serverInstance := &ts.LedgerServer{
 		TransactionsStoreClient: ts_store.NewTransactionsStoreServiceClient(TsStoreConn),
-		Registry:                registry,
 	}
 
 	pb.RegisterTransactionsServiceServer(grpcServer, serverInstance)
-	pb.RegisterReceiptServiceServer(grpcServer, serverInstance)
 	reflection.Register(grpcServer)
 
 	logger.Info("LedgerServer running on port 50053...")

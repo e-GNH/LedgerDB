@@ -1,21 +1,25 @@
-package transactions
+package main
 
 import (
 	"sync"
 
-	pb "LedgerServer/api"
+	"LedgerProxy/modules/batching"
+	pb "LedgerProxy/api"
 )
 
-// bankStream holds the active stream for a subscribed bank
 type bankStream struct {
 	stream pb.ReceiptService_SubscribeServer
 	done   chan struct{}
 }
 
-// BankRegistry manages active bank subscriptions keyed by wallet prefix
+// Send implements batching.SendStream
+func (bs *bankStream) Send(receipt *pb.TransactionReceipt) error {
+	return bs.stream.Send(receipt)
+}
+
 type BankRegistry struct {
 	mu      sync.RWMutex
-	streams map[string]*bankStream // key: bank prefix e.g. "000"
+	streams map[string]*bankStream
 }
 
 func NewBankRegistry() *BankRegistry {
@@ -42,9 +46,13 @@ func (r *BankRegistry) Unregister(prefix string) {
 	delete(r.streams, prefix)
 }
 
-// Get returns the active stream for a prefix, nil if not subscribed
-func (r *BankRegistry) Get(prefix string) *bankStream {
+// Get implements batching.Registry
+func (r *BankRegistry) Get(prefix string) batching.SendStream {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	return r.streams[prefix]
+	bs := r.streams[prefix]
+	if bs == nil {
+		return nil
+	}
+	return bs
 }

@@ -17,7 +17,6 @@ import (
 	batching "LedgerProxy/modules/batching"
 	sec "LedgerProxy/modules/security"
 
-	// ts_store "StorageKernel/proto/TransactionsStore"
 	ledgerserverpb "LedgerServer/api"
 	kernelpb "StorageKernel/proto/worldstate"
 )
@@ -26,17 +25,40 @@ var logger = logging.New("server", "../../")
 
 type securityServer struct {
 	pb.UnimplementedSecurityServiceServer
+	pb.UnimplementedReceiptServiceServer
 	myPrivKey          *rsa.PrivateKey
-	bankKeys           map[string]*rsa.PublicKey // TODO: make it a list of public keys
+	bankKeys           map[string]*rsa.PublicKey
 	kernelClient       kernelpb.WorldStateServiceClient
 	LedgerServerClient ledgerserverpb.TransactionsServiceClient
+	registry           *BankRegistry
 }
 
+
+func (s *securityServer) Subscribe(req *pb.SubscribeRequest, stream pb.ReceiptService_SubscribeServer) error {
+	prefix := req.BankPrefix
+	if prefix == "" {
+		return fmt.Errorf("bank_prefix is required")
+	}
+
+	logger.Info(fmt.Sprintf("Bank subscribed with prefix: %s", prefix))
+	bs := s.registry.Register(prefix, stream)
+
+	select {
+	case <-stream.Context().Done():
+		logger.Info(fmt.Sprintf("Bank %s disconnected", prefix))
+	case <-bs.done:
+		logger.Info(fmt.Sprintf("Bank %s stream closed by server", prefix))
+	}
+
+	s.registry.Unregister(prefix)
+	return nil
+}
+
+
 func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
-
 	logger.Info("--> Received gRPC Secure() request")
-	msg, ok := sec.VerifySecurity(req.EncryptedData, s.myPrivKey, s.bankKeys)
 
+	msg, ok := sec.VerifySecurity(req.EncryptedData, s.myPrivKey, s.bankKeys)
 	if msg != nil {
 		msg.Status = ok
 	}
@@ -44,16 +66,20 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	if ok {
 		logger.Info("SECURITY SUCCESS: Pipeline passed!")
 	}
+
 	message := "Transaction rejected due to security"
 
-	logger.Info("WAL in the local disk")
-	// TODO: erronous code, if failed, it is still logged as success
-	batching.SaveBatchItem(msg, s.LedgerServerClient) 
+	if msg == nil {
+		return &pb.SecureResponse{Success: false, Message: message}, nil
+	}
+
+	logger.Info("WAL: writing to local disk")
+	if err := batching.SaveBatchItem(msg, s.LedgerServerClient); err != nil {
+		logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
+	}
 
 	if ok {
 		logger.Info("Passing transaction to world state...")
-		// TODO: tell zeyad that even if fail, it has to be committed
-		// TODO: uncomment these
 		_, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
 			Nonce:  msg.Nonce,
 			FromId: msg.From,
@@ -62,29 +88,26 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		})
 		if err != nil {
 			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
-			if msg != nil {
-                undoMsg := *msg
-                undoMsg.Message = "undo the last transaction"
-                undoMsg.Status = false 
-                
-                undoErr := batching.SaveBatchItem(&undoMsg, s.LedgerServerClient)
-                if undoErr != nil {
-                    logger.Error(fmt.Sprintf("Failed to save undo batch item: %v", undoErr))
-                }
-            }
+			msg.Status = false
+			og_message := msg.Message
+			msg.Message = "Undo transaction with Nonce " + msg.Nonce 
+			batching.SaveBatchItem(msg, s.LedgerServerClient)
+			msg.Message = og_message
+			batching.StreamReceipt(msg)
 			return &pb.SecureResponse{
 				Success: false,
 				Message: fmt.Sprintf("transfer failed: %v", err),
 			}, nil
 		}
+		msg.Status = true
+		batching.StreamReceipt(msg)
+
 		message = "Transaction validated & successfully added to world state"
 	}
 
-	return &pb.SecureResponse{
-		Success: ok,
-		Message: message,
-	}, nil
+	return &pb.SecureResponse{Success: ok, Message: message}, nil
 }
+
 
 func loadBankKeysFromDir(dirPath string) map[string]*rsa.PublicKey {
 	bankMap := make(map[string]*rsa.PublicKey)
@@ -103,12 +126,11 @@ func loadBankKeysFromDir(dirPath string) map[string]*rsa.PublicKey {
 				logger.Error(fmt.Sprintf("Failed to read key file %s: %v", file.Name(), err))
 				continue
 			}
-
 			pubKey := sec.ParsePublicKeyBytes(keyBytes)
 			if pubKey != nil {
 				bankName := strings.TrimSuffix(file.Name(), ".pem")
 				bankMap[bankName] = pubKey
-				logger.Info(fmt.Sprintf("Successfully loaded trusted key for bank: %s", bankName))
+				logger.Info(fmt.Sprintf("Loaded trusted key for bank: %s", bankName))
 			}
 		}
 	}
@@ -116,8 +138,8 @@ func loadBankKeysFromDir(dirPath string) map[string]*rsa.PublicKey {
 	return bankMap
 }
 
-func main() {
 
+func main() {
 	logger.Info("Reading keys...")
 	myPrivBytes, err := os.ReadFile("modules/security/keys/my_key")
 	if err != nil {
@@ -126,36 +148,43 @@ func main() {
 
 	trustedBankKeys := loadBankKeysFromDir("modules/security/keys/banks")
 
-	logger.Info("Starting gRPC Security Server on port 50051...")
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to listen: %v", err))
 		panic(fmt.Sprintf("Failed to listen: %v", err))
 	}
-	port := "50058"
-	kernelConn, err := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	kernelConn, err := grpc.Dial("localhost:50058", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect to kernel: %v", err))
 	}
 	defer kernelConn.Close()
-	StoreConn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	storeConn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		panic(fmt.Sprintf("failed to connect to kernel: %v", err))
+		panic(fmt.Sprintf("failed to connect to LedgerServer: %v", err))
 	}
-	defer StoreConn.Close()
+	defer storeConn.Close()
+
+	reg := NewBankRegistry()
+
+	// Wire the registry into the batching package
+	batching.SetRegistry(reg)
+
 	grpcServer := grpc.NewServer()
 
 	myServerInstance := &securityServer{
-		myPrivKey:    sec.ParsePrivateKeyBytes(myPrivBytes),
-		bankKeys:     trustedBankKeys,
-		kernelClient: kernelpb.NewWorldStateServiceClient(kernelConn),
-		// kernelClient:       nil,
-		LedgerServerClient: ledgerserverpb.NewTransactionsServiceClient(StoreConn),
+		myPrivKey:          sec.ParsePrivateKeyBytes(myPrivBytes),
+		bankKeys:           trustedBankKeys,
+		kernelClient:       kernelpb.NewWorldStateServiceClient(kernelConn),
+		LedgerServerClient: ledgerserverpb.NewTransactionsServiceClient(storeConn),
+		registry:           reg,
 	}
 
 	pb.RegisterSecurityServiceServer(grpcServer, myServerInstance)
+	pb.RegisterReceiptServiceServer(grpcServer, myServerInstance)
 
-	logger.Info("gRPC Security Server is running on port 50051...")
+	logger.Info("LedgerProxy running on port 50051...")
 	if err := grpcServer.Serve(lis); err != nil {
 		logger.Error(fmt.Sprintf("Failed to serve: %v", err))
 		panic(fmt.Sprintf("Failed to serve: %v", err))

@@ -11,24 +11,39 @@ import (
 	"time"
 
 	"LedgerDB/services/logging"
+	pb "LedgerProxy/api"
 	types "LedgerProxy/types"
 	ledgerserverpb "LedgerServer/api"
-	// ledgerserver "LedgerServer/api/ledgerserver"
 )
 
+// SendStream is the only method batching needs from a bank stream
+type SendStream interface {
+	Send(*pb.TransactionReceipt) error
+}
+
+// Registry is the interface batching uses to reach active bank streams
+type Registry interface {
+	Get(prefix string) SendStream
+	Unregister(prefix string)
+}
+
 var (
-	batch_size         = 10
+	batchSize          = 10
 	mu                 sync.Mutex
 	LedgerServerClient ledgerserverpb.TransactionsServiceClient = nil
+	reg                Registry
 )
 
 var logger = logging.New("batching/batch", "./")
+
+func SetRegistry(r Registry) {
+	reg = r
+}
 
 func SaveBatchItem(item *types.SecureMessage, client ledgerserverpb.TransactionsServiceClient) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	// TODO: Improvement, Implement a singleton
 	if LedgerServerClient == nil {
 		LedgerServerClient = client
 	}
@@ -54,42 +69,46 @@ func SaveBatchItem(item *types.SecureMessage, client ledgerserverpb.Transactions
 	}
 	file.Close()
 
+	// Stream receipt to bank(s) immediately after WAL write
+	StreamReceipt(item)
+
 	count, err := getFileLineCount(filename)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to get file line count: %v", err))
 		return err
 	}
 
-	if count >= batch_size {
+	if count >= batchSize {
 		batch, err := GetBatch()
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to get batch: %v", err))
 			return err
 		}
 
-		// TODO: Call your gRPC send to server here
-		fmt.Print(batch)
 		grpcBatch := &ledgerserverpb.TransactionsBatch{}
-
-		for _, item := range batch.Items {
+		for _, tx := range batch.Items {
 			grpcBatch.Transactions = append(grpcBatch.Transactions, &ledgerserverpb.Transaction{
-				Status:     item.Status,
-				TimeStamp:  item.Timestamp.Format(time.RFC3339),
-				FromWallet: item.From,
-				ToWallet:   item.To,
-				Amount:     float32(item.Amount),
-				Message:    item.Message,
-				Nonce:      item.Nonce,
-				Hash:       hex.EncodeToString(item.Hash),
+				Status:     tx.Status,
+				TimeStamp:  tx.Timestamp.Format(time.RFC3339),
+				FromWallet: tx.From,
+				ToWallet:   tx.To,
+				Amount:     float32(tx.Amount),
+				Message:    tx.Message,
+				Nonce:      tx.Nonce,
+				Hash:       hex.EncodeToString(tx.Hash),
 			})
 		}
 
 		res, err := LedgerServerClient.BatchAppend(context.Background(), grpcBatch)
-
-		if res.Success && err != nil {
+		if err != nil {
 			logger.Error(fmt.Sprintf("failed to send batch: %v", err))
 			return err
 		}
+		if !res.Success {
+			logger.Error("LedgerServer returned failure on BatchAppend")
+			return fmt.Errorf("batch append failed")
+		}
+
 		if err := os.Truncate(filename, 0); err != nil {
 			logger.Error(fmt.Sprintf("failed to clear batch file: %v", err))
 			return fmt.Errorf("failed to clear batch file: %v", err)
@@ -97,6 +116,51 @@ func SaveBatchItem(item *types.SecureMessage, client ledgerserverpb.Transactions
 	}
 
 	return nil
+}
+
+func StreamReceipt(item *types.SecureMessage) {
+	if reg == nil {
+		logger.Info("No registry set, skipping receipt streaming")
+		return
+	}
+
+	fromPrefix := walletPrefix(item.From)
+	toPrefix := walletPrefix(item.To)
+
+	receipt := &pb.TransactionReceipt{
+		Hash:       hex.EncodeToString(item.Hash),
+		Status:     item.Status,
+		FromWallet: item.From,
+		ToWallet:   item.To,
+		Amount:     float32(item.Amount),
+		Message:    item.Message,
+		Nonce:      item.Nonce,
+		TimeStamp:  item.Timestamp.Format(time.RFC3339),
+	}
+
+	sendReceipt(fromPrefix, receipt)
+	if toPrefix != fromPrefix {
+		sendReceipt(toPrefix, receipt)
+	}
+}
+
+func sendReceipt(prefix string, receipt *pb.TransactionReceipt) {
+	stream := reg.Get(prefix)
+	if stream == nil {
+		logger.Info(fmt.Sprintf("No active subscription for prefix %s, skipping", prefix))
+		return
+	}
+	if err := stream.Send(receipt); err != nil {
+		logger.Error(fmt.Sprintf("Failed to stream receipt to bank %s: %v", prefix, err))
+		reg.Unregister(prefix)
+	}
+}
+
+func walletPrefix(walletID string) string {
+	if len(walletID) < 3 {
+		return walletID
+	}
+	return walletID[:3]
 }
 
 func getFileLineCount(filename string) (int, error) {
@@ -115,7 +179,6 @@ func getFileLineCount(filename string) (int, error) {
 }
 
 func GetBatch() (types.Batch, error) {
-
 	filename := "ledger_batches.jsonl"
 	var batch types.Batch
 
@@ -131,18 +194,11 @@ func GetBatch() (types.Batch, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		var item types.SecureMessage
-		line := scanner.Bytes()
-
-		if err := json.Unmarshal(line, &item); err != nil {
+		if err := json.Unmarshal(scanner.Bytes(), &item); err != nil {
 			continue
 		}
-
 		batch.Items = append(batch.Items, item)
 	}
 
-	if err := scanner.Err(); err != nil {
-		return batch, err
-	}
-
-	return batch, nil
+	return batch, scanner.Err()
 }

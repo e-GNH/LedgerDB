@@ -6,10 +6,7 @@ require google.golang.org/grpc v1.79.2
 
 require google.golang.org/protobuf v1.36.11 // indirect
 
-require (
-	LedgerProxy v0.0.0-00010101000000-000000000000
-	LedgerServer v0.0.0-00010101000000-000000000000
-)
+require LedgerProxy v0.0.0-00010101000000-000000000000
 
 require (
 	golang.org/x/net v0.52.0 // indirect

@@ -21,15 +21,11 @@ import (
 
 	pb "LedgerProxy/api"
 	"LedgerProxy/types"
-	ledgerpb "LedgerServer/api"
 )
 
 func main() {
 	fmt.Println("=== Full Pipeline Test ===")
 
-	// =========================================================================
-	// 1. LOAD KEYS
-	// =========================================================================
 	senderPrivBytes, err := os.ReadFile("/home/zizo/Documents/GP/LedgerDB/LedgerProxy/modules/security/keys/banks/CIB")
 	if err != nil {
 		panic("Could not read CIB private key")
@@ -44,32 +40,24 @@ func main() {
 
 	fmt.Println("[OK] Keys loaded")
 
-	// =========================================================================
-	// 2. SUBSCRIBE TO RECEIPT STREAM (non-blocking, runs in background)
-	// =========================================================================
-	ledgerConn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	proxyConn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		panic(fmt.Sprintf("Failed to connect to LedgerServer: %v", err))
+		panic(fmt.Sprintf("Failed to connect to LedgerProxy: %v", err))
 	}
-	defer ledgerConn.Close()
+	defer proxyConn.Close()
 
-	receiptClient := ledgerpb.NewReceiptServiceClient(ledgerConn)
+	receiptClient := pb.NewReceiptServiceClient(proxyConn)
 
-	// Subscribe as bank "000" (from-wallet bank)
+	// Two different banks subscribing
 	go subscribeReceipts(receiptClient, "000")
-	// Subscribe as bank "001" (to-wallet bank)
 	go subscribeReceipts(receiptClient, "001")
 
-	// Give subscriptions a moment to establish
 	time.Sleep(500 * time.Millisecond)
 
-	// =========================================================================
-	// 3. BUILD TRANSACTION PAYLOAD
-	// =========================================================================
 	payload := types.SecureMessage{
 		Timestamp: time.Now(),
 		From:      "000_wallet_A",
-		To:        "000_wallet_B",
+		To:        "001_wallet_B",
 		Amount:    10,
 		Message:   "Payment for cloud infrastructure",
 		Nonce:     fmt.Sprintf("nonce-%d", time.Now().UnixNano()),
@@ -97,9 +85,6 @@ func main() {
 	}
 	unpackedBytes, _ := json.Marshal(unpackedMsg)
 
-	// =========================================================================
-	// 4. HYBRID ENCRYPT
-	// =========================================================================
 	aesKey := make([]byte, 32)
 	rand.Read(aesKey)
 
@@ -117,22 +102,13 @@ func main() {
 	encryptedData := append(encryptedAESKey, aesCiphertext...)
 	fmt.Printf("[OK] Payload encrypted (%d bytes)\n", len(encryptedData))
 
-	// =========================================================================
-	// 5. SEND TO LEDGERPROXY
-	// =========================================================================
-	proxyConn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		panic(fmt.Sprintf("Failed to connect to LedgerProxy: %v", err))
-	}
-	defer proxyConn.Close()
-
-	proxyClient := pb.NewSecurityServiceClient(proxyConn)
+	secClient := pb.NewSecurityServiceClient(proxyConn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	fmt.Println("[..] Sending transaction to LedgerProxy...")
-	res, err := proxyClient.Execute(ctx, &pb.SecureRequest{EncryptedData: encryptedData})
+	res, err := secClient.Execute(ctx, &pb.SecureRequest{EncryptedData: encryptedData})
 	if err != nil {
 		panic(fmt.Sprintf("Execute RPC failed: %v", err))
 	}
@@ -144,15 +120,15 @@ func main() {
 		fmt.Printf("❌ Transaction rejected: %s\n", res.Message)
 	}
 
-	// Wait to receive receipts on both streams
-	fmt.Println("\n[..] Waiting for receipts...")
-	// time.Sleep(20 * time.Second)
+	// Wait long enough for both banks to receive their receipts
+	fmt.Println("\n[..] Waiting for receipts on both banks...")
+	time.Sleep(time.Second)
 }
 
-func subscribeReceipts(client ledgerpb.ReceiptServiceClient, prefix string) {
-	ctx := context.Background() // persistent — no timeout
+func subscribeReceipts(client pb.ReceiptServiceClient, prefix string) {
+	ctx := context.Background()
 
-	stream, err := client.Subscribe(ctx, &ledgerpb.SubscribeRequest{BankPrefix: prefix})
+	stream, err := client.Subscribe(ctx, &pb.SubscribeRequest{BankPrefix: prefix})
 	if err != nil {
 		fmt.Printf("[ERROR] Bank %s failed to subscribe: %v\n", prefix, err)
 		return
