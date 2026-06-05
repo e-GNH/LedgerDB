@@ -22,7 +22,7 @@ var file_name = "main.go"
 
 func test_transfer(h *KernelHandler) {
 	logger.Info(" - [" + file_name + "] - Testing Transfer")
-	err := h.Transfer_Test(ctx, "nonce:12333", "000_wallet_A", "000_wallet_B", 1)
+	err := h.Transfer_Test(ctx, "nonce:12333", "000_wallet_A", "001_wallet_B", 1)
 	switch {
 	case err == nil:
 		logger.Info(" - [" + file_name + "] - Test Transfer OK")
@@ -58,7 +58,7 @@ func main() {
 	if err := h.CreateAccount(ctx, "000_wallet_A", 100); err != nil { // Shall be from onboarding
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	if err := h.CreateAccount(ctx, "000_wallet_B", 100); err != nil {
+	if err := h.CreateAccount(ctx, "001_wallet_B", 100); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
 	test_transfer(h) // TODO: remove after onboarding
