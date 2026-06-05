@@ -33,4 +33,62 @@ var transferScript = redis.NewScript(`
 	local seq = redis.call("INCR", "global:sequence")
 
 	return {"OK", seq}
-`) // TODO: Return Ok + Sequence Number
+`)
+
+var offlineDepositScript = redis.NewScript(`
+	-- KEYS[1] = nonce key
+	-- KEYS[2] = account key
+	-- ARGV[1] = amount
+	local amount  = tonumber(ARGV[1])
+	if amount <= 0 then
+		return {err="INVALID_AMOUNT"}
+	end
+	if redis.call("EXISTS", KEYS[1]) == 1 then
+		return {err="NONCE_ALREADY_USED"}
+	end
+	if redis.call("EXISTS", KEYS[2]) == 0 then
+		return {err="USER_ACCOUNT_NOT_FOUND"}
+	end
+
+	local balance = tonumber(redis.call("HGET", KEYS[2], "balance") or "0")
+
+	if balance < amount then
+		return {err="INSUFFICIENT_FUNDS"}
+	end
+
+	redis.call("HINCRBY", KEYS[2], "balance", -amount)
+	redis.call("HINCRBY", KEYS[2], "offline",  amount)
+	redis.call("SET",     KEYS[1], 1)
+	local seq = redis.call("INCR", "global:sequence")
+
+	return {"OK", seq}
+`)
+
+var offlineWithdrawScript = redis.NewScript(`
+	-- KEYS[1] = nonce key
+	-- KEYS[2] = account key
+	-- ARGV[1] = amount
+	local amount  = tonumber(ARGV[1])
+	if amount <= 0 then
+		return {err="INVALID_AMOUNT"}
+	end
+	if redis.call("EXISTS", KEYS[1]) == 1 then
+		return {err="NONCE_ALREADY_USED"}
+	end
+	if redis.call("EXISTS", KEYS[2]) == 0 then
+		return {err="USER_ACCOUNT_NOT_FOUND"}
+	end
+
+	local balance = tonumber(redis.call("HGET", KEYS[2], "offline") or "0")
+
+	if balance < amount then
+		return {err="INSUFFICIENT_FUNDS"}
+	end
+
+	redis.call("HINCRBY", KEYS[2], "balance", 	amount)
+	redis.call("HINCRBY", KEYS[2], "offline",  -amount)
+	redis.call("SET",     KEYS[1], 1)
+	local seq = redis.call("INCR", "global:sequence")
+
+	return {"OK", seq}
+`)

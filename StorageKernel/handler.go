@@ -27,7 +27,50 @@ func (h *KernelHandler) CreateAccount(ctx context.Context, id string, balance in
 	return h.rdb.HSet(ctx, "account:"+id,
 		"balance", balance,
 		"pending", 0,
+		"offline", 0,
 	).Err()
+}
+func (h *KernelHandler) OfflineWithdraw(ctx context.Context, req *pb.OfflineWithdrawRequest) (*pb.OfflineWithdrawResponse, error) {
+	file_name = "handler.go"
+	keys := []string{
+		"nonce:" + req.Nonce,
+		"account:" + req.AccountId,
+	}
+	logger.Info(" - [" + file_name + "] - Offline Withdrawal " + fmt.Sprint(req.Amount) + " For " + req.AccountId)
+
+	res, err := offlineWithdrawScript.Run(ctx, h.rdb, keys, req.Amount).Slice()
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+		return nil, mapGrpcError(err)
+	}
+	if len(res) != 2 {
+		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
+		return nil, status.Error(codes.Internal, "unexpected script result")
+	}
+	sequence := res[1]
+	logger.Info(" - [" + file_name + "] - Offline Withdrawal committed " + fmt.Sprint(sequence))
+	return &pb.OfflineWithdrawResponse{Ok: true, Message: "Offline Withdrawal committed, sequence: " + fmt.Sprint(sequence)}, nil
+}
+func (h *KernelHandler) OfflineDeposit(ctx context.Context, req *pb.OfflineDepositRequest) (*pb.OfflineDepositResponse, error) {
+	file_name = "handler.go"
+	keys := []string{
+		"nonce:" + req.Nonce,
+		"account:" + req.AccountId,
+	}
+	logger.Info(" - [" + file_name + "] - Offline Deposit " + fmt.Sprint(req.Amount) + " For " + req.AccountId)
+
+	res, err := offlineDepositScript.Run(ctx, h.rdb, keys, req.Amount).Slice()
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+		return nil, mapGrpcError(err)
+	}
+	if len(res) != 2 {
+		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
+		return nil, status.Error(codes.Internal, "unexpected script result")
+	}
+	sequence := res[1]
+	logger.Info(" - [" + file_name + "] - Offline Deposit committed " + fmt.Sprint(sequence))
+	return &pb.OfflineDepositResponse{Ok: true, Message: "Offline Deposit committed, sequence: " + fmt.Sprint(sequence)}, nil
 }
 func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
 	file_name = "handler.go"

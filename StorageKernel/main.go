@@ -62,7 +62,18 @@ func main() {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
 	test_transfer(h) // TODO: remove after onboarding
-
+	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:123456", AccountId: "000_wallet_A", Amount: 99}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:12345", AccountId: "000_wallet_A", Amount: 50}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:123345", AccountId: "000_wallet_A", Amount: 49}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:1234256", AccountId: "000_wallet_A", Amount: 99}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
 	// ==========================================
 	// 🧪 HDFS BATCH TEST
 	// ==========================================
