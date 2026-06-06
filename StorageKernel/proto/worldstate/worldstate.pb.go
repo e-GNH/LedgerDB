@@ -365,6 +365,118 @@ func (x *OfflineDepositResponse) GetMessage() string {
 	return ""
 }
 
+type CreateAccountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Nonce         string                 `protobuf:"bytes,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	AccountId     string                 `protobuf:"bytes,2,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Balance       int64                  `protobuf:"varint,3,opt,name=balance,proto3" json:"balance,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateAccountRequest) Reset() {
+	*x = CreateAccountRequest{}
+	mi := &file_worldstate_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateAccountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateAccountRequest) ProtoMessage() {}
+
+func (x *CreateAccountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worldstate_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateAccountRequest.ProtoReflect.Descriptor instead.
+func (*CreateAccountRequest) Descriptor() ([]byte, []int) {
+	return file_worldstate_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *CreateAccountRequest) GetNonce() string {
+	if x != nil {
+		return x.Nonce
+	}
+	return ""
+}
+
+func (x *CreateAccountRequest) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *CreateAccountRequest) GetBalance() int64 {
+	if x != nil {
+		return x.Balance
+	}
+	return 0
+}
+
+type CreateAccountResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ok            bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateAccountResponse) Reset() {
+	*x = CreateAccountResponse{}
+	mi := &file_worldstate_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateAccountResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateAccountResponse) ProtoMessage() {}
+
+func (x *CreateAccountResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worldstate_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateAccountResponse.ProtoReflect.Descriptor instead.
+func (*CreateAccountResponse) Descriptor() ([]byte, []int) {
+	return file_worldstate_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CreateAccountResponse) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *CreateAccountResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_worldstate_proto protoreflect.FileDescriptor
 
 const file_worldstate_proto_rawDesc = "" +
@@ -394,11 +506,20 @@ const file_worldstate_proto_rawDesc = "" +
 	"\x06amount\x18\x03 \x01(\x03R\x06amount\"B\n" +
 	"\x16OfflineDepositResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\x8f\x02\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"e\n" +
+	"\x14CreateAccountRequest\x12\x14\n" +
+	"\x05nonce\x18\x01 \x01(\tR\x05nonce\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x02 \x01(\tR\taccountId\x12\x18\n" +
+	"\abalance\x18\x03 \x01(\x03R\abalance\"A\n" +
+	"\x15CreateAccountResponse\x12\x0e\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xe5\x02\n" +
 	"\x11WorldStateService\x12E\n" +
 	"\bTransfer\x12\x1b.worldstate.TransferRequest\x1a\x1c.worldstate.TransferResponse\x12Z\n" +
 	"\x0fOfflineWithdraw\x12\".worldstate.OfflineWithdrawRequest\x1a#.worldstate.OfflineWithdrawResponse\x12W\n" +
-	"\x0eOfflineDeposit\x12!.worldstate.OfflineDepositRequest\x1a\".worldstate.OfflineDepositResponseB Z\x1eStorageKernel/proto/worldstateb\x06proto3"
+	"\x0eOfflineDeposit\x12!.worldstate.OfflineDepositRequest\x1a\".worldstate.OfflineDepositResponse\x12T\n" +
+	"\rCreateAccount\x12 .worldstate.CreateAccountRequest\x1a!.worldstate.CreateAccountResponseB Z\x1eStorageKernel/proto/worldstateb\x06proto3"
 
 var (
 	file_worldstate_proto_rawDescOnce sync.Once
@@ -412,7 +533,7 @@ func file_worldstate_proto_rawDescGZIP() []byte {
 	return file_worldstate_proto_rawDescData
 }
 
-var file_worldstate_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_worldstate_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_worldstate_proto_goTypes = []any{
 	(*TransferRequest)(nil),         // 0: worldstate.TransferRequest
 	(*TransferResponse)(nil),        // 1: worldstate.TransferResponse
@@ -420,16 +541,20 @@ var file_worldstate_proto_goTypes = []any{
 	(*OfflineWithdrawResponse)(nil), // 3: worldstate.OfflineWithdrawResponse
 	(*OfflineDepositRequest)(nil),   // 4: worldstate.OfflineDepositRequest
 	(*OfflineDepositResponse)(nil),  // 5: worldstate.OfflineDepositResponse
+	(*CreateAccountRequest)(nil),    // 6: worldstate.CreateAccountRequest
+	(*CreateAccountResponse)(nil),   // 7: worldstate.CreateAccountResponse
 }
 var file_worldstate_proto_depIdxs = []int32{
 	0, // 0: worldstate.WorldStateService.Transfer:input_type -> worldstate.TransferRequest
 	2, // 1: worldstate.WorldStateService.OfflineWithdraw:input_type -> worldstate.OfflineWithdrawRequest
 	4, // 2: worldstate.WorldStateService.OfflineDeposit:input_type -> worldstate.OfflineDepositRequest
-	1, // 3: worldstate.WorldStateService.Transfer:output_type -> worldstate.TransferResponse
-	3, // 4: worldstate.WorldStateService.OfflineWithdraw:output_type -> worldstate.OfflineWithdrawResponse
-	5, // 5: worldstate.WorldStateService.OfflineDeposit:output_type -> worldstate.OfflineDepositResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	6, // 3: worldstate.WorldStateService.CreateAccount:input_type -> worldstate.CreateAccountRequest
+	1, // 4: worldstate.WorldStateService.Transfer:output_type -> worldstate.TransferResponse
+	3, // 5: worldstate.WorldStateService.OfflineWithdraw:output_type -> worldstate.OfflineWithdrawResponse
+	5, // 6: worldstate.WorldStateService.OfflineDeposit:output_type -> worldstate.OfflineDepositResponse
+	7, // 7: worldstate.WorldStateService.CreateAccount:output_type -> worldstate.CreateAccountResponse
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -446,7 +571,7 @@ func file_worldstate_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_worldstate_proto_rawDesc), len(file_worldstate_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

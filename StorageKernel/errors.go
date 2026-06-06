@@ -13,7 +13,9 @@ var (
 	ErrToAccountMissing   = errors.New("TO_ACCOUNT_NOT_FOUND")
 	ErrInsufficientFunds  = errors.New("INSUFFICIENT_FUNDS")
 	ErrInvalidAmount      = errors.New("INVALID_AMOUNT")
-	ErrUserAccountMissing = errors.New("USER_ACCOUNT_NOT_FOUND") // For offline withdrawal & deposit
+	ErrUserAccountMissing = errors.New("USER_ACCOUNT_NOT_FOUND")      // For offline withdrawal & deposit
+	ErrUserAccountExists  = errors.New("USER_ACCOUNT_ALREADY_EXISTS") // For account creation
+	ErrInvalidBalance     = errors.New("INVALID_BALANCE")             // For account creation
 )
 
 func mapLuaError(err error) error {
@@ -33,6 +35,10 @@ func mapLuaError(err error) error {
 		return ErrInsufficientFunds
 	case "USER_ACCOUNT_NOT_FOUND":
 		return ErrUserAccountMissing
+	case "INVALID_BALANCE":
+		return ErrInvalidBalance
+	case "USER_ACCOUNT_ALREADY_EXISTS":
+		return ErrUserAccountExists
 	default:
 		return err
 	}

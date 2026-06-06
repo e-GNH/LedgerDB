@@ -92,3 +92,27 @@ var offlineWithdrawScript = redis.NewScript(`
 
 	return {"OK", seq}
 `)
+var createAccountScript = redis.NewScript(`
+	-- KEYS[1] = nonce key
+	-- KEYS[2] = account key
+	-- ARGV[1] = balance
+	local balance  = tonumber(ARGV[1])
+	if balance < 0 then
+		return {err="INVALID_BALANCE"}
+	end
+	if redis.call("EXISTS", KEYS[1]) == 1 then
+		return {err="NONCE_ALREADY_USED"}
+	end
+	if redis.call("EXISTS", KEYS[2]) == 1 then
+		return {err="USER_ACCOUNT_ALREADY_EXISTS"}
+	end
+	redis.call("HSET", KEYS[2],
+		"balance", balance,
+		"pending", 0,
+		"offline", 0
+	)
+	redis.call("SET",     KEYS[1], 1)
+	local seq = redis.call("INCR", "global:sequence")
+
+	return {"OK", seq}
+`)

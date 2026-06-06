@@ -22,6 +22,7 @@ const (
 	WorldStateService_Transfer_FullMethodName        = "/worldstate.WorldStateService/Transfer"
 	WorldStateService_OfflineWithdraw_FullMethodName = "/worldstate.WorldStateService/OfflineWithdraw"
 	WorldStateService_OfflineDeposit_FullMethodName  = "/worldstate.WorldStateService/OfflineDeposit"
+	WorldStateService_CreateAccount_FullMethodName   = "/worldstate.WorldStateService/CreateAccount"
 )
 
 // WorldStateServiceClient is the client API for WorldStateService service.
@@ -31,6 +32,7 @@ type WorldStateServiceClient interface {
 	Transfer(ctx context.Context, in *TransferRequest, opts ...grpc.CallOption) (*TransferResponse, error)
 	OfflineWithdraw(ctx context.Context, in *OfflineWithdrawRequest, opts ...grpc.CallOption) (*OfflineWithdrawResponse, error)
 	OfflineDeposit(ctx context.Context, in *OfflineDepositRequest, opts ...grpc.CallOption) (*OfflineDepositResponse, error)
+	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
 }
 
 type worldStateServiceClient struct {
@@ -71,6 +73,16 @@ func (c *worldStateServiceClient) OfflineDeposit(ctx context.Context, in *Offlin
 	return out, nil
 }
 
+func (c *worldStateServiceClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateAccountResponse)
+	err := c.cc.Invoke(ctx, WorldStateService_CreateAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorldStateServiceServer is the server API for WorldStateService service.
 // All implementations must embed UnimplementedWorldStateServiceServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type WorldStateServiceServer interface {
 	Transfer(context.Context, *TransferRequest) (*TransferResponse, error)
 	OfflineWithdraw(context.Context, *OfflineWithdrawRequest) (*OfflineWithdrawResponse, error)
 	OfflineDeposit(context.Context, *OfflineDepositRequest) (*OfflineDepositResponse, error)
+	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
 	mustEmbedUnimplementedWorldStateServiceServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedWorldStateServiceServer) OfflineWithdraw(context.Context, *Of
 }
 func (UnimplementedWorldStateServiceServer) OfflineDeposit(context.Context, *OfflineDepositRequest) (*OfflineDepositResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method OfflineDeposit not implemented")
+}
+func (UnimplementedWorldStateServiceServer) CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateAccount not implemented")
 }
 func (UnimplementedWorldStateServiceServer) mustEmbedUnimplementedWorldStateServiceServer() {}
 func (UnimplementedWorldStateServiceServer) testEmbeddedByValue()                           {}
@@ -172,6 +188,24 @@ func _WorldStateService_OfflineDeposit_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorldStateService_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldStateServiceServer).CreateAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldStateService_CreateAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldStateServiceServer).CreateAccount(ctx, req.(*CreateAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorldStateService_ServiceDesc is the grpc.ServiceDesc for WorldStateService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var WorldStateService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "OfflineDeposit",
 			Handler:    _WorldStateService_OfflineDeposit_Handler,
+		},
+		{
+			MethodName: "CreateAccount",
+			Handler:    _WorldStateService_CreateAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
