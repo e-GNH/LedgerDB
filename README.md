@@ -15,7 +15,7 @@ go run .
 ```
 cd LedgerProxy
 go mod tidy
-go run cmd/server/server.go
+go run ./cmd/server/
 ```
 
 ### Terminal 3
