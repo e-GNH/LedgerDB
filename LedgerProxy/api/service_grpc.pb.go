@@ -19,7 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SecurityService_Execute_FullMethodName = "/LedgerProxy.SecurityService/Execute"
+	SecurityService_Execute_FullMethodName         = "/LedgerProxy.SecurityService/Execute"
+	SecurityService_OfflineWithdraw_FullMethodName = "/LedgerProxy.SecurityService/OfflineWithdraw"
+	SecurityService_OfflineDeposit_FullMethodName  = "/LedgerProxy.SecurityService/OfflineDeposit"
 )
 
 // SecurityServiceClient is the client API for SecurityService service.
@@ -32,6 +34,8 @@ type SecurityServiceClient interface {
 	// Execute accepts a hybrid-encrypted payload, decrypts it, and
 	// verifies the sender's signature, data hash, and timeliness.
 	Execute(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
+	OfflineWithdraw(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
+	OfflineDeposit(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
 }
 
 type securityServiceClient struct {
@@ -52,6 +56,26 @@ func (c *securityServiceClient) Execute(ctx context.Context, in *SecureRequest, 
 	return out, nil
 }
 
+func (c *securityServiceClient) OfflineWithdraw(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SecureResponse)
+	err := c.cc.Invoke(ctx, SecurityService_OfflineWithdraw_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *securityServiceClient) OfflineDeposit(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SecureResponse)
+	err := c.cc.Invoke(ctx, SecurityService_OfflineDeposit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SecurityServiceServer is the server API for SecurityService service.
 // All implementations must embed UnimplementedSecurityServiceServer
 // for forward compatibility.
@@ -62,6 +86,8 @@ type SecurityServiceServer interface {
 	// Execute accepts a hybrid-encrypted payload, decrypts it, and
 	// verifies the sender's signature, data hash, and timeliness.
 	Execute(context.Context, *SecureRequest) (*SecureResponse, error)
+	OfflineWithdraw(context.Context, *SecureRequest) (*SecureResponse, error)
+	OfflineDeposit(context.Context, *SecureRequest) (*SecureResponse, error)
 	mustEmbedUnimplementedSecurityServiceServer()
 }
 
@@ -74,6 +100,12 @@ type UnimplementedSecurityServiceServer struct{}
 
 func (UnimplementedSecurityServiceServer) Execute(context.Context, *SecureRequest) (*SecureResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Execute not implemented")
+}
+func (UnimplementedSecurityServiceServer) OfflineWithdraw(context.Context, *SecureRequest) (*SecureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method OfflineWithdraw not implemented")
+}
+func (UnimplementedSecurityServiceServer) OfflineDeposit(context.Context, *SecureRequest) (*SecureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method OfflineDeposit not implemented")
 }
 func (UnimplementedSecurityServiceServer) mustEmbedUnimplementedSecurityServiceServer() {}
 func (UnimplementedSecurityServiceServer) testEmbeddedByValue()                         {}
@@ -114,6 +146,42 @@ func _SecurityService_Execute_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SecurityService_OfflineWithdraw_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SecureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecurityServiceServer).OfflineWithdraw(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecurityService_OfflineWithdraw_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecurityServiceServer).OfflineWithdraw(ctx, req.(*SecureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SecurityService_OfflineDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SecureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecurityServiceServer).OfflineDeposit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecurityService_OfflineDeposit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecurityServiceServer).OfflineDeposit(ctx, req.(*SecureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SecurityService_ServiceDesc is the grpc.ServiceDesc for SecurityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -125,7 +193,132 @@ var SecurityService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Execute",
 			Handler:    _SecurityService_Execute_Handler,
 		},
+		{
+			MethodName: "OfflineWithdraw",
+			Handler:    _SecurityService_OfflineWithdraw_Handler,
+		},
+		{
+			MethodName: "OfflineDeposit",
+			Handler:    _SecurityService_OfflineDeposit_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
+	Metadata: "service.proto",
+}
+
+const (
+	ReceiptService_Subscribe_FullMethodName = "/LedgerProxy.ReceiptService/Subscribe"
+)
+
+// ReceiptServiceClient is the client API for ReceiptService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// ReceiptService allows banks to subscribe to their transaction receipts
+// Banks hold a persistent open stream identified by their wallet prefix
+type ReceiptServiceClient interface {
+	// Subscribe opens a long-lived server-streaming connection.
+	// The bank sends its prefix (e.g. "000") and receives receipts
+	// whenever a transaction involving one of its wallets is committed.
+	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TransactionReceipt], error)
+}
+
+type receiptServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewReceiptServiceClient(cc grpc.ClientConnInterface) ReceiptServiceClient {
+	return &receiptServiceClient{cc}
+}
+
+func (c *receiptServiceClient) Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TransactionReceipt], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ReceiptService_ServiceDesc.Streams[0], ReceiptService_Subscribe_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[SubscribeRequest, TransactionReceipt]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ReceiptService_SubscribeClient = grpc.ServerStreamingClient[TransactionReceipt]
+
+// ReceiptServiceServer is the server API for ReceiptService service.
+// All implementations must embed UnimplementedReceiptServiceServer
+// for forward compatibility.
+//
+// ReceiptService allows banks to subscribe to their transaction receipts
+// Banks hold a persistent open stream identified by their wallet prefix
+type ReceiptServiceServer interface {
+	// Subscribe opens a long-lived server-streaming connection.
+	// The bank sends its prefix (e.g. "000") and receives receipts
+	// whenever a transaction involving one of its wallets is committed.
+	Subscribe(*SubscribeRequest, grpc.ServerStreamingServer[TransactionReceipt]) error
+	mustEmbedUnimplementedReceiptServiceServer()
+}
+
+// UnimplementedReceiptServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedReceiptServiceServer struct{}
+
+func (UnimplementedReceiptServiceServer) Subscribe(*SubscribeRequest, grpc.ServerStreamingServer[TransactionReceipt]) error {
+	return status.Error(codes.Unimplemented, "method Subscribe not implemented")
+}
+func (UnimplementedReceiptServiceServer) mustEmbedUnimplementedReceiptServiceServer() {}
+func (UnimplementedReceiptServiceServer) testEmbeddedByValue()                        {}
+
+// UnsafeReceiptServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ReceiptServiceServer will
+// result in compilation errors.
+type UnsafeReceiptServiceServer interface {
+	mustEmbedUnimplementedReceiptServiceServer()
+}
+
+func RegisterReceiptServiceServer(s grpc.ServiceRegistrar, srv ReceiptServiceServer) {
+	// If the following call panics, it indicates UnimplementedReceiptServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&ReceiptService_ServiceDesc, srv)
+}
+
+func _ReceiptService_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SubscribeRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ReceiptServiceServer).Subscribe(m, &grpc.GenericServerStream[SubscribeRequest, TransactionReceipt]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ReceiptService_SubscribeServer = grpc.ServerStreamingServer[TransactionReceipt]
+
+// ReceiptService_ServiceDesc is the grpc.ServiceDesc for ReceiptService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ReceiptService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "LedgerProxy.ReceiptService",
+	HandlerType: (*ReceiptServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Subscribe",
+			Handler:       _ReceiptService_Subscribe_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "service.proto",
 }

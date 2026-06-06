@@ -21,7 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Single transaction payload
 type Transaction struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        bool                   `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
@@ -122,7 +121,6 @@ func (x *Transaction) GetHash() string {
 	return ""
 }
 
-// batch of transactions
 type TransactionsBatch struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Transactions  []*Transaction         `protobuf:"bytes,1,rep,name=transactions,proto3" json:"transactions,omitempty"`
@@ -167,7 +165,6 @@ func (x *TransactionsBatch) GetTransactions() []*Transaction {
 	return nil
 }
 
-// success or not
 type ServerResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`

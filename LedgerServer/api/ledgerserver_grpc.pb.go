@@ -26,10 +26,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// TransactionsService handles the addition, deletion of transactions
+// TransactionsService handles appending transaction batches from LedgerProxy
 type TransactionsServiceClient interface {
-	// Execute accepts a hybrid-encrypted payload, decrypts it, and
-	// verifies the sender's signature, data hash, and timeliness.
 	BatchAppend(ctx context.Context, in *TransactionsBatch, opts ...grpc.CallOption) (*ServerResponse, error)
 }
 
@@ -55,10 +53,8 @@ func (c *transactionsServiceClient) BatchAppend(ctx context.Context, in *Transac
 // All implementations must embed UnimplementedTransactionsServiceServer
 // for forward compatibility.
 //
-// TransactionsService handles the addition, deletion of transactions
+// TransactionsService handles appending transaction batches from LedgerProxy
 type TransactionsServiceServer interface {
-	// Execute accepts a hybrid-encrypted payload, decrypts it, and
-	// verifies the sender's signature, data hash, and timeliness.
 	BatchAppend(context.Context, *TransactionsBatch) (*ServerResponse, error)
 	mustEmbedUnimplementedTransactionsServiceServer()
 }

@@ -1,20 +1,13 @@
-
 syntax = "proto3";
 
 package TransactionsStore;
 
 option go_package = "StorageKernel/proto/TransactionsStore";
 
-// TransactionsStoreService defines the gRPC service for storing transactions in
-// the transactions store, which is our main ledger
 service TransactionsStoreService {
-  // Store is a gRPC method that takes a batch of transactions and 
-  // returns a batc of TransactionResponse
-  // It is used to store a transaction in the transactions store
-  rpc Store(TransactionBatchRequest) returns (TransactionBatchResponse);
+  rpc Store(TransactionBatchRequest) returns (StoreAck);
 }
 
-// TransactionRequest represents a request to store a transaction in the transactions store
 message Transaction {
   bool   status      = 1;
   string from_wallet = 2;
@@ -23,26 +16,15 @@ message Transaction {
   string message     = 5;
   string nonce       = 6;
   string hash        = 7;
-  string time_stamp = 8;
+  string time_stamp  = 8;
 }
 
-// I will receive a batch of transcations
 message TransactionBatchRequest {
   repeated Transaction transactions = 1;
 }
 
-// The server responds with a receipt
-// then it will start the indexing process
-message TransactionReceipt {
-  string transaction_id = 1;
-  bool status = 2;
-  string from_wallet = 3;
-  string to_wallet = 4;
-  float amount = 5;
-  string message = 6;
-  string time_stamp = 7;
-}
-// I will return a batch of receipts
-message TransactionBatchResponse {
-  repeated TransactionReceipt receipts = 1; 
+// Simple ack 
+message StoreAck {
+  bool   success  = 1;
+  string batch_id = 2;
 }

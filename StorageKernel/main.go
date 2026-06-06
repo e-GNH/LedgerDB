@@ -8,10 +8,10 @@ import (
 	// pb "StorageKernel/proto/worldstate"
 	"LedgerDB/services/logging"
 	ts "StorageKernel/proto/TransactionsStore"
+	pb "StorageKernel/proto/worldstate"
 	"fmt"
 	"log"
 
-	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -20,9 +20,9 @@ var ctx = context.Background()
 var logger = logging.New("StorageKernel", "./")
 var file_name = "main.go"
 
-func test_transfer(rdb *redis.Client, h *KernelHandler) {
+func test_transfer(h *KernelHandler, offline bool) {
 	logger.Info(" - [" + file_name + "] - Testing Transfer")
-	err := h.Transfer_Test(ctx, "nonce:1211123122", "A", "B", 1)
+	_, err := h.Transfer(ctx, &pb.TransferRequest{Nonce: "nonce:12333", FromId: "000_wallet_A", ToId: "001_wallet_B", Amount: 10, OfflineTransaction: offline})
 	switch {
 	case err == nil:
 		logger.Info(" - [" + file_name + "] - Test Transfer OK")
@@ -43,7 +43,9 @@ func main() {
 
 	logger.Info(" - [" + file_name + "] - Creating Redis Client")
 
-	// rdb := newRedisClient()
+	rdb := newRedisClient()
+	// TODO REMOVE after testing
+	rdb.FlushAll(ctx) // Delete Everything
 	ts_server, err := newHDFSClient()
 
 	if err != nil {
@@ -51,16 +53,34 @@ func main() {
 		return
 	}
 
-	h := &KernelHandler{hdfs: ts_server}
+	h := &KernelHandler{hdfs: ts_server, rdb: rdb}
 
-	// test_transfer(rdb, h) // TODO: remove after onboarding
-	// if err := h.CreateAccount(ctx, "A", 100); err != nil { // Shall be from onboarding
-	//     logger.Error(" - [" + file_name + "] - " + err.Error())
-	// }
-	// if err := h.CreateAccount(ctx, "B", 100); err != nil {
-	//     logger.Error(" - [" + file_name + "] - " + err.Error())
-	// }
-
+	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123s456", AccountId: "000_wallet_A", Balance: 100}); err != nil { // Shall be from onboarding
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123457", AccountId: "001_wallet_B", Balance: 100}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	// test_transfer(h, false)
+	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:123456", AccountId: "000_wallet_A", Amount: 99}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	test_transfer(h, true)
+	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:12323145", AccountId: "001_wallet_B", Amount: 10}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:123231245", AccountId: "001_wallet_B", Amount: 110}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:12345", AccountId: "000_wallet_A", Amount: 49}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:123345", AccountId: "000_wallet_A", Amount: 39}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:1234256", AccountId: "000_wallet_A", Amount: 89}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
 	// ==========================================
 	// 🧪 HDFS BATCH TEST
 	// ==========================================
@@ -95,8 +115,8 @@ func main() {
 	// 	logger.Info(" - [" + file_name + "] - HDFS Test PASSED! Batch written successfully.")
 	// }
 	// ==========================================
-
-	lis, err := net.Listen("tcp", ":50055")
+	port := "50058"
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 		return
@@ -105,16 +125,14 @@ func main() {
 	logger.Info(" - [" + file_name + "] - Starting StorageKernel GRPC Server")
 	grpcServer := grpc.NewServer()
 
-	// pb.RegisterWorldStateServiceServer(grpcServer, h)
+	pb.RegisterWorldStateServiceServer(grpcServer, h)
 	ts.RegisterTransactionsStoreServiceServer(grpcServer, h)
 
 	reflection.Register(grpcServer)
 
-	logger.Info(" - [" + file_name + "] - Storage kernel listening on port 50055")
+	logger.Info(" - [" + file_name + "] - Storage kernel listening on port " + port)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-	// TODO REMOVE after testing
-	// rdb.FlushAll(ctx) // Delete Everything
 
 }

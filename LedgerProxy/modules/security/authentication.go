@@ -45,8 +45,6 @@ func ParsePrivateKeyBytes(pemStr []byte) *rsa.PrivateKey {
 	return priv
 }
 
-
-
 func ParsePublicKey(pemStr string) *rsa.PublicKey {
 	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil {
@@ -94,15 +92,15 @@ func ParsePublicKeyBytes(pemStr []byte) *rsa.PublicKey {
 }
 
 func isKeyTrusted(received *rsa.PublicKey, trusted map[string]*rsa.PublicKey) bool {
-    for _, trustedKey := range trusted {
-        if received.N.Cmp(trustedKey.N) == 0 && received.E == trustedKey.E {
-            return true
-        }
-    }
-    return false
+	for _, trustedKey := range trusted {
+		if received.N.Cmp(trustedKey.N) == 0 && received.E == trustedKey.E {
+			return true
+		}
+	}
+	return false
 }
 
-func VerifySecurity(encryptedData []byte, myPrivKey *rsa.PrivateKey, trustedKeys map[string]*rsa.PublicKey) (*types.SecureMessage, bool) {
+func VerifySecurity[T any](encryptedData []byte, myPrivKey *rsa.PrivateKey, trustedKeys map[string]*rsa.PublicKey) (*T, bool) {
 	log.Debug("Started Processing")
 
 	decryptedBytes, err := HybridDecrypt(encryptedData, myPrivKey)
@@ -118,23 +116,24 @@ func VerifySecurity(encryptedData []byte, myPrivKey *rsa.PrivateKey, trustedKeys
 		return nil, false
 	}
 	log.Debug("Unpacked data")
+
 	pub, err := x509.ParsePKIXPublicKey(unpacked.BankPubKey)
-    if err != nil {
-        log.Error(fmt.Sprintf("Received invalid public key format: %v", err))
-        return nil, false
-    }
-    
-    receivedPubKey, ok := pub.(*rsa.PublicKey)
-    if !ok {
-        log.Error("Public key is not an RSA key")
-        return nil, false
-    }
+	if err != nil {
+		log.Error(fmt.Sprintf("Received invalid public key format: %v", err))
+		return nil, false
+	}
+
+	receivedPubKey, ok := pub.(*rsa.PublicKey)
+	if !ok {
+		log.Error("Public key is not an RSA key")
+		return nil, false
+	}
 
 	if !isKeyTrusted(receivedPubKey, trustedKeys) {
-        log.Error("Access Denied: The public key provided in the request is not in the trusted list.")
-        return nil, false
-    }
-    log.Debug("Sender's public key is verified and trusted")
+		log.Error("Access Denied: The public key provided in the request is not in the trusted list.")
+		return nil, false
+	}
+	log.Debug("Sender's public key is verified and trusted")
 
 	if !VerifyUserSignature(unpacked.Hash, unpacked.Signature, receivedPubKey) {
 		log.Error("Failed to verify user signature")
@@ -148,21 +147,28 @@ func VerifySecurity(encryptedData []byte, myPrivKey *rsa.PrivateKey, trustedKeys
 	}
 	log.Debug("Hash check passed")
 
+	// Unmarshal into SecureMessage first to validate timestamp
 	var msg types.SecureMessage
 	if err := json.Unmarshal(unpacked.Data, &msg); err != nil {
-		log.Error(fmt.Sprintf("Failed to unmarshal message data: %v", err))
+		log.Error(fmt.Sprintf("Failed to unmarshal base message: %v", err))
 		return nil, false
 	}
-	log.Debug("Unpacked message data")
 
 	if !VerifyTimeliness(msg.Timestamp) {
 		log.Error("Message failed timeliness check: Possible replay attack")
 		return nil, false
 	}
 	log.Debug("Message is timely")
-	msg.Hash = unpacked.Hash
 
-	return &msg, true
+	// Now unmarshal into the caller's desired type
+	var result T
+	if err := json.Unmarshal(unpacked.Data, &result); err != nil {
+		log.Error(fmt.Sprintf("Failed to unmarshal into target type: %v", err))
+		return nil, false
+	}
+	log.Debug("Unpacked message data into target type")
+
+	return &result, true
 }
 
 func HybridDecrypt(encryptedData []byte, myPrivKey *rsa.PrivateKey) ([]byte, error) {

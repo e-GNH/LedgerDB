@@ -21,7 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// TransactionRequest represents a request to store a transaction in the transactions store
 type Transaction struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        bool                   `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
@@ -122,7 +121,6 @@ func (x *Transaction) GetTimeStamp() string {
 	return ""
 }
 
-// I will receive a batch of transcations
 type TransactionBatchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Transactions  []*Transaction         `protobuf:"bytes,1,rep,name=transactions,proto3" json:"transactions,omitempty"`
@@ -167,35 +165,29 @@ func (x *TransactionBatchRequest) GetTransactions() []*Transaction {
 	return nil
 }
 
-// The server responds with a receipt
-// then it will start the indexing process
-type TransactionReceipt struct {
+// Simple ack — receipt generation is LedgerServer's responsibility
+type StoreAck struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TransactionId string                 `protobuf:"bytes,1,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
-	Status        bool                   `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
-	FromWallet    string                 `protobuf:"bytes,3,opt,name=from_wallet,json=fromWallet,proto3" json:"from_wallet,omitempty"`
-	ToWallet      string                 `protobuf:"bytes,4,opt,name=to_wallet,json=toWallet,proto3" json:"to_wallet,omitempty"`
-	Amount        float32                `protobuf:"fixed32,5,opt,name=amount,proto3" json:"amount,omitempty"`
-	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
-	TimeStamp     string                 `protobuf:"bytes,7,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	BatchId       string                 `protobuf:"bytes,2,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TransactionReceipt) Reset() {
-	*x = TransactionReceipt{}
+func (x *StoreAck) Reset() {
+	*x = StoreAck{}
 	mi := &file_TransactionsStore_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TransactionReceipt) String() string {
+func (x *StoreAck) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TransactionReceipt) ProtoMessage() {}
+func (*StoreAck) ProtoMessage() {}
 
-func (x *TransactionReceipt) ProtoReflect() protoreflect.Message {
+func (x *StoreAck) ProtoReflect() protoreflect.Message {
 	mi := &file_TransactionsStore_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -207,103 +199,23 @@ func (x *TransactionReceipt) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TransactionReceipt.ProtoReflect.Descriptor instead.
-func (*TransactionReceipt) Descriptor() ([]byte, []int) {
+// Deprecated: Use StoreAck.ProtoReflect.Descriptor instead.
+func (*StoreAck) Descriptor() ([]byte, []int) {
 	return file_TransactionsStore_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *TransactionReceipt) GetTransactionId() string {
+func (x *StoreAck) GetSuccess() bool {
 	if x != nil {
-		return x.TransactionId
-	}
-	return ""
-}
-
-func (x *TransactionReceipt) GetStatus() bool {
-	if x != nil {
-		return x.Status
+		return x.Success
 	}
 	return false
 }
 
-func (x *TransactionReceipt) GetFromWallet() string {
+func (x *StoreAck) GetBatchId() string {
 	if x != nil {
-		return x.FromWallet
+		return x.BatchId
 	}
 	return ""
-}
-
-func (x *TransactionReceipt) GetToWallet() string {
-	if x != nil {
-		return x.ToWallet
-	}
-	return ""
-}
-
-func (x *TransactionReceipt) GetAmount() float32 {
-	if x != nil {
-		return x.Amount
-	}
-	return 0
-}
-
-func (x *TransactionReceipt) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *TransactionReceipt) GetTimeStamp() string {
-	if x != nil {
-		return x.TimeStamp
-	}
-	return ""
-}
-
-// I will return a batch of receipts
-type TransactionBatchResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Receipts      []*TransactionReceipt  `protobuf:"bytes,1,rep,name=receipts,proto3" json:"receipts,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TransactionBatchResponse) Reset() {
-	*x = TransactionBatchResponse{}
-	mi := &file_TransactionsStore_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TransactionBatchResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TransactionBatchResponse) ProtoMessage() {}
-
-func (x *TransactionBatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_TransactionsStore_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TransactionBatchResponse.ProtoReflect.Descriptor instead.
-func (*TransactionBatchResponse) Descriptor() ([]byte, []int) {
-	return file_TransactionsStore_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *TransactionBatchResponse) GetReceipts() []*TransactionReceipt {
-	if x != nil {
-		return x.Receipts
-	}
-	return nil
 }
 
 var File_TransactionsStore_proto protoreflect.FileDescriptor
@@ -323,21 +235,12 @@ const file_TransactionsStore_proto_rawDesc = "" +
 	"\n" +
 	"time_stamp\x18\b \x01(\tR\ttimeStamp\"]\n" +
 	"\x17TransactionBatchRequest\x12B\n" +
-	"\ftransactions\x18\x01 \x03(\v2\x1e.TransactionsStore.TransactionR\ftransactions\"\xe2\x01\n" +
-	"\x12TransactionReceipt\x12%\n" +
-	"\x0etransaction_id\x18\x01 \x01(\tR\rtransactionId\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\bR\x06status\x12\x1f\n" +
-	"\vfrom_wallet\x18\x03 \x01(\tR\n" +
-	"fromWallet\x12\x1b\n" +
-	"\tto_wallet\x18\x04 \x01(\tR\btoWallet\x12\x16\n" +
-	"\x06amount\x18\x05 \x01(\x02R\x06amount\x12\x18\n" +
-	"\amessage\x18\x06 \x01(\tR\amessage\x12\x1d\n" +
-	"\n" +
-	"time_stamp\x18\a \x01(\tR\ttimeStamp\"]\n" +
-	"\x18TransactionBatchResponse\x12A\n" +
-	"\breceipts\x18\x01 \x03(\v2%.TransactionsStore.TransactionReceiptR\breceipts2|\n" +
-	"\x18TransactionsStoreService\x12`\n" +
-	"\x05Store\x12*.TransactionsStore.TransactionBatchRequest\x1a+.TransactionsStore.TransactionBatchResponseB'Z%StorageKernel/proto/TransactionsStoreb\x06proto3"
+	"\ftransactions\x18\x01 \x03(\v2\x1e.TransactionsStore.TransactionR\ftransactions\"?\n" +
+	"\bStoreAck\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x19\n" +
+	"\bbatch_id\x18\x02 \x01(\tR\abatchId2l\n" +
+	"\x18TransactionsStoreService\x12P\n" +
+	"\x05Store\x12*.TransactionsStore.TransactionBatchRequest\x1a\x1b.TransactionsStore.StoreAckB'Z%StorageKernel/proto/TransactionsStoreb\x06proto3"
 
 var (
 	file_TransactionsStore_proto_rawDescOnce sync.Once
@@ -351,23 +254,21 @@ func file_TransactionsStore_proto_rawDescGZIP() []byte {
 	return file_TransactionsStore_proto_rawDescData
 }
 
-var file_TransactionsStore_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_TransactionsStore_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_TransactionsStore_proto_goTypes = []any{
-	(*Transaction)(nil),              // 0: TransactionsStore.Transaction
-	(*TransactionBatchRequest)(nil),  // 1: TransactionsStore.TransactionBatchRequest
-	(*TransactionReceipt)(nil),       // 2: TransactionsStore.TransactionReceipt
-	(*TransactionBatchResponse)(nil), // 3: TransactionsStore.TransactionBatchResponse
+	(*Transaction)(nil),             // 0: TransactionsStore.Transaction
+	(*TransactionBatchRequest)(nil), // 1: TransactionsStore.TransactionBatchRequest
+	(*StoreAck)(nil),                // 2: TransactionsStore.StoreAck
 }
 var file_TransactionsStore_proto_depIdxs = []int32{
 	0, // 0: TransactionsStore.TransactionBatchRequest.transactions:type_name -> TransactionsStore.Transaction
-	2, // 1: TransactionsStore.TransactionBatchResponse.receipts:type_name -> TransactionsStore.TransactionReceipt
-	1, // 2: TransactionsStore.TransactionsStoreService.Store:input_type -> TransactionsStore.TransactionBatchRequest
-	3, // 3: TransactionsStore.TransactionsStoreService.Store:output_type -> TransactionsStore.TransactionBatchResponse
-	3, // [3:4] is the sub-list for method output_type
-	2, // [2:3] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	1, // 1: TransactionsStore.TransactionsStoreService.Store:input_type -> TransactionsStore.TransactionBatchRequest
+	2, // 2: TransactionsStore.TransactionsStoreService.Store:output_type -> TransactionsStore.StoreAck
+	2, // [2:3] is the sub-list for method output_type
+	1, // [1:2] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_TransactionsStore_proto_init() }
@@ -381,7 +282,7 @@ func file_TransactionsStore_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_TransactionsStore_proto_rawDesc), len(file_TransactionsStore_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
