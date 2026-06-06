@@ -33,7 +33,6 @@ type securityServer struct {
 	registry           *BankRegistry
 }
 
-
 func (s *securityServer) Subscribe(req *pb.SubscribeRequest, stream pb.ReceiptService_SubscribeServer) error {
 	prefix := req.BankPrefix
 	if prefix == "" {
@@ -53,7 +52,6 @@ func (s *securityServer) Subscribe(req *pb.SubscribeRequest, stream pb.ReceiptSe
 	s.registry.Unregister(prefix)
 	return nil
 }
-
 
 func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
 	logger.Info("--> Received gRPC Secure() request")
@@ -81,16 +79,17 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	if ok {
 		logger.Info("Passing transaction to world state...")
 		_, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
-			Nonce:  msg.Nonce,
-			FromId: msg.From,
-			ToId:   msg.To,
-			Amount: int64(msg.Amount),
+			Nonce:              msg.Nonce,
+			FromId:             msg.From,
+			ToId:               msg.To,
+			Amount:             int64(msg.Amount),
+			OfflineTransaction: false,
 		})
 		if err != nil {
 			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 			msg.Status = false
 			og_message := msg.Message
-			msg.Message = "Undo transaction with Nonce " + msg.Nonce 
+			msg.Message = "Undo transaction with Nonce " + msg.Nonce
 			batching.SaveBatchItem(msg, s.LedgerServerClient)
 			msg.Message = og_message
 			batching.StreamReceipt(msg)
@@ -107,7 +106,6 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 
 	return &pb.SecureResponse{Success: ok, Message: message}, nil
 }
-
 
 func loadBankKeysFromDir(dirPath string) map[string]*rsa.PublicKey {
 	bankMap := make(map[string]*rsa.PublicKey)
@@ -137,7 +135,6 @@ func loadBankKeysFromDir(dirPath string) map[string]*rsa.PublicKey {
 
 	return bankMap
 }
-
 
 func main() {
 	logger.Info("Reading keys...")

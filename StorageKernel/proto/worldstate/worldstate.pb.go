@@ -22,13 +22,14 @@ const (
 )
 
 type TransferRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Nonce         string                 `protobuf:"bytes,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	FromId        string                 `protobuf:"bytes,2,opt,name=from_id,json=fromId,proto3" json:"from_id,omitempty"`
-	ToId          string                 `protobuf:"bytes,3,opt,name=to_id,json=toId,proto3" json:"to_id,omitempty"`
-	Amount        int64                  `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Nonce              string                 `protobuf:"bytes,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	FromId             string                 `protobuf:"bytes,2,opt,name=from_id,json=fromId,proto3" json:"from_id,omitempty"`
+	ToId               string                 `protobuf:"bytes,3,opt,name=to_id,json=toId,proto3" json:"to_id,omitempty"`
+	Amount             int64                  `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
+	OfflineTransaction bool                   `protobuf:"varint,5,opt,name=offline_transaction,json=offlineTransaction,proto3" json:"offline_transaction,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *TransferRequest) Reset() {
@@ -87,6 +88,13 @@ func (x *TransferRequest) GetAmount() int64 {
 		return x.Amount
 	}
 	return 0
+}
+
+func (x *TransferRequest) GetOfflineTransaction() bool {
+	if x != nil {
+		return x.OfflineTransaction
+	}
+	return false
 }
 
 type TransferResponse struct {
@@ -482,12 +490,13 @@ var File_worldstate_proto protoreflect.FileDescriptor
 const file_worldstate_proto_rawDesc = "" +
 	"\n" +
 	"\x10worldstate.proto\x12\n" +
-	"worldstate\"m\n" +
+	"worldstate\"\x9e\x01\n" +
 	"\x0fTransferRequest\x12\x14\n" +
 	"\x05nonce\x18\x01 \x01(\tR\x05nonce\x12\x17\n" +
 	"\afrom_id\x18\x02 \x01(\tR\x06fromId\x12\x13\n" +
 	"\x05to_id\x18\x03 \x01(\tR\x04toId\x12\x16\n" +
-	"\x06amount\x18\x04 \x01(\x03R\x06amount\"<\n" +
+	"\x06amount\x18\x04 \x01(\x03R\x06amount\x12/\n" +
+	"\x13offline_transaction\x18\x05 \x01(\bR\x12offlineTransaction\"<\n" +
 	"\x10TransferResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"e\n" +

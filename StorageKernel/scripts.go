@@ -6,6 +6,7 @@ var transferScript = redis.NewScript(`
 	-- KEYS[1] = nonce key
 	-- KEYS[2] = from account key
 	-- KEYS[3] = to account key
+	-- KEYS[4] = offline account boolean
 	-- ARGV[1] = amount
 	local amount  = tonumber(ARGV[1])
 	if amount <= 0 then
@@ -20,15 +21,20 @@ var transferScript = redis.NewScript(`
 	if redis.call("EXISTS", KEYS[3]) == 0 then
 		return {err="TO_ACCOUNT_NOT_FOUND"}
 	end
-
-	local balance = tonumber(redis.call("HGET", KEYS[2], "balance") or "0")
+	local balance_key = "balance"
+	local pending_key = "pending"
+	if KEYS[4] == "true" then
+		balance_key = "offline"
+		pending_key = "offline"
+	end
+	local balance = tonumber(redis.call("HGET", KEYS[2], balance_key) or "0")
 
 	if balance < amount then
 		return {err="INSUFFICIENT_FUNDS"}
 	end
 
-	redis.call("HINCRBY", KEYS[2], "balance", -amount)
-	redis.call("HINCRBY", KEYS[3], "pending",  amount)
+	redis.call("HINCRBY", KEYS[2], balance_key, -amount)
+	redis.call("HINCRBY", KEYS[3], pending_key,  amount)
 	redis.call("SET",     KEYS[1], 1)
 	local seq = redis.call("INCR", "global:sequence")
 

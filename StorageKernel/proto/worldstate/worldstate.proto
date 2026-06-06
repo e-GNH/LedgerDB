@@ -16,6 +16,7 @@ message TransferRequest {
   string from_id = 2;
   string to_id   = 3;
   int64  amount  = 4;
+  bool offline_transaction = 5;
 }
 
 message TransferResponse {
