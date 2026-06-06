@@ -10,6 +10,8 @@ service SecurityService {
     // Execute accepts a hybrid-encrypted payload, decrypts it, and 
     // verifies the sender's signature, data hash, and timeliness.
     rpc Execute(SecureRequest) returns (SecureResponse) {}
+    rpc OfflineWithdraw(SecureRequest) returns (SecureResponse) {}
+    rpc OfflineDeposit(SecureRequest) returns (SecureResponse) {}
 }
 
 message SecureRequest {

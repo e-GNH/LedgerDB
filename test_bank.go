@@ -54,12 +54,18 @@ func main() {
 
 	time.Sleep(500 * time.Millisecond)
 
-	payload := types.SecureMessage{
+	// payload := types.SecureMessage{
+	// 	Timestamp: time.Now(),
+	// 	From:      "000_wallet_A",
+	// 	To:        "001_wallet_B",
+	// 	Amount:    10,
+	// 	Message:   "Payment for cloud infrastructure",
+	// 	Nonce:     fmt.Sprintf("nonce-%d", time.Now().UnixNano()),
+	// }
+
+	payload := types.SecureOfflineWithdrawMessage{
 		Timestamp: time.Now(),
-		From:      "000_wallet_A",
-		To:        "001_wallet_B",
 		Amount:    10,
-		Message:   "Payment for cloud infrastructure",
 		Nonce:     fmt.Sprintf("nonce-%d", time.Now().UnixNano()),
 	}
 	payloadBytes, _ := json.Marshal(payload)

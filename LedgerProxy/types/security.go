@@ -14,6 +14,19 @@ type SecureMessage struct {
 	Hash      []byte    `json:"hash"`
 }
 
+type SecureOfflineWithdrawMessage struct {
+	AccountId string    `json:"account_id"`
+	Amount    float64   `json:"amount"`
+	Nonce     string    `json:"nonce"`
+	Timestamp time.Time `json:"timestamp"`
+}
+type SecureOfflineDepositMessage struct {
+	AccountId string    `json:"account_id"`
+	Amount    float64   `json:"amount"`
+	Nonce     string    `json:"nonce"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
 // type SignedMessage struct {
 // 	MessageData []byte `json:"payload"`   // The actual payload (timestamp, etc.) 
 // 	Signature   []byte `json:"signature"` // The sender's signature of the MessageData

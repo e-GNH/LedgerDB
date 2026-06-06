@@ -47,13 +47,20 @@ func main() {
 
 	fmt.Println("Successfully loaded Client Private Key and Server Public Key.")
 
-	payload := types.SecureMessage{
-		Timestamp: time.Now(),
-		From:      "A",
-		To:        "B",
+	// payload := types.SecureMessage{
+	// 	Timestamp: time.Now(),
+	// 	From:      "A",
+	// 	To:        "B",
+	// 	Amount:    11,
+	// 	Message:   "Payment for cloud infrastructure",
+	// 	Nonce:     "unique-txn-123s245",
+	// }
+
+	payload := types.SecureOfflineWithdrawMessage{
 		Amount:    11,
-		Message:   "Payment for cloud infrastructure",
 		Nonce:     "unique-txn-123s245",
+		AccountId: "A",
+		Timestamp: time.Now(),
 	}
 	payloadBytes, _ := json.Marshal(payload)
 
