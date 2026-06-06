@@ -16,6 +16,7 @@ import (
 	pb "LedgerProxy/api"
 	batching "LedgerProxy/modules/batching"
 	sec "LedgerProxy/modules/security"
+	"LedgerProxy/types"
 
 	ledgerserverpb "LedgerServer/api"
 	kernelpb "StorageKernel/proto/worldstate"
@@ -56,7 +57,7 @@ func (s *securityServer) Subscribe(req *pb.SubscribeRequest, stream pb.ReceiptSe
 func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
 	logger.Info("--> Received gRPC Secure() request")
 
-	msg, ok := sec.VerifySecurity(req.EncryptedData, s.myPrivKey, s.bankKeys)
+	msg, ok := sec.VerifySecurity[types.SecureMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 	if msg != nil {
 		msg.Status = ok
 	}
@@ -106,6 +107,74 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 
 	return &pb.SecureResponse{Success: ok, Message: message}, nil
 }
+
+func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
+	logger.Info("--> Received Offline Withdraw() request")
+
+	msg, ok := sec.VerifySecurity[types.SecureOfflineWithdrawMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
+	if msg == nil || !ok {
+		return &pb.SecureResponse{
+			Success: false, 
+			Message: "Failed to decrypt and verify message",
+		}, nil
+	}
+
+	logger.Info("SECURITY SUCCESS: Pipeline passed!")
+
+	// TODO: Solve this issue
+	// logger.Info("WAL: writing to local disk")
+	// if err := batching.SaveBatchItem(msg, s.LedgerServerClient); err != nil {
+	// 	logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
+	// }
+
+	logger.Info("Passing transaction to world state...")
+	resp, err := s.kernelClient.OfflineWithdraw(ctx, &kernelpb.OfflineWithdrawRequest{
+		Nonce:  msg.Nonce,
+		AccountId: msg.AccountId,
+		Amount: int64(msg.Amount),
+	})
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+	}
+	
+	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
+}
+
+
+func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
+	logger.Info("--> Received Offline Deposit() request")
+
+	msg, ok := sec.VerifySecurity[types.SecureOfflineDepositMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
+	if msg == nil || !ok {
+		return &pb.SecureResponse{
+			Success: false, 
+			Message: "Failed to decrypt and verify message",
+		}, nil
+	}
+
+	logger.Info("SECURITY SUCCESS: Pipeline passed!")
+
+	// TODO: Solve this issue
+	// logger.Info("WAL: writing to local disk")
+	// if err := batching.SaveBatchItem(msg, s.LedgerServerClient); err != nil {
+	// 	logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
+	// }
+
+	logger.Info("Passing transaction to world state...")
+	resp, err := s.kernelClient.OfflineDeposit(ctx, &kernelpb.OfflineDepositRequest{
+		Nonce:  msg.Nonce,
+		AccountId: msg.AccountId,
+		Amount: int64(msg.Amount),
+	})
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+	}
+	
+	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
+}
+
 
 func loadBankKeysFromDir(dirPath string) map[string]*rsa.PublicKey {
 	bankMap := make(map[string]*rsa.PublicKey)

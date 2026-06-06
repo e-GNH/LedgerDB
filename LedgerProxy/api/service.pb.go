@@ -284,9 +284,11 @@ const file_service_proto_rawDesc = "" +
 	"\amessage\x18\x06 \x01(\tR\amessage\x12\x14\n" +
 	"\x05nonce\x18\a \x01(\tR\x05nonce\x12\x1d\n" +
 	"\n" +
-	"time_stamp\x18\b \x01(\tR\ttimeStamp2W\n" +
+	"time_stamp\x18\b \x01(\tR\ttimeStamp2\xf2\x01\n" +
 	"\x0fSecurityService\x12D\n" +
-	"\aExecute\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x002a\n" +
+	"\aExecute\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00\x12L\n" +
+	"\x0fOfflineWithdraw\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00\x12K\n" +
+	"\x0eOfflineDeposit\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x002a\n" +
 	"\x0eReceiptService\x12O\n" +
 	"\tSubscribe\x12\x1d.LedgerProxy.SubscribeRequest\x1a\x1f.LedgerProxy.TransactionReceipt\"\x000\x01B\x14Z\x12LedgerProxy/api/pbb\x06proto3"
 
@@ -311,11 +313,15 @@ var file_service_proto_goTypes = []any{
 }
 var file_service_proto_depIdxs = []int32{
 	0, // 0: LedgerProxy.SecurityService.Execute:input_type -> LedgerProxy.SecureRequest
-	2, // 1: LedgerProxy.ReceiptService.Subscribe:input_type -> LedgerProxy.SubscribeRequest
-	1, // 2: LedgerProxy.SecurityService.Execute:output_type -> LedgerProxy.SecureResponse
-	3, // 3: LedgerProxy.ReceiptService.Subscribe:output_type -> LedgerProxy.TransactionReceipt
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	0, // 1: LedgerProxy.SecurityService.OfflineWithdraw:input_type -> LedgerProxy.SecureRequest
+	0, // 2: LedgerProxy.SecurityService.OfflineDeposit:input_type -> LedgerProxy.SecureRequest
+	2, // 3: LedgerProxy.ReceiptService.Subscribe:input_type -> LedgerProxy.SubscribeRequest
+	1, // 4: LedgerProxy.SecurityService.Execute:output_type -> LedgerProxy.SecureResponse
+	1, // 5: LedgerProxy.SecurityService.OfflineWithdraw:output_type -> LedgerProxy.SecureResponse
+	1, // 6: LedgerProxy.SecurityService.OfflineDeposit:output_type -> LedgerProxy.SecureResponse
+	3, // 7: LedgerProxy.ReceiptService.Subscribe:output_type -> LedgerProxy.TransactionReceipt
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

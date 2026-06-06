@@ -19,7 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SecurityService_Execute_FullMethodName = "/LedgerProxy.SecurityService/Execute"
+	SecurityService_Execute_FullMethodName         = "/LedgerProxy.SecurityService/Execute"
+	SecurityService_OfflineWithdraw_FullMethodName = "/LedgerProxy.SecurityService/OfflineWithdraw"
+	SecurityService_OfflineDeposit_FullMethodName  = "/LedgerProxy.SecurityService/OfflineDeposit"
 )
 
 // SecurityServiceClient is the client API for SecurityService service.
@@ -32,6 +34,8 @@ type SecurityServiceClient interface {
 	// Execute accepts a hybrid-encrypted payload, decrypts it, and
 	// verifies the sender's signature, data hash, and timeliness.
 	Execute(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
+	OfflineWithdraw(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
+	OfflineDeposit(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
 }
 
 type securityServiceClient struct {
@@ -52,6 +56,26 @@ func (c *securityServiceClient) Execute(ctx context.Context, in *SecureRequest, 
 	return out, nil
 }
 
+func (c *securityServiceClient) OfflineWithdraw(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SecureResponse)
+	err := c.cc.Invoke(ctx, SecurityService_OfflineWithdraw_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *securityServiceClient) OfflineDeposit(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SecureResponse)
+	err := c.cc.Invoke(ctx, SecurityService_OfflineDeposit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SecurityServiceServer is the server API for SecurityService service.
 // All implementations must embed UnimplementedSecurityServiceServer
 // for forward compatibility.
@@ -62,6 +86,8 @@ type SecurityServiceServer interface {
 	// Execute accepts a hybrid-encrypted payload, decrypts it, and
 	// verifies the sender's signature, data hash, and timeliness.
 	Execute(context.Context, *SecureRequest) (*SecureResponse, error)
+	OfflineWithdraw(context.Context, *SecureRequest) (*SecureResponse, error)
+	OfflineDeposit(context.Context, *SecureRequest) (*SecureResponse, error)
 	mustEmbedUnimplementedSecurityServiceServer()
 }
 
@@ -74,6 +100,12 @@ type UnimplementedSecurityServiceServer struct{}
 
 func (UnimplementedSecurityServiceServer) Execute(context.Context, *SecureRequest) (*SecureResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Execute not implemented")
+}
+func (UnimplementedSecurityServiceServer) OfflineWithdraw(context.Context, *SecureRequest) (*SecureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method OfflineWithdraw not implemented")
+}
+func (UnimplementedSecurityServiceServer) OfflineDeposit(context.Context, *SecureRequest) (*SecureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method OfflineDeposit not implemented")
 }
 func (UnimplementedSecurityServiceServer) mustEmbedUnimplementedSecurityServiceServer() {}
 func (UnimplementedSecurityServiceServer) testEmbeddedByValue()                         {}
@@ -114,6 +146,42 @@ func _SecurityService_Execute_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SecurityService_OfflineWithdraw_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SecureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecurityServiceServer).OfflineWithdraw(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecurityService_OfflineWithdraw_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecurityServiceServer).OfflineWithdraw(ctx, req.(*SecureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SecurityService_OfflineDeposit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SecureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecurityServiceServer).OfflineDeposit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecurityService_OfflineDeposit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecurityServiceServer).OfflineDeposit(ctx, req.(*SecureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SecurityService_ServiceDesc is the grpc.ServiceDesc for SecurityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -124,6 +192,14 @@ var SecurityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Execute",
 			Handler:    _SecurityService_Execute_Handler,
+		},
+		{
+			MethodName: "OfflineWithdraw",
+			Handler:    _SecurityService_OfflineWithdraw_Handler,
+		},
+		{
+			MethodName: "OfflineDeposit",
+			Handler:    _SecurityService_OfflineDeposit_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
