@@ -3,6 +3,7 @@ package main
 import (
 	ts "StorageKernel/proto/TransactionsStore"
 	pb "StorageKernel/proto/worldstate"
+	"strconv"
 
 	"context"
 	"encoding/json"
@@ -23,12 +24,25 @@ type KernelHandler struct {
 	hdfs *hdfs.Client
 }
 
-func (h *KernelHandler) CreateAccount(ctx context.Context, id string, balance int64) error { // TODO FINISH AFTER ONBOARDING
-	return h.rdb.HSet(ctx, "account:"+id,
-		"balance", balance,
-		"pending", 0,
-		"offline", 0,
-	).Err()
+func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
+	keys := []string{
+		"nonce:" + req.Nonce,
+		"account:" + req.AccountId,
+	}
+	logger.Info(" - [" + file_name + "] - Account Creation with balance " + fmt.Sprint(req.Balance) + " For " + req.AccountId)
+
+	res, err := createAccountScript.Run(ctx, h.rdb, keys, req.Balance).Slice()
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+		return nil, mapGrpcError(err)
+	}
+	if len(res) != 2 {
+		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
+		return nil, status.Error(codes.Internal, "unexpected script result")
+	}
+	sequence := res[1]
+	logger.Info(" - [" + file_name + "] - Create Account committed " + fmt.Sprint(sequence))
+	return &pb.CreateAccountResponse{Ok: true, Message: "Create Account committed, sequence: " + fmt.Sprint(sequence)}, nil
 }
 func (h *KernelHandler) OfflineWithdraw(ctx context.Context, req *pb.OfflineWithdrawRequest) (*pb.OfflineWithdrawResponse, error) {
 	file_name = "handler.go"
@@ -78,6 +92,7 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 		"nonce:" + req.Nonce,
 		"account:" + req.FromId,
 		"account:" + req.ToId,
+		strconv.FormatBool(req.OfflineTransaction),
 	}
 	logger.Info(" - [" + file_name + "] - Transferring " + fmt.Sprint(req.Amount) + " from " + req.FromId + " to " + req.ToId)
 
@@ -93,21 +108,6 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 	sequence := res[1]
 	logger.Info(" - [" + file_name + "] - Transfer committed " + fmt.Sprint(sequence))
 	return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
-}
-func (h *KernelHandler) Transfer_Test(ctx context.Context, nonce, from, to string, amount int64) error {
-	keys := []string{
-		"nonce:" + nonce,
-		"account:" + from,
-		"account:" + to,
-	}
-	res, err := transferScript.Run(ctx, h.rdb, keys, amount).Slice()
-
-	if err == nil {
-		sequence := res[1]
-		logger.Info(" - [" + file_name + "] - Transfer committed " + fmt.Sprint(sequence))
-	}
-
-	return mapLuaError(err)
 }
 
 // %%%%%%%%%%%% JUST TESTING %%%%%%%%%%%%%

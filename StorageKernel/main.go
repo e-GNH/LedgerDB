@@ -20,9 +20,9 @@ var ctx = context.Background()
 var logger = logging.New("StorageKernel", "./")
 var file_name = "main.go"
 
-func test_transfer(h *KernelHandler) {
+func test_transfer(h *KernelHandler, offline bool) {
 	logger.Info(" - [" + file_name + "] - Testing Transfer")
-	err := h.Transfer_Test(ctx, "nonce:12333", "000_wallet_A", "001_wallet_B", 1)
+	_, err := h.Transfer(ctx, &pb.TransferRequest{Nonce: "nonce:12333", FromId: "000_wallet_A", ToId: "001_wallet_B", Amount: 10, OfflineTransaction: offline})
 	switch {
 	case err == nil:
 		logger.Info(" - [" + file_name + "] - Test Transfer OK")
@@ -55,23 +55,30 @@ func main() {
 
 	h := &KernelHandler{hdfs: ts_server, rdb: rdb}
 
-	if err := h.CreateAccount(ctx, "000_wallet_A", 100); err != nil { // Shall be from onboarding
+	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123s456", AccountId: "000_wallet_A", Balance: 100}); err != nil { // Shall be from onboarding
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	if err := h.CreateAccount(ctx, "001_wallet_B", 100); err != nil {
+	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123457", AccountId: "001_wallet_B", Balance: 100}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	test_transfer(h) // TODO: remove after onboarding
+	// test_transfer(h, false)
 	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:123456", AccountId: "000_wallet_A", Amount: 99}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:12345", AccountId: "000_wallet_A", Amount: 50}); err != nil {
+	test_transfer(h, true)
+	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:12323145", AccountId: "001_wallet_B", Amount: 10}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:123345", AccountId: "000_wallet_A", Amount: 49}); err != nil {
+	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:123231245", AccountId: "001_wallet_B", Amount: 110}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:1234256", AccountId: "000_wallet_A", Amount: 99}); err != nil {
+	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:12345", AccountId: "000_wallet_A", Amount: 49}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:123345", AccountId: "000_wallet_A", Amount: 39}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:1234256", AccountId: "000_wallet_A", Amount: 89}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
 	// ==========================================

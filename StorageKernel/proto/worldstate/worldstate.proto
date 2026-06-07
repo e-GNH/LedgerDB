@@ -8,6 +8,7 @@ service WorldStateService {
   rpc Transfer(TransferRequest) returns (TransferResponse);
   rpc OfflineWithdraw(OfflineWithdrawRequest) returns (OfflineWithdrawResponse);
   rpc OfflineDeposit(OfflineDepositRequest) returns (OfflineDepositResponse);
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
 }
 
 message TransferRequest {
@@ -15,6 +16,7 @@ message TransferRequest {
   string from_id = 2;
   string to_id   = 3;
   int64  amount  = 4;
+  bool offline_transaction = 5;
 }
 
 message TransferResponse {
@@ -37,6 +39,16 @@ message OfflineDepositRequest {
   int64  amount  = 3;
 }
 message OfflineDepositResponse {
+  bool   ok      = 1;
+  string message = 2;
+}
+
+message CreateAccountRequest {
+  string nonce   = 1;
+  string account_id = 2;
+  int64  balance  = 3;
+}
+message CreateAccountResponse {
   bool   ok      = 1;
   string message = 2;
 }
