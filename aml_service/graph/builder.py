@@ -30,6 +30,8 @@ class TransactionsGraph:
         return sum(data['amount'] for _, _, data in self.graph.out_edges(account, data=True))
     
     # TODO implement own version of all simple paths with pruning for timestamps to avoid generating all paths and then filtering them, which can be expensive
+    # NOTE: This is an approximation and is affected by order of generated paths from networkx
+    # Better than generating all paths with combinations of nodes then running full max flow algorithm to respect timing
     def get_money_cycled(self, account):
                 
         loops_total_received = 0
@@ -47,18 +49,25 @@ class TransactionsGraph:
                 # Case: A->B 1000 B->A 1500 A->B 500, this will return 1500 as amount cycled back 
                 # but it is better than missing other cases where A->B 1000 A->B 500 B->A 1500 which needs 1500 to be returned
                 successor_timestamp = min(data['timestamp'] for _, dest, data in self.graph.out_edges(account, data=True) if dest == successor)
+                remaining_source_capacity = successor_min_amount
                 for path in simple_paths:
-                    min_amount = successor_min_amount ## initialize min_amount with the amount of the first transaction from account to successor, as this is the maximum amount that can be cycled back through this path
+                    if remaining_source_capacity <= 0:
+                        break
+                    min_amount = remaining_source_capacity ## initialize min_amount with the amount of the first transaction from account to successor, as this is the maximum amount that can be cycled back through this path
                     timestamp = successor_timestamp ## initialize timestamp with the timestamp of the first transaction from account to successor
                     for u, v, key in path:
                         edge_data = self.graph.get_edge_data(u, v, key=key)
                         if edge_data['timestamp'] >= timestamp:
-                            min_amount = min(min_amount, edge_data['amount'])
+                            min_amount = min(min_amount, remaining_capacity[(u, v, key)])
                             timestamp = edge_data['timestamp']
                         else:
                             min_amount = 0
                             break ## if we encounter an edge with timestamp older than the initial transaction, we can stop checking this path as it won't contribute to the loop amount
+                    remaining_source_capacity -= min_amount
                     loops_total_received += min_amount
+                    
+                    for u, v, key in path:
+                        remaining_capacity[(u, v, key)] -= min_amount
         
         return loops_total_received
                 
