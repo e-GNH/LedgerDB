@@ -7,7 +7,8 @@ class TransactionsGraph:
         
     def add_transaction(self, from_account, to_account, amount, timestamp):
         self.graph.add_edge(from_account, to_account, amount=amount, timestamp=timestamp)
-        
+     
+    ## TODO: CALL that asynchronously with locks
     def clean_edges(self, cutoff_time):
         edges_to_be_deleted = [ (from_account, to_account, key)  ## key to delete edge in MultiDiGraph needs to be identified because multiple edges can exist between same nodes
                                for from_account, to_account, key, data in 
@@ -18,10 +19,10 @@ class TransactionsGraph:
         self.graph.remove_nodes_from(list(nx.isolates(self.graph)))
     
     def get_indegree(self, account):
-        return self.graph.in_degree(account)
+        return len(set(self.graph.predecessors(account)))
     
     def get_outdegree(self, account):
-        return self.graph.out_degree(account)
+        return  len(set(self.graph.successors(account)))
     
     def get_input_money(self, account):
         return sum(data['amount'] for _, _, data in self.graph.in_edges(account, data=True))
@@ -41,7 +42,9 @@ class TransactionsGraph:
             
         for successor in set(self.graph.successors(account)): ## check each unique successor to avoid redundant path calculations
             if nx.has_path(self.graph,successor, account): ## check if there is a path back to the original account
-                simple_paths = nx.all_simple_edge_paths(self.graph, source=successor, target=account, cutoff=self.LOOP_CUTOFF)
+                simple_paths = sorted(
+                    list(nx.all_simple_edge_paths(self.graph, source=successor, target=account, cutoff=self.LOOP_CUTOFF))
+                    , key = len)
                 successor_min_amount = sum(data['amount'] for _, dest, data in self.graph.out_edges(account, data=True) if dest == successor)
                 ## This will catch false positives where there are multiple transactions from account to successor
                 # but only one of them is part of a loop. 
