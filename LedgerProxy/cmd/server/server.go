@@ -114,7 +114,7 @@ func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequ
 	msg, ok := sec.VerifySecurity[types.SecureOfflineWithdrawMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 	if msg == nil || !ok {
 		return &pb.SecureResponse{
-			Success: false, 
+			Success: false,
 			Message: "Failed to decrypt and verify message",
 		}, nil
 	}
@@ -129,18 +129,17 @@ func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequ
 
 	logger.Info("Passing transaction to world state...")
 	resp, err := s.kernelClient.OfflineWithdraw(ctx, &kernelpb.OfflineWithdrawRequest{
-		Nonce:  msg.Nonce,
+		Nonce:     msg.Nonce,
 		AccountId: msg.AccountId,
-		Amount: int64(msg.Amount),
+		Amount:    int64(msg.Amount),
 	})
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 	}
-	
+
 	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
 }
-
 
 func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
 	logger.Info("--> Received Offline Deposit() request")
@@ -148,7 +147,7 @@ func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureReque
 	msg, ok := sec.VerifySecurity[types.SecureOfflineDepositMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 	if msg == nil || !ok {
 		return &pb.SecureResponse{
-			Success: false, 
+			Success: false,
 			Message: "Failed to decrypt and verify message",
 		}, nil
 	}
@@ -163,15 +162,49 @@ func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureReque
 
 	logger.Info("Passing transaction to world state...")
 	resp, err := s.kernelClient.OfflineDeposit(ctx, &kernelpb.OfflineDepositRequest{
-		Nonce:  msg.Nonce,
+		Nonce:     msg.Nonce,
 		AccountId: msg.AccountId,
-		Amount: int64(msg.Amount),
+		Amount:    int64(msg.Amount),
 	})
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 	}
-	
+
+	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
+}
+
+
+func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
+	logger.Info("--> Received Create Account() request")
+
+	msg, ok := sec.VerifySecurity[types.SecureCreateAccountMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
+	if msg == nil || !ok {
+		return &pb.SecureResponse{
+			Success: false,
+			Message: "Failed to decrypt and verify message",
+		}, nil
+	}
+
+	logger.Info("SECURITY SUCCESS: Pipeline passed!")
+
+	// TODO: Solve this issue
+	// logger.Info("WAL: writing to local disk")
+	// if err := batching.SaveBatchItem(msg, s.LedgerServerClient); err != nil {
+	// 	logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
+	// }
+
+	logger.Info("Passing wallet to the world state...")
+	resp, err := s.kernelClient.CreateAccount(ctx, &kernelpb.CreateAccountRequest{
+		Nonce:     msg.Nonce,
+		AccountId: msg.AccountId,
+		Balance:   int64(msg.Balance),
+	})
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("Kernel rejected wallet creation: %v", err))
+	}
+
 	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
 }
 

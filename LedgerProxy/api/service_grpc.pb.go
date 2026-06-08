@@ -22,6 +22,7 @@ const (
 	SecurityService_Execute_FullMethodName         = "/LedgerProxy.SecurityService/Execute"
 	SecurityService_OfflineWithdraw_FullMethodName = "/LedgerProxy.SecurityService/OfflineWithdraw"
 	SecurityService_OfflineDeposit_FullMethodName  = "/LedgerProxy.SecurityService/OfflineDeposit"
+	SecurityService_CreateAccount_FullMethodName   = "/LedgerProxy.SecurityService/CreateAccount"
 )
 
 // SecurityServiceClient is the client API for SecurityService service.
@@ -36,6 +37,7 @@ type SecurityServiceClient interface {
 	Execute(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
 	OfflineWithdraw(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
 	OfflineDeposit(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
+	CreateAccount(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
 }
 
 type securityServiceClient struct {
@@ -76,6 +78,16 @@ func (c *securityServiceClient) OfflineDeposit(ctx context.Context, in *SecureRe
 	return out, nil
 }
 
+func (c *securityServiceClient) CreateAccount(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SecureResponse)
+	err := c.cc.Invoke(ctx, SecurityService_CreateAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SecurityServiceServer is the server API for SecurityService service.
 // All implementations must embed UnimplementedSecurityServiceServer
 // for forward compatibility.
@@ -88,6 +100,7 @@ type SecurityServiceServer interface {
 	Execute(context.Context, *SecureRequest) (*SecureResponse, error)
 	OfflineWithdraw(context.Context, *SecureRequest) (*SecureResponse, error)
 	OfflineDeposit(context.Context, *SecureRequest) (*SecureResponse, error)
+	CreateAccount(context.Context, *SecureRequest) (*SecureResponse, error)
 	mustEmbedUnimplementedSecurityServiceServer()
 }
 
@@ -106,6 +119,9 @@ func (UnimplementedSecurityServiceServer) OfflineWithdraw(context.Context, *Secu
 }
 func (UnimplementedSecurityServiceServer) OfflineDeposit(context.Context, *SecureRequest) (*SecureResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method OfflineDeposit not implemented")
+}
+func (UnimplementedSecurityServiceServer) CreateAccount(context.Context, *SecureRequest) (*SecureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateAccount not implemented")
 }
 func (UnimplementedSecurityServiceServer) mustEmbedUnimplementedSecurityServiceServer() {}
 func (UnimplementedSecurityServiceServer) testEmbeddedByValue()                         {}
@@ -182,6 +198,24 @@ func _SecurityService_OfflineDeposit_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SecurityService_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SecureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecurityServiceServer).CreateAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecurityService_CreateAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecurityServiceServer).CreateAccount(ctx, req.(*SecureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SecurityService_ServiceDesc is the grpc.ServiceDesc for SecurityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -200,6 +234,10 @@ var SecurityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "OfflineDeposit",
 			Handler:    _SecurityService_OfflineDeposit_Handler,
+		},
+		{
+			MethodName: "CreateAccount",
+			Handler:    _SecurityService_CreateAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

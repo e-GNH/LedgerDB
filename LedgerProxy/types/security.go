@@ -2,7 +2,6 @@ package types
 
 import "time"
 
-// SecureMessage represents the structure of our data AFTER decryption
 type SecureMessage struct {
 	Status bool        `json:"status"`
 	Timestamp time.Time `json:"timestamp"`
@@ -27,10 +26,11 @@ type SecureOfflineDepositMessage struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// type SignedMessage struct {
-// 	MessageData []byte `json:"payload"`   // The actual payload (timestamp, etc.) 
-// 	Signature   []byte `json:"signature"` // The sender's signature of the MessageData
-// }
+type SecureCreateAccountMessage struct {
+	AccountId string    `json:"account_id"`
+	Balance   float64   `json:"balance"`
+	Nonce     string    `json:"nonce"`
+}
 
 type UnpackedMessage struct {
 	Data       []byte `json:"data"`         // The raw JSON bytes of the actual payload
