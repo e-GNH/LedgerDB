@@ -12,6 +12,7 @@ service SecurityService {
     rpc Execute(SecureRequest) returns (SecureResponse) {}
     rpc OfflineWithdraw(SecureRequest) returns (SecureResponse) {}
     rpc OfflineDeposit(SecureRequest) returns (SecureResponse) {}
+    rpc CreateAccount(SecureRequest) returns (SecureResponse) {}
 }
 
 message SecureRequest {
