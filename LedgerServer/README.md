@@ -15,11 +15,11 @@ LedgerServer is responsible for:
 ## System Position
 
 ```
-LedgerProxy (:50051)
+LedgerProxy (:50001)
       │
       │  BatchAppend(TransactionsBatch)
       ▼
- LedgerServer (:50053)
+ LedgerServer (:50003)
       │
       │  Store(TransactionBatchRequest)
       ▼
@@ -32,14 +32,14 @@ LedgerProxy (:50051)
 
 | Service        | Port  |
 |----------------|-------|
-| LedgerServer   | 50053 |
+| LedgerServer   | 50003 |
 | StorageKernel  | 50058 |
 
 ---
 
 ## gRPC Services
 
-LedgerServer exposes two gRPC services on port 50053, defined in `ledgerserver.proto`.
+LedgerServer exposes two gRPC services on port 50003, defined in `ledgerserver.proto`.
 
 ### TransactionsService
 
@@ -184,7 +184,7 @@ StorageKernel writes the batch to HDFS under `/ledger/transactions/batch_<timest
 startup
   │
   ▼
-net.Listen(":50053")
+net.Listen(":50003")
   │
   ▼
 grpc.Dial("localhost:50058")   ← connect to StorageKernel

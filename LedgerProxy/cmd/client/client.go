@@ -108,9 +108,9 @@ func main() {
 
 	fmt.Printf("Encrypted payload size: %d bytes\n", len(encryptedData))
 
-	fmt.Println("Connecting to gRPC server at localhost:50051...")
+	fmt.Println("Connecting to gRPC server at localhost:50001...")
 
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial("localhost:50001", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(fmt.Sprintf("Did not connect: %v", err))
 	}

@@ -16,7 +16,7 @@ StorageKernel is responsible for:
 ## System Position
 
 ```
-LedgerProxy (:50051)
+LedgerProxy (:50001)
       │
       │  Transfer(TransferRequest)        [world state]
       ▼
@@ -25,7 +25,7 @@ StorageKernel (:50058)
       ├── Redis        [live account balances, nonce registry]
       └── HDFS         [permanent transaction log]
 
-LedgerServer (:50053)
+LedgerServer (:50003)
       │
       │  Store(TransactionBatchRequest)   [persistence]
       ▼

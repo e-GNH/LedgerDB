@@ -23,11 +23,11 @@ Bank (gRPC Client)
       │  Execute(SecureRequest)        Subscribe(SubscribeRequest)
       │  ─────────────────────►        ◄─────────────────────────
       ▼
- LedgerProxy (:50051)
+ LedgerProxy (:50001)
       │
       ├──► StorageKernel (:50058)   [Transfer — world state / Redis]
       │
-      └──► LedgerServer (:50053)   [BatchAppend — HDFS persistence]
+      └──► LedgerServer (:50003)   [BatchAppend — HDFS persistence]
 ```
 
 ---
@@ -36,13 +36,13 @@ Bank (gRPC Client)
 
 | Service        | Port  |
 |----------------|-------|
-| LedgerProxy    | 50051 |
+| LedgerProxy    | 50001 |
 
 ---
 
 ## gRPC Services
 
-LedgerProxy exposes two gRPC services on port 50051, defined in `service.proto`.
+LedgerProxy exposes two gRPC services on port 50001, defined in `service.proto`.
 
 ### SecurityService
 
@@ -368,7 +368,7 @@ Updates account balances in Redis atomically via a Lua script. Called only when 
 ### LedgerServer (Persistence)
 
 ```
-grpc.Dial("localhost:50053")
+grpc.Dial("localhost:50003")
 LedgerServerClient.BatchAppend(TransactionsBatch)
 ```
 

@@ -40,7 +40,7 @@ func main() {
 
 	fmt.Println("[OK] Keys loaded")
 
-	proxyConn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	proxyConn, err := grpc.Dial("localhost:50001", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(fmt.Sprintf("Failed to connect to LedgerProxy: %v", err))
 	}

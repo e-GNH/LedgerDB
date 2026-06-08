@@ -17,9 +17,9 @@ import (
 var logger = logging.New("server", "./")
 
 func main() {
-	logger.Info("Starting LedgerServer on port 50053...")
+	logger.Info("Starting LedgerServer on port 50003...")
 
-	lis, err := net.Listen("tcp", ":50053")
+	lis, err := net.Listen("tcp", ":50003")
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to listen: %v", err))
 		panic(fmt.Sprintf("Failed to listen: %v", err))
@@ -41,7 +41,7 @@ func main() {
 	pb.RegisterTransactionsServiceServer(grpcServer, serverInstance)
 	reflection.Register(grpcServer)
 
-	logger.Info("LedgerServer running on port 50053...")
+	logger.Info("LedgerServer running on port 50003...")
 	if err := grpcServer.Serve(lis); err != nil {
 		logger.Error(fmt.Sprintf("Failed to serve: %v", err))
 		panic(fmt.Sprintf("Failed to serve: %v", err))

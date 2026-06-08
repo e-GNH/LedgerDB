@@ -174,7 +174,6 @@ func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureReque
 	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
 }
 
-
 func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
 	logger.Info("--> Received Create Account() request")
 
@@ -207,7 +206,6 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 
 	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
 }
-
 
 func loadBankKeysFromDir(dirPath string) map[string]*rsa.PublicKey {
 	bankMap := make(map[string]*rsa.PublicKey)
@@ -247,7 +245,7 @@ func main() {
 
 	trustedBankKeys := loadBankKeysFromDir("modules/security/keys/banks")
 
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", ":50001")
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to listen: %v", err))
 		panic(fmt.Sprintf("Failed to listen: %v", err))
@@ -259,7 +257,7 @@ func main() {
 	}
 	defer kernelConn.Close()
 
-	storeConn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	storeConn, err := grpc.Dial("localhost:50003", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect to LedgerServer: %v", err))
 	}
@@ -283,7 +281,7 @@ func main() {
 	pb.RegisterSecurityServiceServer(grpcServer, myServerInstance)
 	pb.RegisterReceiptServiceServer(grpcServer, myServerInstance)
 
-	logger.Info("LedgerProxy running on port 50051...")
+	logger.Info("LedgerProxy running on port 50001...")
 	if err := grpcServer.Serve(lis); err != nil {
 		logger.Error(fmt.Sprintf("Failed to serve: %v", err))
 		panic(fmt.Sprintf("Failed to serve: %v", err))
