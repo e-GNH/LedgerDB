@@ -77,7 +77,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		TimeStamp:  msg.Timestamp.Format(time.RFC3339),
 		FromWallet: msg.From,
 		ToWallet:   msg.To,
-		Amount:     float32(msg.Amount),
+		Amount:     int64(msg.Amount),
 		Message:    msg.Message,
 		Nonce:      msg.Nonce,
 		Hash:       hex.EncodeToString(msg.Hash),
@@ -111,7 +111,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 				TimeStamp:  time.Now().Format(time.RFC3339),
 				FromWallet: msg.From,
 				ToWallet:   msg.To,
-				Amount:     float32(msg.Amount),
+				Amount:     int64(msg.Amount),
 				Message:    "Undo transaction with Nonce " + msg.Nonce,
 				Nonce:      msg.Nonce,
 				Hash:       hex.EncodeToString(msg.Hash),
@@ -160,12 +160,12 @@ func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*
 		}
 
 		syncMsg := &ledgerserverpb.SyncMessage{
-			Nonce:               msg.Nonce,
-			FromId:              msg.From,
-			ToId:                msg.To,
-			Amount:              int64(msg.Amount),
-			OfflineTransaction:  true,
-			TimeStamp:           time.Now().Format(time.RFC3339),
+			Nonce:              msg.Nonce,
+			FromId:             msg.From,
+			ToId:               msg.To,
+			Amount:             int64(msg.Amount),
+			OfflineTransaction: true,
+			TimeStamp:          time.Now().Format(time.RFC3339),
 		}
 		anySync, err := anypb.New(syncMsg)
 		if err != nil {

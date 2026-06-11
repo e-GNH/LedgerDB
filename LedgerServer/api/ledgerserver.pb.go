@@ -360,7 +360,7 @@ type Transaction struct {
 	Status        bool                   `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
 	FromWallet    string                 `protobuf:"bytes,3,opt,name=from_wallet,json=fromWallet,proto3" json:"from_wallet,omitempty"`
 	ToWallet      string                 `protobuf:"bytes,4,opt,name=to_wallet,json=toWallet,proto3" json:"to_wallet,omitempty"`
-	Amount        float32                `protobuf:"fixed32,5,opt,name=amount,proto3" json:"amount,omitempty"`
+	Amount        int64                  `protobuf:"varint,5,opt,name=amount,proto3" json:"amount,omitempty"`
 	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
 	Nonce         string                 `protobuf:"bytes,7,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	TimeStamp     string                 `protobuf:"bytes,8,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
@@ -426,7 +426,7 @@ func (x *Transaction) GetToWallet() string {
 	return ""
 }
 
-func (x *Transaction) GetAmount() float32 {
+func (x *Transaction) GetAmount() int64 {
 	if x != nil {
 		return x.Amount
 	}
@@ -540,7 +540,7 @@ const file_ledgerserver_proto_rawDesc = "" +
 	"\vfrom_wallet\x18\x03 \x01(\tR\n" +
 	"fromWallet\x12\x1b\n" +
 	"\tto_wallet\x18\x04 \x01(\tR\btoWallet\x12\x16\n" +
-	"\x06amount\x18\x05 \x01(\x02R\x06amount\x12\x18\n" +
+	"\x06amount\x18\x05 \x01(\x03R\x06amount\x12\x18\n" +
 	"\amessage\x18\x06 \x01(\tR\amessage\x12\x14\n" +
 	"\x05nonce\x18\a \x01(\tR\x05nonce\x12\x1d\n" +
 	"\n" +

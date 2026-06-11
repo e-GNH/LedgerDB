@@ -99,7 +99,7 @@ message TransactionReceipt {
     bool   status      = 2;
     string from_wallet = 3;
     string to_wallet   = 4;
-    float  amount      = 5;
+    int64  amount      = 5;
     string message     = 6;
     string nonce       = 7;
     string time_stamp  = 8;
@@ -139,7 +139,7 @@ type SecureMessage struct {
     Timestamp time.Time // used for timeliness check
     From      string    // sender wallet ID, e.g. "000_wallet_A"
     To        string    // receiver wallet ID, e.g. "001_wallet_B"
-    Amount    float64   // transaction amount
+    Amount    int64   // transaction amount
     Message   string    // human-readable memo
     Nonce     string    // unique transaction identifier
     Hash      []byte    // SHA-256 hash of the payload

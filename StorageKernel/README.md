@@ -96,7 +96,7 @@ message Transaction {
     bool   status      = 1;
     string from_wallet = 2;
     string to_wallet   = 3;
-    float  amount      = 4;
+    int  amount      = 4;
     string message     = 5;
     string nonce       = 6;
     string hash        = 7;

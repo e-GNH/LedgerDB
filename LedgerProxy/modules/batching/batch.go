@@ -146,7 +146,7 @@ func StreamReceipt(item *types.SecureMessage) {
 		Status:     item.Status,
 		FromWallet: item.From,
 		ToWallet:   item.To,
-		Amount:     float32(item.Amount),
+		Amount:     int64(item.Amount),
 		Message:    item.Message,
 		Nonce:      item.Nonce,
 		TimeStamp:  item.Timestamp.Format("2006-01-02T15:04:05Z07:00"),

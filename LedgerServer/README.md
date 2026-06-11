@@ -79,7 +79,7 @@ message Transaction {
     string time_stamp  = 2;
     string from_wallet = 3;
     string to_wallet   = 4;
-    float  amount      = 5;
+    int  amount      = 5;
     string message     = 6;
     string nonce       = 7;
     string hash        = 8;
@@ -107,7 +107,7 @@ message TransactionReceipt {
     bool   status      = 2;
     string from_wallet = 3;
     string to_wallet   = 4;
-    float  amount      = 5;
+    int  amount      = 5;
     string message     = 6;
     string nonce       = 7;
     string time_stamp  = 8;
