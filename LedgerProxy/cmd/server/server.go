@@ -61,17 +61,18 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	logger.Info("--> Received gRPC Secure() request")
 
 	msg, ok := sec.VerifySecurity[types.SecureMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
-	if msg != nil {
-		msg.Status = ok
-	}
-	if ok {
-		logger.Info("SECURITY SUCCESS: Pipeline passed!")
-	}
-
+	
 	message := "Transaction rejected due to security"
 	if msg == nil {
 		return &pb.SecureResponse{Success: false, Message: message}, nil
 	}
+
+	msg.Status = ok
+
+	if ok {
+		logger.Info("SECURITY SUCCESS: Pipeline passed!")
+	}
+	
 	tx := &ledgerserverpb.Transaction{
 		Status:     msg.Status,
 		TimeStamp:  msg.Timestamp.Format(time.RFC3339),
@@ -82,7 +83,9 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		Nonce:      msg.Nonce,
 		Hash:       hex.EncodeToString(msg.Hash),
 	}
+
 	anyTx, err := anypb.New(tx)
+	
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to wrap transaction: %v", err))
 		return &pb.SecureResponse{Success: false, Message: message}, nil
