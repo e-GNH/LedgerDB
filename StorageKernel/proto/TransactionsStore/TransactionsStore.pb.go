@@ -9,6 +9,7 @@ package TransactionsStore
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	anypb "google.golang.org/protobuf/types/known/anypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -165,7 +166,7 @@ func (x *TransactionBatchRequest) GetTransactions() []*Transaction {
 	return nil
 }
 
-// Simple ack — receipt generation is LedgerServer's responsibility
+// Simple ack
 type StoreAck struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -222,7 +223,7 @@ var File_TransactionsStore_proto protoreflect.FileDescriptor
 
 const file_TransactionsStore_proto_rawDesc = "" +
 	"\n" +
-	"\x17TransactionsStore.proto\x12\x11TransactionsStore\"\xde\x01\n" +
+	"\x17TransactionsStore.proto\x12\x11TransactionsStore\x1a\x19google/protobuf/any.proto\"\xde\x01\n" +
 	"\vTransaction\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\bR\x06status\x12\x1f\n" +
 	"\vfrom_wallet\x18\x02 \x01(\tR\n" +
@@ -238,9 +239,9 @@ const file_TransactionsStore_proto_rawDesc = "" +
 	"\ftransactions\x18\x01 \x03(\v2\x1e.TransactionsStore.TransactionR\ftransactions\"?\n" +
 	"\bStoreAck\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x19\n" +
-	"\bbatch_id\x18\x02 \x01(\tR\abatchId2l\n" +
-	"\x18TransactionsStoreService\x12P\n" +
-	"\x05Store\x12*.TransactionsStore.TransactionBatchRequest\x1a\x1b.TransactionsStore.StoreAckB'Z%StorageKernel/proto/TransactionsStoreb\x06proto3"
+	"\bbatch_id\x18\x02 \x01(\tR\abatchId2V\n" +
+	"\x18TransactionsStoreService\x12:\n" +
+	"\x05Store\x12\x14.google.protobuf.Any\x1a\x1b.TransactionsStore.StoreAckB'Z%StorageKernel/proto/TransactionsStoreb\x06proto3"
 
 var (
 	file_TransactionsStore_proto_rawDescOnce sync.Once
@@ -259,10 +260,11 @@ var file_TransactionsStore_proto_goTypes = []any{
 	(*Transaction)(nil),             // 0: TransactionsStore.Transaction
 	(*TransactionBatchRequest)(nil), // 1: TransactionsStore.TransactionBatchRequest
 	(*StoreAck)(nil),                // 2: TransactionsStore.StoreAck
+	(*anypb.Any)(nil),               // 3: google.protobuf.Any
 }
 var file_TransactionsStore_proto_depIdxs = []int32{
 	0, // 0: TransactionsStore.TransactionBatchRequest.transactions:type_name -> TransactionsStore.Transaction
-	1, // 1: TransactionsStore.TransactionsStoreService.Store:input_type -> TransactionsStore.TransactionBatchRequest
+	3, // 1: TransactionsStore.TransactionsStoreService.Store:input_type -> google.protobuf.Any
 	2, // 2: TransactionsStore.TransactionsStoreService.Store:output_type -> TransactionsStore.StoreAck
 	2, // [2:3] is the sub-list for method output_type
 	1, // [1:2] is the sub-list for method input_type

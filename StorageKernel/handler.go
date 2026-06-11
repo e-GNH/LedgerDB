@@ -172,11 +172,11 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 
 // %%%%%%%%%%% END JUST TESTING %%%%%%%%%%%%
 
-func (h *KernelHandler) Store(ctx context.Context, req *ts.TransactionBatchRequest) (*ts.StoreAck, error) {
+func (h *KernelHandler) Store(ctx context.Context, req any) (*ts.StoreAck, error) {
 	fileName := "handler.go"
-	logger.Info(" - [" + fileName + "] - Storing Transaction Batch")
+	logger.Info(" - [" + fileName + "] - Storing Batch")
 
-	batchId, err := h.writeBatchToHDFS(req.Transactions, fileName)
+	batchId, err := h.writeBatchToHDFS(req, fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -188,12 +188,13 @@ func (h *KernelHandler) Store(ctx context.Context, req *ts.TransactionBatchReque
 	}, nil
 }
 
-func (h *KernelHandler) writeBatchToHDFS(transactions []*ts.Transaction, fileName string) (string, error) {
+func (h *KernelHandler) writeBatchToHDFS(data any, fileName string) (string, error) {
 	logger.Info(" - [" + fileName + "] - Converting batch to JSON")
-	txData, err := json.Marshal(transactions)
+
+	txData, err := json.Marshal(data)
 	if err != nil {
 		logger.Error(" - [" + fileName + "] - " + err.Error())
-		return "", status.Error(codes.Internal, "failed to marshal transaction data")
+		return "", status.Error(codes.Internal, "failed to marshal data")
 	}
 
 	ledgerDir := "/ledger/transactions"
@@ -218,6 +219,7 @@ func (h *KernelHandler) writeBatchToHDFS(transactions []*ts.Transaction, fileNam
 		logger.Error(" - [" + fileName + "] - failed to write data: " + err.Error())
 		return "", status.Error(codes.Internal, "failed to write data to HDFS")
 	}
+
 	logger.Info(" - [" + fileName + "] - Converted batch to JSON")
 	return batchId, nil
 }

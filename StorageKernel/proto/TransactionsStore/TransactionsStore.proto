@@ -1,11 +1,13 @@
 syntax = "proto3";
 
+import "google/protobuf/any.proto";
+
 package TransactionsStore;
 
 option go_package = "StorageKernel/proto/TransactionsStore";
 
 service TransactionsStoreService {
-  rpc Store(TransactionBatchRequest) returns (StoreAck);
+  rpc Store(google.protobuf.Any) returns (StoreAck);
 }
 
 message Transaction {

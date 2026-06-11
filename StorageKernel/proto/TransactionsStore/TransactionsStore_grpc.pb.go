@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	anypb "google.golang.org/protobuf/types/known/anypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -26,7 +27,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TransactionsStoreServiceClient interface {
-	Store(ctx context.Context, in *TransactionBatchRequest, opts ...grpc.CallOption) (*StoreAck, error)
+	Store(ctx context.Context, in *anypb.Any, opts ...grpc.CallOption) (*StoreAck, error)
 }
 
 type transactionsStoreServiceClient struct {
@@ -37,7 +38,7 @@ func NewTransactionsStoreServiceClient(cc grpc.ClientConnInterface) Transactions
 	return &transactionsStoreServiceClient{cc}
 }
 
-func (c *transactionsStoreServiceClient) Store(ctx context.Context, in *TransactionBatchRequest, opts ...grpc.CallOption) (*StoreAck, error) {
+func (c *transactionsStoreServiceClient) Store(ctx context.Context, in *anypb.Any, opts ...grpc.CallOption) (*StoreAck, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StoreAck)
 	err := c.cc.Invoke(ctx, TransactionsStoreService_Store_FullMethodName, in, out, cOpts...)
@@ -51,7 +52,7 @@ func (c *transactionsStoreServiceClient) Store(ctx context.Context, in *Transact
 // All implementations must embed UnimplementedTransactionsStoreServiceServer
 // for forward compatibility.
 type TransactionsStoreServiceServer interface {
-	Store(context.Context, *TransactionBatchRequest) (*StoreAck, error)
+	Store(context.Context, *anypb.Any) (*StoreAck, error)
 	mustEmbedUnimplementedTransactionsStoreServiceServer()
 }
 
@@ -62,7 +63,7 @@ type TransactionsStoreServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedTransactionsStoreServiceServer struct{}
 
-func (UnimplementedTransactionsStoreServiceServer) Store(context.Context, *TransactionBatchRequest) (*StoreAck, error) {
+func (UnimplementedTransactionsStoreServiceServer) Store(context.Context, *anypb.Any) (*StoreAck, error) {
 	return nil, status.Error(codes.Unimplemented, "method Store not implemented")
 }
 func (UnimplementedTransactionsStoreServiceServer) mustEmbedUnimplementedTransactionsStoreServiceServer() {
@@ -88,7 +89,7 @@ func RegisterTransactionsStoreServiceServer(s grpc.ServiceRegistrar, srv Transac
 }
 
 func _TransactionsStoreService_Store_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TransactionBatchRequest)
+	in := new(anypb.Any)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func _TransactionsStoreService_Store_Handler(srv interface{}, ctx context.Contex
 		FullMethod: TransactionsStoreService_Store_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TransactionsStoreServiceServer).Store(ctx, req.(*TransactionBatchRequest))
+		return srv.(TransactionsStoreServiceServer).Store(ctx, req.(*anypb.Any))
 	}
 	return interceptor(ctx, in, info, handler)
 }
