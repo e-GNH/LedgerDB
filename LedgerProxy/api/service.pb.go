@@ -117,6 +117,94 @@ func (x *SecureResponse) GetMessage() string {
 	return ""
 }
 
+type SecureRequestList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Requests      []*SecureRequest       `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SecureRequestList) Reset() {
+	*x = SecureRequestList{}
+	mi := &file_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SecureRequestList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SecureRequestList) ProtoMessage() {}
+
+func (x *SecureRequestList) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SecureRequestList.ProtoReflect.Descriptor instead.
+func (*SecureRequestList) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SecureRequestList) GetRequests() []*SecureRequest {
+	if x != nil {
+		return x.Requests
+	}
+	return nil
+}
+
+type SecureResponseList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Responses     []*SecureResponse      `protobuf:"bytes,1,rep,name=responses,proto3" json:"responses,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SecureResponseList) Reset() {
+	*x = SecureResponseList{}
+	mi := &file_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SecureResponseList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SecureResponseList) ProtoMessage() {}
+
+func (x *SecureResponseList) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SecureResponseList.ProtoReflect.Descriptor instead.
+func (*SecureResponseList) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SecureResponseList) GetResponses() []*SecureResponse {
+	if x != nil {
+		return x.Responses
+	}
+	return nil
+}
+
 type SubscribeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	BankPrefix    string                 `protobuf:"bytes,1,opt,name=bank_prefix,json=bankPrefix,proto3" json:"bank_prefix,omitempty"` // e.g. "000", "001"
@@ -126,7 +214,7 @@ type SubscribeRequest struct {
 
 func (x *SubscribeRequest) Reset() {
 	*x = SubscribeRequest{}
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -138,7 +226,7 @@ func (x *SubscribeRequest) String() string {
 func (*SubscribeRequest) ProtoMessage() {}
 
 func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -151,7 +239,7 @@ func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubscribeRequest.ProtoReflect.Descriptor instead.
 func (*SubscribeRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{2}
+	return file_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SubscribeRequest) GetBankPrefix() string {
@@ -177,7 +265,7 @@ type TransactionReceipt struct {
 
 func (x *TransactionReceipt) Reset() {
 	*x = TransactionReceipt{}
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -189,7 +277,7 @@ func (x *TransactionReceipt) String() string {
 func (*TransactionReceipt) ProtoMessage() {}
 
 func (x *TransactionReceipt) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -202,7 +290,7 @@ func (x *TransactionReceipt) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransactionReceipt.ProtoReflect.Descriptor instead.
 func (*TransactionReceipt) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{3}
+	return file_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *TransactionReceipt) GetHash() string {
@@ -270,7 +358,11 @@ const file_service_proto_rawDesc = "" +
 	"\x0eencrypted_data\x18\x01 \x01(\fR\rencryptedData\"D\n" +
 	"\x0eSecureResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"3\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"K\n" +
+	"\x11SecureRequestList\x126\n" +
+	"\brequests\x18\x01 \x03(\v2\x1a.LedgerProxy.SecureRequestR\brequests\"O\n" +
+	"\x12SecureResponseList\x129\n" +
+	"\tresponses\x18\x01 \x03(\v2\x1b.LedgerProxy.SecureResponseR\tresponses\"3\n" +
 	"\x10SubscribeRequest\x12\x1f\n" +
 	"\vbank_prefix\x18\x01 \x01(\tR\n" +
 	"bankPrefix\"\xe5\x01\n" +
@@ -284,12 +376,13 @@ const file_service_proto_rawDesc = "" +
 	"\amessage\x18\x06 \x01(\tR\amessage\x12\x14\n" +
 	"\x05nonce\x18\a \x01(\tR\x05nonce\x12\x1d\n" +
 	"\n" +
-	"time_stamp\x18\b \x01(\tR\ttimeStamp2\xbe\x02\n" +
-	"\x0fSecurityService\x12D\n" +
-	"\aExecute\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00\x12L\n" +
+	"time_stamp\x18\b \x01(\tR\ttimeStamp2\x89\x03\n" +
+	"\x0fSecurityService\x12J\n" +
+	"\rCreateAccount\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00\x12D\n" +
+	"\aExecute\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00\x12I\n" +
+	"\x04Sync\x12\x1e.LedgerProxy.SecureRequestList\x1a\x1f.LedgerProxy.SecureResponseList\"\x00\x12L\n" +
 	"\x0fOfflineWithdraw\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00\x12K\n" +
-	"\x0eOfflineDeposit\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00\x12J\n" +
-	"\rCreateAccount\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x002a\n" +
+	"\x0eOfflineDeposit\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x002a\n" +
 	"\x0eReceiptService\x12O\n" +
 	"\tSubscribe\x12\x1d.LedgerProxy.SubscribeRequest\x1a\x1f.LedgerProxy.TransactionReceipt\"\x000\x01B\x14Z\x12LedgerProxy/api/pbb\x06proto3"
 
@@ -305,29 +398,35 @@ func file_service_proto_rawDescGZIP() []byte {
 	return file_service_proto_rawDescData
 }
 
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_service_proto_goTypes = []any{
 	(*SecureRequest)(nil),      // 0: LedgerProxy.SecureRequest
 	(*SecureResponse)(nil),     // 1: LedgerProxy.SecureResponse
-	(*SubscribeRequest)(nil),   // 2: LedgerProxy.SubscribeRequest
-	(*TransactionReceipt)(nil), // 3: LedgerProxy.TransactionReceipt
+	(*SecureRequestList)(nil),  // 2: LedgerProxy.SecureRequestList
+	(*SecureResponseList)(nil), // 3: LedgerProxy.SecureResponseList
+	(*SubscribeRequest)(nil),   // 4: LedgerProxy.SubscribeRequest
+	(*TransactionReceipt)(nil), // 5: LedgerProxy.TransactionReceipt
 }
 var file_service_proto_depIdxs = []int32{
-	0, // 0: LedgerProxy.SecurityService.Execute:input_type -> LedgerProxy.SecureRequest
-	0, // 1: LedgerProxy.SecurityService.OfflineWithdraw:input_type -> LedgerProxy.SecureRequest
-	0, // 2: LedgerProxy.SecurityService.OfflineDeposit:input_type -> LedgerProxy.SecureRequest
-	0, // 3: LedgerProxy.SecurityService.CreateAccount:input_type -> LedgerProxy.SecureRequest
-	2, // 4: LedgerProxy.ReceiptService.Subscribe:input_type -> LedgerProxy.SubscribeRequest
-	1, // 5: LedgerProxy.SecurityService.Execute:output_type -> LedgerProxy.SecureResponse
-	1, // 6: LedgerProxy.SecurityService.OfflineWithdraw:output_type -> LedgerProxy.SecureResponse
-	1, // 7: LedgerProxy.SecurityService.OfflineDeposit:output_type -> LedgerProxy.SecureResponse
+	0, // 0: LedgerProxy.SecureRequestList.requests:type_name -> LedgerProxy.SecureRequest
+	1, // 1: LedgerProxy.SecureResponseList.responses:type_name -> LedgerProxy.SecureResponse
+	0, // 2: LedgerProxy.SecurityService.CreateAccount:input_type -> LedgerProxy.SecureRequest
+	0, // 3: LedgerProxy.SecurityService.Execute:input_type -> LedgerProxy.SecureRequest
+	2, // 4: LedgerProxy.SecurityService.Sync:input_type -> LedgerProxy.SecureRequestList
+	0, // 5: LedgerProxy.SecurityService.OfflineWithdraw:input_type -> LedgerProxy.SecureRequest
+	0, // 6: LedgerProxy.SecurityService.OfflineDeposit:input_type -> LedgerProxy.SecureRequest
+	4, // 7: LedgerProxy.ReceiptService.Subscribe:input_type -> LedgerProxy.SubscribeRequest
 	1, // 8: LedgerProxy.SecurityService.CreateAccount:output_type -> LedgerProxy.SecureResponse
-	3, // 9: LedgerProxy.ReceiptService.Subscribe:output_type -> LedgerProxy.TransactionReceipt
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	1, // 9: LedgerProxy.SecurityService.Execute:output_type -> LedgerProxy.SecureResponse
+	3, // 10: LedgerProxy.SecurityService.Sync:output_type -> LedgerProxy.SecureResponseList
+	1, // 11: LedgerProxy.SecurityService.OfflineWithdraw:output_type -> LedgerProxy.SecureResponse
+	1, // 12: LedgerProxy.SecurityService.OfflineDeposit:output_type -> LedgerProxy.SecureResponse
+	5, // 13: LedgerProxy.ReceiptService.Subscribe:output_type -> LedgerProxy.TransactionReceipt
+	8, // [8:14] is the sub-list for method output_type
+	2, // [2:8] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_service_proto_init() }
@@ -341,7 +440,7 @@ func file_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

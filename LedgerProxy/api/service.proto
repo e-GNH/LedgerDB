@@ -4,15 +4,16 @@ option go_package = "LedgerProxy/api/pb";
 
 package LedgerProxy;
 
-// SecurityService handles the decryption, authentication, and 
-// integrity validation of incoming ledger transactions.
 service SecurityService {
-    // Execute accepts a hybrid-encrypted payload, decrypts it, and 
-    // verifies the sender's signature, data hash, and timeliness.
+
+    rpc CreateAccount(SecureRequest) returns (SecureResponse) {}
+
     rpc Execute(SecureRequest) returns (SecureResponse) {}
+    rpc Sync(SecureRequestList) returns (SecureResponseList) {}
+
     rpc OfflineWithdraw(SecureRequest) returns (SecureResponse) {}
     rpc OfflineDeposit(SecureRequest) returns (SecureResponse) {}
-    rpc CreateAccount(SecureRequest) returns (SecureResponse) {}
+    
 }
 
 message SecureRequest {
@@ -24,12 +25,17 @@ message SecureResponse {
     string message = 2; // Optional: details about the result
 }
 
-// ReceiptService allows banks to subscribe to their transaction receipts
-// Banks hold a persistent open stream identified by their wallet prefix
-service ReceiptService {
-    // Subscribe opens a long-lived server-streaming connection.
+message SecureRequestList {
+    repeated SecureRequest requests = 1; 
+}
+
+message SecureResponseList {
+    repeated SecureResponse responses =  1;
+}
+
+
+service ReceiptService {    
     // The bank sends its prefix (e.g. "000") and receives receipts
-    // whenever a transaction involving one of its wallets is committed.
     rpc Subscribe(SubscribeRequest) returns (stream TransactionReceipt) {}
 }
 

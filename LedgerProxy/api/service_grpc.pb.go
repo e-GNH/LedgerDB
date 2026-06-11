@@ -19,25 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	SecurityService_CreateAccount_FullMethodName   = "/LedgerProxy.SecurityService/CreateAccount"
 	SecurityService_Execute_FullMethodName         = "/LedgerProxy.SecurityService/Execute"
+	SecurityService_Sync_FullMethodName            = "/LedgerProxy.SecurityService/Sync"
 	SecurityService_OfflineWithdraw_FullMethodName = "/LedgerProxy.SecurityService/OfflineWithdraw"
 	SecurityService_OfflineDeposit_FullMethodName  = "/LedgerProxy.SecurityService/OfflineDeposit"
-	SecurityService_CreateAccount_FullMethodName   = "/LedgerProxy.SecurityService/CreateAccount"
 )
 
 // SecurityServiceClient is the client API for SecurityService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// SecurityService handles the decryption, authentication, and
-// integrity validation of incoming ledger transactions.
 type SecurityServiceClient interface {
-	// Execute accepts a hybrid-encrypted payload, decrypts it, and
-	// verifies the sender's signature, data hash, and timeliness.
+	CreateAccount(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
 	Execute(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
+	Sync(ctx context.Context, in *SecureRequestList, opts ...grpc.CallOption) (*SecureResponseList, error)
 	OfflineWithdraw(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
 	OfflineDeposit(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
-	CreateAccount(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error)
 }
 
 type securityServiceClient struct {
@@ -48,10 +45,30 @@ func NewSecurityServiceClient(cc grpc.ClientConnInterface) SecurityServiceClient
 	return &securityServiceClient{cc}
 }
 
+func (c *securityServiceClient) CreateAccount(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SecureResponse)
+	err := c.cc.Invoke(ctx, SecurityService_CreateAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *securityServiceClient) Execute(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SecureResponse)
 	err := c.cc.Invoke(ctx, SecurityService_Execute_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *securityServiceClient) Sync(ctx context.Context, in *SecureRequestList, opts ...grpc.CallOption) (*SecureResponseList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SecureResponseList)
+	err := c.cc.Invoke(ctx, SecurityService_Sync_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,29 +95,15 @@ func (c *securityServiceClient) OfflineDeposit(ctx context.Context, in *SecureRe
 	return out, nil
 }
 
-func (c *securityServiceClient) CreateAccount(ctx context.Context, in *SecureRequest, opts ...grpc.CallOption) (*SecureResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SecureResponse)
-	err := c.cc.Invoke(ctx, SecurityService_CreateAccount_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // SecurityServiceServer is the server API for SecurityService service.
 // All implementations must embed UnimplementedSecurityServiceServer
 // for forward compatibility.
-//
-// SecurityService handles the decryption, authentication, and
-// integrity validation of incoming ledger transactions.
 type SecurityServiceServer interface {
-	// Execute accepts a hybrid-encrypted payload, decrypts it, and
-	// verifies the sender's signature, data hash, and timeliness.
+	CreateAccount(context.Context, *SecureRequest) (*SecureResponse, error)
 	Execute(context.Context, *SecureRequest) (*SecureResponse, error)
+	Sync(context.Context, *SecureRequestList) (*SecureResponseList, error)
 	OfflineWithdraw(context.Context, *SecureRequest) (*SecureResponse, error)
 	OfflineDeposit(context.Context, *SecureRequest) (*SecureResponse, error)
-	CreateAccount(context.Context, *SecureRequest) (*SecureResponse, error)
 	mustEmbedUnimplementedSecurityServiceServer()
 }
 
@@ -111,17 +114,20 @@ type SecurityServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSecurityServiceServer struct{}
 
+func (UnimplementedSecurityServiceServer) CreateAccount(context.Context, *SecureRequest) (*SecureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateAccount not implemented")
+}
 func (UnimplementedSecurityServiceServer) Execute(context.Context, *SecureRequest) (*SecureResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Execute not implemented")
+}
+func (UnimplementedSecurityServiceServer) Sync(context.Context, *SecureRequestList) (*SecureResponseList, error) {
+	return nil, status.Error(codes.Unimplemented, "method Sync not implemented")
 }
 func (UnimplementedSecurityServiceServer) OfflineWithdraw(context.Context, *SecureRequest) (*SecureResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method OfflineWithdraw not implemented")
 }
 func (UnimplementedSecurityServiceServer) OfflineDeposit(context.Context, *SecureRequest) (*SecureResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method OfflineDeposit not implemented")
-}
-func (UnimplementedSecurityServiceServer) CreateAccount(context.Context, *SecureRequest) (*SecureResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateAccount not implemented")
 }
 func (UnimplementedSecurityServiceServer) mustEmbedUnimplementedSecurityServiceServer() {}
 func (UnimplementedSecurityServiceServer) testEmbeddedByValue()                         {}
@@ -144,6 +150,24 @@ func RegisterSecurityServiceServer(s grpc.ServiceRegistrar, srv SecurityServiceS
 	s.RegisterService(&SecurityService_ServiceDesc, srv)
 }
 
+func _SecurityService_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SecureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecurityServiceServer).CreateAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecurityService_CreateAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecurityServiceServer).CreateAccount(ctx, req.(*SecureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SecurityService_Execute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SecureRequest)
 	if err := dec(in); err != nil {
@@ -158,6 +182,24 @@ func _SecurityService_Execute_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SecurityServiceServer).Execute(ctx, req.(*SecureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SecurityService_Sync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SecureRequestList)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecurityServiceServer).Sync(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SecurityService_Sync_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecurityServiceServer).Sync(ctx, req.(*SecureRequestList))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -198,24 +240,6 @@ func _SecurityService_OfflineDeposit_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecurityService_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SecureRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SecurityServiceServer).CreateAccount(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SecurityService_CreateAccount_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecurityServiceServer).CreateAccount(ctx, req.(*SecureRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // SecurityService_ServiceDesc is the grpc.ServiceDesc for SecurityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -224,8 +248,16 @@ var SecurityService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SecurityServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "CreateAccount",
+			Handler:    _SecurityService_CreateAccount_Handler,
+		},
+		{
 			MethodName: "Execute",
 			Handler:    _SecurityService_Execute_Handler,
+		},
+		{
+			MethodName: "Sync",
+			Handler:    _SecurityService_Sync_Handler,
 		},
 		{
 			MethodName: "OfflineWithdraw",
@@ -234,10 +266,6 @@ var SecurityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "OfflineDeposit",
 			Handler:    _SecurityService_OfflineDeposit_Handler,
-		},
-		{
-			MethodName: "CreateAccount",
-			Handler:    _SecurityService_CreateAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -251,13 +279,8 @@ const (
 // ReceiptServiceClient is the client API for ReceiptService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// ReceiptService allows banks to subscribe to their transaction receipts
-// Banks hold a persistent open stream identified by their wallet prefix
 type ReceiptServiceClient interface {
-	// Subscribe opens a long-lived server-streaming connection.
 	// The bank sends its prefix (e.g. "000") and receives receipts
-	// whenever a transaction involving one of its wallets is committed.
 	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TransactionReceipt], error)
 }
 
@@ -291,13 +314,8 @@ type ReceiptService_SubscribeClient = grpc.ServerStreamingClient[TransactionRece
 // ReceiptServiceServer is the server API for ReceiptService service.
 // All implementations must embed UnimplementedReceiptServiceServer
 // for forward compatibility.
-//
-// ReceiptService allows banks to subscribe to their transaction receipts
-// Banks hold a persistent open stream identified by their wallet prefix
 type ReceiptServiceServer interface {
-	// Subscribe opens a long-lived server-streaming connection.
 	// The bank sends its prefix (e.g. "000") and receives receipts
-	// whenever a transaction involving one of its wallets is committed.
 	Subscribe(*SubscribeRequest, grpc.ServerStreamingServer[TransactionReceipt]) error
 	mustEmbedUnimplementedReceiptServiceServer()
 }

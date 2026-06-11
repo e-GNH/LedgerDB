@@ -108,6 +108,59 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	return &pb.SecureResponse{Success: ok, Message: message}, nil
 }
 
+func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*pb.SecureResponseList, error) {
+	logger.Info("--> Received Sync() request")
+
+	var msgs []types.LedgerSyncMessage
+	var responses []*pb.SecureResponse
+
+	for _, r := range req.Requests {
+		msg, ok := sec.VerifySecurity[types.SecureSyncMessage](
+			r.EncryptedData, 
+			s.myPrivKey,
+			s.bankKeys,
+		)
+
+		if msg == nil || !ok {
+			logger.Error("Failed to decrypt and verify message")
+			responses = append(responses, &pb.SecureResponse{
+                Success: false,
+                Message: "Failed to decrypt and verify message",
+            })
+            continue
+		}
+
+		logger.Info(fmt.Sprintf("Verified %d messages", len(msgs)))
+
+		// TODO: handle this
+		// logger.Info("WAL: writing to local disk")
+		// if err := batching.SaveBatchItem(msg, s.LedgerServerClient); err != nil {
+		// 	logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
+		// }
+
+		logger.Info("Passing a sync transaction to the world state...")
+		resp, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
+			Nonce:     msg.Nonce,
+			FromId: msg.From,
+			ToId:   msg.To,
+			Amount:    int64(msg.Amount),
+			OfflineTransaction: true,
+		})
+
+		if err != nil {
+			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+		}
+
+		responses = append(responses, &pb.SecureResponse{
+			Success: resp.Ok,
+			Message: resp.Message,
+		})
+
+	}	
+
+	return &pb.SecureResponseList{Responses: responses}, nil
+}
+
 func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
 	logger.Info("--> Received Offline Withdraw() request")
 

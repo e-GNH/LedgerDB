@@ -32,6 +32,22 @@ type SecureCreateAccountMessage struct {
 	Nonce     string    `json:"nonce"`
 }
 
+type SecureSyncMessage struct {
+	From      string    `json:"from"`
+	To        string    `json:"to"`
+	Amount    float64   `json:"amount"`
+	Nonce     string    `json:"nonce"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type LedgerSyncMessage struct {
+	FromId      string    `json:"from_id"`
+	ToId        string    `json:"to_id"`
+	Amount    float64   `json:"amount"`
+	Nonce     string    `json:"nonce"`
+	OfflineTransaction bool `json:"offine_transaction"`
+}
+
 type UnpackedMessage struct {
 	Data       []byte `json:"data"`         // The raw JSON bytes of the actual payload
 	Signature  []byte `json:"signature"`    // The sender's signature of the hash
