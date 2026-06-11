@@ -9,6 +9,7 @@ package ledgerserver
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	anypb "google.golang.org/protobuf/types/known/anypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -21,23 +22,355 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type BatchToAppend struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Logs          []*anypb.Any           `protobuf:"bytes,1,rep,name=logs,proto3" json:"logs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchToAppend) Reset() {
+	*x = BatchToAppend{}
+	mi := &file_ledgerserver_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchToAppend) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchToAppend) ProtoMessage() {}
+
+func (x *BatchToAppend) ProtoReflect() protoreflect.Message {
+	mi := &file_ledgerserver_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchToAppend.ProtoReflect.Descriptor instead.
+func (*BatchToAppend) Descriptor() ([]byte, []int) {
+	return file_ledgerserver_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *BatchToAppend) GetLogs() []*anypb.Any {
+	if x != nil {
+		return x.Logs
+	}
+	return nil
+}
+
+type OfflineDepositMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Nonce         string                 `protobuf:"bytes,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Amount        int64                  `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	TimeStamp     string                 `protobuf:"bytes,4,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OfflineDepositMessage) Reset() {
+	*x = OfflineDepositMessage{}
+	mi := &file_ledgerserver_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OfflineDepositMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OfflineDepositMessage) ProtoMessage() {}
+
+func (x *OfflineDepositMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_ledgerserver_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OfflineDepositMessage.ProtoReflect.Descriptor instead.
+func (*OfflineDepositMessage) Descriptor() ([]byte, []int) {
+	return file_ledgerserver_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *OfflineDepositMessage) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *OfflineDepositMessage) GetNonce() string {
+	if x != nil {
+		return x.Nonce
+	}
+	return ""
+}
+
+func (x *OfflineDepositMessage) GetAmount() int64 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+func (x *OfflineDepositMessage) GetTimeStamp() string {
+	if x != nil {
+		return x.TimeStamp
+	}
+	return ""
+}
+
+type CreateAccountMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Nonce         string                 `protobuf:"bytes,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Balance       int64                  `protobuf:"varint,3,opt,name=balance,proto3" json:"balance,omitempty"`
+	TimeStamp     string                 `protobuf:"bytes,4,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateAccountMessage) Reset() {
+	*x = CreateAccountMessage{}
+	mi := &file_ledgerserver_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateAccountMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateAccountMessage) ProtoMessage() {}
+
+func (x *CreateAccountMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_ledgerserver_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateAccountMessage.ProtoReflect.Descriptor instead.
+func (*CreateAccountMessage) Descriptor() ([]byte, []int) {
+	return file_ledgerserver_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *CreateAccountMessage) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *CreateAccountMessage) GetNonce() string {
+	if x != nil {
+		return x.Nonce
+	}
+	return ""
+}
+
+func (x *CreateAccountMessage) GetBalance() int64 {
+	if x != nil {
+		return x.Balance
+	}
+	return 0
+}
+
+func (x *CreateAccountMessage) GetTimeStamp() string {
+	if x != nil {
+		return x.TimeStamp
+	}
+	return ""
+}
+
+type OfflineWithdrawMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Nonce         string                 `protobuf:"bytes,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Amount        int64                  `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	TimeStamp     string                 `protobuf:"bytes,4,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OfflineWithdrawMessage) Reset() {
+	*x = OfflineWithdrawMessage{}
+	mi := &file_ledgerserver_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OfflineWithdrawMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OfflineWithdrawMessage) ProtoMessage() {}
+
+func (x *OfflineWithdrawMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_ledgerserver_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OfflineWithdrawMessage.ProtoReflect.Descriptor instead.
+func (*OfflineWithdrawMessage) Descriptor() ([]byte, []int) {
+	return file_ledgerserver_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *OfflineWithdrawMessage) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *OfflineWithdrawMessage) GetNonce() string {
+	if x != nil {
+		return x.Nonce
+	}
+	return ""
+}
+
+func (x *OfflineWithdrawMessage) GetAmount() int64 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+func (x *OfflineWithdrawMessage) GetTimeStamp() string {
+	if x != nil {
+		return x.TimeStamp
+	}
+	return ""
+}
+
+type SyncMessage struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Nonce              string                 `protobuf:"bytes,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	FromId             string                 `protobuf:"bytes,2,opt,name=from_id,json=fromId,proto3" json:"from_id,omitempty"`
+	ToId               string                 `protobuf:"bytes,3,opt,name=to_id,json=toId,proto3" json:"to_id,omitempty"`
+	Amount             int64                  `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
+	OfflineTransaction bool                   `protobuf:"varint,5,opt,name=offline_transaction,json=offlineTransaction,proto3" json:"offline_transaction,omitempty"`
+	TimeStamp          string                 `protobuf:"bytes,6,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *SyncMessage) Reset() {
+	*x = SyncMessage{}
+	mi := &file_ledgerserver_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncMessage) ProtoMessage() {}
+
+func (x *SyncMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_ledgerserver_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncMessage.ProtoReflect.Descriptor instead.
+func (*SyncMessage) Descriptor() ([]byte, []int) {
+	return file_ledgerserver_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *SyncMessage) GetNonce() string {
+	if x != nil {
+		return x.Nonce
+	}
+	return ""
+}
+
+func (x *SyncMessage) GetFromId() string {
+	if x != nil {
+		return x.FromId
+	}
+	return ""
+}
+
+func (x *SyncMessage) GetToId() string {
+	if x != nil {
+		return x.ToId
+	}
+	return ""
+}
+
+func (x *SyncMessage) GetAmount() int64 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+func (x *SyncMessage) GetOfflineTransaction() bool {
+	if x != nil {
+		return x.OfflineTransaction
+	}
+	return false
+}
+
+func (x *SyncMessage) GetTimeStamp() string {
+	if x != nil {
+		return x.TimeStamp
+	}
+	return ""
+}
+
 type Transaction struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        bool                   `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	TimeStamp     string                 `protobuf:"bytes,2,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
+	Hash          string                 `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Status        bool                   `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
 	FromWallet    string                 `protobuf:"bytes,3,opt,name=from_wallet,json=fromWallet,proto3" json:"from_wallet,omitempty"`
 	ToWallet      string                 `protobuf:"bytes,4,opt,name=to_wallet,json=toWallet,proto3" json:"to_wallet,omitempty"`
 	Amount        float32                `protobuf:"fixed32,5,opt,name=amount,proto3" json:"amount,omitempty"`
 	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
 	Nonce         string                 `protobuf:"bytes,7,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Hash          string                 `protobuf:"bytes,8,opt,name=hash,proto3" json:"hash,omitempty"`
+	TimeStamp     string                 `protobuf:"bytes,8,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Transaction) Reset() {
 	*x = Transaction{}
-	mi := &file_ledgerserver_proto_msgTypes[0]
+	mi := &file_ledgerserver_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -49,7 +382,7 @@ func (x *Transaction) String() string {
 func (*Transaction) ProtoMessage() {}
 
 func (x *Transaction) ProtoReflect() protoreflect.Message {
-	mi := &file_ledgerserver_proto_msgTypes[0]
+	mi := &file_ledgerserver_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +395,14 @@ func (x *Transaction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transaction.ProtoReflect.Descriptor instead.
 func (*Transaction) Descriptor() ([]byte, []int) {
-	return file_ledgerserver_proto_rawDescGZIP(), []int{0}
+	return file_ledgerserver_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *Transaction) GetHash() string {
+	if x != nil {
+		return x.Hash
+	}
+	return ""
 }
 
 func (x *Transaction) GetStatus() bool {
@@ -70,13 +410,6 @@ func (x *Transaction) GetStatus() bool {
 		return x.Status
 	}
 	return false
-}
-
-func (x *Transaction) GetTimeStamp() string {
-	if x != nil {
-		return x.TimeStamp
-	}
-	return ""
 }
 
 func (x *Transaction) GetFromWallet() string {
@@ -114,55 +447,11 @@ func (x *Transaction) GetNonce() string {
 	return ""
 }
 
-func (x *Transaction) GetHash() string {
+func (x *Transaction) GetTimeStamp() string {
 	if x != nil {
-		return x.Hash
+		return x.TimeStamp
 	}
 	return ""
-}
-
-type TransactionsBatch struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Transactions  []*Transaction         `protobuf:"bytes,1,rep,name=transactions,proto3" json:"transactions,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TransactionsBatch) Reset() {
-	*x = TransactionsBatch{}
-	mi := &file_ledgerserver_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TransactionsBatch) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TransactionsBatch) ProtoMessage() {}
-
-func (x *TransactionsBatch) ProtoReflect() protoreflect.Message {
-	mi := &file_ledgerserver_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TransactionsBatch.ProtoReflect.Descriptor instead.
-func (*TransactionsBatch) Descriptor() ([]byte, []int) {
-	return file_ledgerserver_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *TransactionsBatch) GetTransactions() []*Transaction {
-	if x != nil {
-		return x.Transactions
-	}
-	return nil
 }
 
 type ServerResponse struct {
@@ -174,7 +463,7 @@ type ServerResponse struct {
 
 func (x *ServerResponse) Reset() {
 	*x = ServerResponse{}
-	mi := &file_ledgerserver_proto_msgTypes[2]
+	mi := &file_ledgerserver_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -186,7 +475,7 @@ func (x *ServerResponse) String() string {
 func (*ServerResponse) ProtoMessage() {}
 
 func (x *ServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ledgerserver_proto_msgTypes[2]
+	mi := &file_ledgerserver_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -199,7 +488,7 @@ func (x *ServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerResponse.ProtoReflect.Descriptor instead.
 func (*ServerResponse) Descriptor() ([]byte, []int) {
-	return file_ledgerserver_proto_rawDescGZIP(), []int{2}
+	return file_ledgerserver_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ServerResponse) GetSuccess() bool {
@@ -213,24 +502,53 @@ var File_ledgerserver_proto protoreflect.FileDescriptor
 
 const file_ledgerserver_proto_rawDesc = "" +
 	"\n" +
-	"\x12ledgerserver.proto\x12\fLedgerServer\"\xde\x01\n" +
-	"\vTransaction\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\bR\x06status\x12\x1d\n" +
+	"\x12ledgerserver.proto\x12\fLedgerServer\x1a\x19google/protobuf/any.proto\"9\n" +
+	"\rBatchToAppend\x12(\n" +
+	"\x04logs\x18\x01 \x03(\v2\x14.google.protobuf.AnyR\x04logs\"\x83\x01\n" +
+	"\x15OfflineDepositMessage\x12\x1d\n" +
 	"\n" +
-	"time_stamp\x18\x02 \x01(\tR\ttimeStamp\x12\x1f\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12\x14\n" +
+	"\x05nonce\x18\x02 \x01(\tR\x05nonce\x12\x16\n" +
+	"\x06amount\x18\x03 \x01(\x03R\x06amount\x12\x1d\n" +
+	"\n" +
+	"time_stamp\x18\x04 \x01(\tR\ttimeStamp\"\x84\x01\n" +
+	"\x14CreateAccountMessage\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12\x14\n" +
+	"\x05nonce\x18\x02 \x01(\tR\x05nonce\x12\x18\n" +
+	"\abalance\x18\x03 \x01(\x03R\abalance\x12\x1d\n" +
+	"\n" +
+	"time_stamp\x18\x04 \x01(\tR\ttimeStamp\"\x84\x01\n" +
+	"\x16OfflineWithdrawMessage\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12\x14\n" +
+	"\x05nonce\x18\x02 \x01(\tR\x05nonce\x12\x16\n" +
+	"\x06amount\x18\x03 \x01(\x03R\x06amount\x12\x1d\n" +
+	"\n" +
+	"time_stamp\x18\x04 \x01(\tR\ttimeStamp\"\xb9\x01\n" +
+	"\vSyncMessage\x12\x14\n" +
+	"\x05nonce\x18\x01 \x01(\tR\x05nonce\x12\x17\n" +
+	"\afrom_id\x18\x02 \x01(\tR\x06fromId\x12\x13\n" +
+	"\x05to_id\x18\x03 \x01(\tR\x04toId\x12\x16\n" +
+	"\x06amount\x18\x04 \x01(\x03R\x06amount\x12/\n" +
+	"\x13offline_transaction\x18\x05 \x01(\bR\x12offlineTransaction\x12\x1d\n" +
+	"\n" +
+	"time_stamp\x18\x06 \x01(\tR\ttimeStamp\"\xde\x01\n" +
+	"\vTransaction\x12\x12\n" +
+	"\x04hash\x18\x01 \x01(\tR\x04hash\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\bR\x06status\x12\x1f\n" +
 	"\vfrom_wallet\x18\x03 \x01(\tR\n" +
 	"fromWallet\x12\x1b\n" +
 	"\tto_wallet\x18\x04 \x01(\tR\btoWallet\x12\x16\n" +
 	"\x06amount\x18\x05 \x01(\x02R\x06amount\x12\x18\n" +
 	"\amessage\x18\x06 \x01(\tR\amessage\x12\x14\n" +
-	"\x05nonce\x18\a \x01(\tR\x05nonce\x12\x12\n" +
-	"\x04hash\x18\b \x01(\tR\x04hash\"R\n" +
-	"\x11TransactionsBatch\x12=\n" +
-	"\ftransactions\x18\x01 \x03(\v2\x19.LedgerServer.TransactionR\ftransactions\"*\n" +
+	"\x05nonce\x18\a \x01(\tR\x05nonce\x12\x1d\n" +
+	"\n" +
+	"time_stamp\x18\b \x01(\tR\ttimeStamp\"*\n" +
 	"\x0eServerResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2e\n" +
-	"\x13TransactionsService\x12N\n" +
-	"\vBatchAppend\x12\x1f.LedgerServer.TransactionsBatch\x1a\x1c.LedgerServer.ServerResponse\"\x00B\x1fZ\x1dLedgerServer/api/ledgerserverb\x06proto3"
+	"\asuccess\x18\x01 \x01(\bR\asuccess2a\n" +
+	"\x13TransactionsService\x12J\n" +
+	"\vBatchAppend\x12\x1b.LedgerServer.BatchToAppend\x1a\x1c.LedgerServer.ServerResponse\"\x00B\x1fZ\x1dLedgerServer/api/ledgerserverb\x06proto3"
 
 var (
 	file_ledgerserver_proto_rawDescOnce sync.Once
@@ -244,16 +562,21 @@ func file_ledgerserver_proto_rawDescGZIP() []byte {
 	return file_ledgerserver_proto_rawDescData
 }
 
-var file_ledgerserver_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_ledgerserver_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_ledgerserver_proto_goTypes = []any{
-	(*Transaction)(nil),       // 0: LedgerServer.Transaction
-	(*TransactionsBatch)(nil), // 1: LedgerServer.TransactionsBatch
-	(*ServerResponse)(nil),    // 2: LedgerServer.ServerResponse
+	(*BatchToAppend)(nil),          // 0: LedgerServer.BatchToAppend
+	(*OfflineDepositMessage)(nil),  // 1: LedgerServer.OfflineDepositMessage
+	(*CreateAccountMessage)(nil),   // 2: LedgerServer.CreateAccountMessage
+	(*OfflineWithdrawMessage)(nil), // 3: LedgerServer.OfflineWithdrawMessage
+	(*SyncMessage)(nil),            // 4: LedgerServer.SyncMessage
+	(*Transaction)(nil),            // 5: LedgerServer.Transaction
+	(*ServerResponse)(nil),         // 6: LedgerServer.ServerResponse
+	(*anypb.Any)(nil),              // 7: google.protobuf.Any
 }
 var file_ledgerserver_proto_depIdxs = []int32{
-	0, // 0: LedgerServer.TransactionsBatch.transactions:type_name -> LedgerServer.Transaction
-	1, // 1: LedgerServer.TransactionsService.BatchAppend:input_type -> LedgerServer.TransactionsBatch
-	2, // 2: LedgerServer.TransactionsService.BatchAppend:output_type -> LedgerServer.ServerResponse
+	7, // 0: LedgerServer.BatchToAppend.logs:type_name -> google.protobuf.Any
+	0, // 1: LedgerServer.TransactionsService.BatchAppend:input_type -> LedgerServer.BatchToAppend
+	6, // 2: LedgerServer.TransactionsService.BatchAppend:output_type -> LedgerServer.ServerResponse
 	2, // [2:3] is the sub-list for method output_type
 	1, // [1:2] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -272,7 +595,7 @@ func file_ledgerserver_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ledgerserver_proto_rawDesc), len(file_ledgerserver_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

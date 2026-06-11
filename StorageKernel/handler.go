@@ -3,6 +3,9 @@ package main
 import (
 	ts "StorageKernel/proto/TransactionsStore"
 	pb "StorageKernel/proto/worldstate"
+	
+	ls "LedgerServer/api"        
+
 	"strconv"
 
 	"context"
@@ -15,6 +18,8 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+    "google.golang.org/protobuf/types/known/anypb"
 )
 
 type KernelHandler struct {
@@ -172,56 +177,70 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 
 // %%%%%%%%%%% END JUST TESTING %%%%%%%%%%%%
 
-func (h *KernelHandler) Store(ctx context.Context, req any) (*ts.StoreAck, error) {
-	fileName := "handler.go"
-	logger.Info(" - [" + fileName + "] - Storing Batch")
+func (h *KernelHandler) Store(ctx context.Context, req *anypb.Any) (*ts.StoreAck, error) {
+    fileName := "handler.go"
+    logger.Info(" - [" + fileName + "] - Storing Batch")
 
-	batchId, err := h.writeBatchToHDFS(req, fileName)
-	if err != nil {
-		return nil, err
-	}
+    batchId, err := h.writeBatchToHDFS(req, fileName)
+    if err != nil {
+        return nil, err
+    }
 
-	logger.Info(" - [" + fileName + "] - Successfully stored batch: " + batchId)
-	return &ts.StoreAck{
-		Success: true,
-		BatchId: batchId,
-	}, nil
+    logger.Info(" - [" + fileName + "] - Successfully stored batch: " + batchId)
+    return &ts.StoreAck{
+        Success: true,
+        BatchId: batchId,
+    }, nil
 }
 
-func (h *KernelHandler) writeBatchToHDFS(data any, fileName string) (string, error) {
-	logger.Info(" - [" + fileName + "] - Converting batch to JSON")
+func (h *KernelHandler) writeBatchToHDFS(req *anypb.Any, fileName string) (string, error) {
 
-	txData, err := json.Marshal(data)
-	if err != nil {
-		logger.Error(" - [" + fileName + "] - " + err.Error())
-		return "", status.Error(codes.Internal, "failed to marshal data")
-	}
+	var batch ls.BatchToAppend
+    if err := req.UnmarshalTo(&batch); err != nil {
+        logger.Error(" - [" + fileName + "] - failed to unmarshal batch: " + err.Error())
+        return "", status.Error(codes.Internal, "failed to unmarshal batch")
+    }
 
-	ledgerDir := "/ledger/transactions"
-	err = h.hdfs.MkdirAll(ledgerDir, 0755)
-	if err != nil {
-		logger.Error(" - [" + fileName + "] - failed to create hdfs dir: " + err.Error())
-		return "", status.Error(codes.Internal, "failed to create hdfs directory")
-	}
+    marshaler := protojson.MarshalOptions{EmitUnpopulated: false}
+    entries := make([]json.RawMessage, 0, len(batch.Logs))
 
-	batchId := fmt.Sprintf("batch_%d", time.Now().UnixNano())
-	filePath := fmt.Sprintf("%s/%s.json", ledgerDir, batchId)
+    for _, anyMsg := range batch.Logs {
+        jsonBytes, err := marshaler.Marshal(anyMsg)
+        if err != nil {
+            logger.Error(fmt.Sprintf(" - [%s] - failed to marshal entry: %v", fileName, err))
+            return "", status.Error(codes.Internal, "failed to marshal entry")
+        }
+        entries = append(entries, json.RawMessage(jsonBytes))
+    }
 
-	writer, err := h.hdfs.Create(filePath)
-	if err != nil {
-		logger.Error(" - [" + fileName + "] - failed to create file: " + err.Error())
-		return "", status.Error(codes.Internal, "failed to create file in HDFS")
-	}
-	defer writer.Close()
+    txData, err := json.Marshal(entries)
+    if err != nil {
+        logger.Error(" - [" + fileName + "] - failed to marshal JSON array: " + err.Error())
+        return "", status.Error(codes.Internal, "failed to marshal batch JSON")
+    }
 
-	_, err = writer.Write(txData)
-	if err != nil {
-		logger.Error(" - [" + fileName + "] - failed to write data: " + err.Error())
-		return "", status.Error(codes.Internal, "failed to write data to HDFS")
-	}
+    // Write to HDFS
+    ledgerDir := "/ledger/transactions"
+    batchId := fmt.Sprintf("batch_%d", time.Now().UnixNano())
+    filePath := fmt.Sprintf("%s/%s.json", ledgerDir, batchId)
 
-	logger.Info(" - [" + fileName + "] - Converted batch to JSON")
-	return batchId, nil
+    writer, err := h.hdfs.Create(filePath)
+    if err != nil {
+        logger.Error(" - [" + fileName + "] - failed to create file: " + err.Error())
+        return "", status.Error(codes.Internal, "failed to create file in HDFS")
+    }
+    defer func() {
+        if cerr := writer.Close(); cerr != nil {
+            logger.Error(" - [" + fileName + "] - failed to close writer: " + cerr.Error())
+        }
+    }()
+
+    if _, err = writer.Write(txData); err != nil {
+        logger.Error(" - [" + fileName + "] - failed to write data: " + err.Error())
+        return "", status.Error(codes.Internal, "failed to write data to HDFS")
+    }
+
+    return batchId, nil
 }
 
 // func (h *KernelHandler) generateReceipts(transactions []*ts.Transaction, fileName string) []*ts.TransactionReceipt {

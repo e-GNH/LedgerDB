@@ -1,27 +1,59 @@
 syntax = "proto3";
 
+import "google/protobuf/any.proto";
+
 option go_package = "LedgerServer/api/ledgerserver";
 
 package LedgerServer;
 
 // TransactionsService handles appending transaction batches from LedgerProxy
 service TransactionsService {
-    rpc BatchAppend(TransactionsBatch) returns (ServerResponse) {}
+    rpc BatchAppend(BatchToAppend) returns (ServerResponse) {}
+}
+
+message BatchToAppend {
+    repeated google.protobuf.Any logs = 1;
+}
+
+message OfflineDepositMessage {
+    string account_id = 1;
+    string nonce = 2;
+    int64 amount = 3;
+    string time_stamp = 4;
+}
+
+message CreateAccountMessage {
+    string account_id = 1;
+    string nonce = 2;
+    int64 balance = 3;
+    string time_stamp = 4;
+}
+
+message OfflineWithdrawMessage {
+    string account_id = 1;
+    string nonce = 2;
+    int64 amount = 3;
+    string time_stamp = 4;
+}
+
+message SyncMessage {
+    string nonce   = 1;
+    string from_id = 2;
+    string to_id   = 3;
+    int64  amount  = 4;
+    bool offline_transaction = 5;
+    string time_stamp = 6;
 }
 
 message Transaction {
-    bool   status      = 1;
-    string time_stamp  = 2;
+    string hash        = 1;
+    bool   status      = 2;
     string from_wallet = 3;
     string to_wallet   = 4;
     float  amount      = 5;
     string message     = 6;
     string nonce       = 7;
-    string hash        = 8;
-}
-
-message TransactionsBatch {
-    repeated Transaction transactions = 1;
+    string time_stamp  = 8;
 }
 
 message ServerResponse {

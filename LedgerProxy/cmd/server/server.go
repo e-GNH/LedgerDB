@@ -3,14 +3,17 @@ package main
 import (
 	"context"
 	"crypto/rsa"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"LedgerDB/services/logging"
 	pb "LedgerProxy/api"
@@ -61,19 +64,32 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	if msg != nil {
 		msg.Status = ok
 	}
-
 	if ok {
 		logger.Info("SECURITY SUCCESS: Pipeline passed!")
 	}
 
 	message := "Transaction rejected due to security"
-
 	if msg == nil {
+		return &pb.SecureResponse{Success: false, Message: message}, nil
+	}
+	tx := &ledgerserverpb.Transaction{
+		Status:     msg.Status,
+		TimeStamp:  msg.Timestamp.Format(time.RFC3339),
+		FromWallet: msg.From,
+		ToWallet:   msg.To,
+		Amount:     float32(msg.Amount),
+		Message:    msg.Message,
+		Nonce:      msg.Nonce,
+		Hash:       hex.EncodeToString(msg.Hash),
+	}
+	anyTx, err := anypb.New(tx)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to wrap transaction: %v", err))
 		return &pb.SecureResponse{Success: false, Message: message}, nil
 	}
 
 	logger.Info("WAL: writing to local disk")
-	if err := batching.SaveBatchItem(msg, s.LedgerServerClient); err != nil {
+	if err := batching.SaveBatchItem(anyTx, s.LedgerServerClient); err != nil {
 		logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
 	}
 
@@ -89,19 +105,33 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		if err != nil {
 			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 			msg.Status = false
-			og_message := msg.Message
-			msg.Message = "Undo transaction with Nonce " + msg.Nonce
-			batching.SaveBatchItem(msg, s.LedgerServerClient)
-			msg.Message = og_message
+
+			undoTx := &ledgerserverpb.Transaction{
+				Status:     false,
+				TimeStamp:  time.Now().Format(time.RFC3339),
+				FromWallet: msg.From,
+				ToWallet:   msg.To,
+				Amount:     float32(msg.Amount),
+				Message:    "Undo transaction with Nonce " + msg.Nonce,
+				Nonce:      msg.Nonce,
+				Hash:       hex.EncodeToString(msg.Hash),
+			}
+			anyUndo, err := anypb.New(undoTx)
+			if err != nil {
+				logger.Error(fmt.Sprintf("Failed to wrap undo transaction: %v", err))
+			} else {
+				batching.SaveBatchItem(anyUndo, s.LedgerServerClient)
+			}
 			batching.StreamReceipt(msg)
+
 			return &pb.SecureResponse{
 				Success: false,
 				Message: fmt.Sprintf("transfer failed: %v", err),
 			}, nil
 		}
+
 		msg.Status = true
 		batching.StreamReceipt(msg)
-
 		message = "Transaction validated & successfully added to world state"
 	}
 
@@ -111,12 +141,11 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*pb.SecureResponseList, error) {
 	logger.Info("--> Received Sync() request")
 
-	var msgs []types.LedgerSyncMessage
 	var responses []*pb.SecureResponse
 
 	for _, r := range req.Requests {
 		msg, ok := sec.VerifySecurity[types.SecureSyncMessage](
-			r.EncryptedData, 
+			r.EncryptedData,
 			s.myPrivKey,
 			s.bankKeys,
 		)
@@ -124,39 +153,51 @@ func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*
 		if msg == nil || !ok {
 			logger.Error("Failed to decrypt and verify message")
 			responses = append(responses, &pb.SecureResponse{
-                Success: false,
-                Message: "Failed to decrypt and verify message",
-            })
-            continue
+				Success: false,
+				Message: "Failed to decrypt and verify message",
+			})
+			continue
 		}
 
-		logger.Info(fmt.Sprintf("Verified %d messages", len(msgs)))
+		syncMsg := &ledgerserverpb.SyncMessage{
+			Nonce:               msg.Nonce,
+			FromId:              msg.From,
+			ToId:                msg.To,
+			Amount:              int64(msg.Amount),
+			OfflineTransaction:  true,
+			TimeStamp:           time.Now().Format(time.RFC3339),
+		}
+		anySync, err := anypb.New(syncMsg)
+		if err != nil {
+			logger.Error(fmt.Sprintf("Failed to wrap sync message: %v", err))
+			responses = append(responses, &pb.SecureResponse{Success: false, Message: "internal error"})
+			continue
+		}
 
-		// TODO: handle this
-		// logger.Info("WAL: writing to local disk")
-		// if err := batching.SaveBatchItem(msg, s.LedgerServerClient); err != nil {
-		// 	logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
-		// }
+		logger.Info("WAL: writing to local disk")
+		if err := batching.SaveBatchItem(anySync, s.LedgerServerClient); err != nil {
+			logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
+		}
 
 		logger.Info("Passing a sync transaction to the world state...")
 		resp, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
-			Nonce:     msg.Nonce,
-			FromId: msg.From,
-			ToId:   msg.To,
-			Amount:    int64(msg.Amount),
+			Nonce:              msg.Nonce,
+			FromId:             msg.From,
+			ToId:               msg.To,
+			Amount:             int64(msg.Amount),
 			OfflineTransaction: true,
 		})
-
 		if err != nil {
 			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+			responses = append(responses, &pb.SecureResponse{Success: false, Message: err.Error()})
+			continue
 		}
 
 		responses = append(responses, &pb.SecureResponse{
 			Success: resp.Ok,
 			Message: resp.Message,
 		})
-
-	}	
+	}
 
 	return &pb.SecureResponseList{Responses: responses}, nil
 }
@@ -166,19 +207,27 @@ func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequ
 
 	msg, ok := sec.VerifySecurity[types.SecureOfflineWithdrawMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 	if msg == nil || !ok {
-		return &pb.SecureResponse{
-			Success: false,
-			Message: "Failed to decrypt and verify message",
-		}, nil
+		return &pb.SecureResponse{Success: false, Message: "Failed to decrypt and verify message"}, nil
 	}
 
 	logger.Info("SECURITY SUCCESS: Pipeline passed!")
 
-	// TODO: Solve this issue
-	// logger.Info("WAL: writing to local disk")
-	// if err := batching.SaveBatchItem(msg, s.LedgerServerClient); err != nil {
-	// 	logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
-	// }
+	withdrawMsg := &ledgerserverpb.OfflineWithdrawMessage{
+		AccountId: msg.AccountId,
+		Amount:    msg.Amount,
+		Nonce:     msg.Nonce,
+		TimeStamp: time.Now().Format(time.RFC3339),
+	}
+	anyWithdraw, err := anypb.New(withdrawMsg)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to wrap withdraw message: %v", err))
+		return &pb.SecureResponse{Success: false, Message: "internal error"}, nil
+	}
+
+	logger.Info("WAL: writing to local disk")
+	if err := batching.SaveBatchItem(anyWithdraw, s.LedgerServerClient); err != nil {
+		logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
+	}
 
 	logger.Info("Passing transaction to world state...")
 	resp, err := s.kernelClient.OfflineWithdraw(ctx, &kernelpb.OfflineWithdrawRequest{
@@ -186,7 +235,6 @@ func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequ
 		AccountId: msg.AccountId,
 		Amount:    int64(msg.Amount),
 	})
-
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 	}
@@ -199,19 +247,27 @@ func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureReque
 
 	msg, ok := sec.VerifySecurity[types.SecureOfflineDepositMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 	if msg == nil || !ok {
-		return &pb.SecureResponse{
-			Success: false,
-			Message: "Failed to decrypt and verify message",
-		}, nil
+		return &pb.SecureResponse{Success: false, Message: "Failed to decrypt and verify message"}, nil
 	}
 
 	logger.Info("SECURITY SUCCESS: Pipeline passed!")
 
-	// TODO: Solve this issue
-	// logger.Info("WAL: writing to local disk")
-	// if err := batching.SaveBatchItem(msg, s.LedgerServerClient); err != nil {
-	// 	logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
-	// }
+	depositMsg := &ledgerserverpb.OfflineDepositMessage{
+		AccountId: msg.AccountId,
+		Amount:    msg.Amount,
+		Nonce:     msg.Nonce,
+		TimeStamp: time.Now().Format(time.RFC3339),
+	}
+	anyDeposit, err := anypb.New(depositMsg)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to wrap deposit message: %v", err))
+		return &pb.SecureResponse{Success: false, Message: "internal error"}, nil
+	}
+
+	logger.Info("WAL: writing to local disk")
+	if err := batching.SaveBatchItem(anyDeposit, s.LedgerServerClient); err != nil {
+		logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
+	}
 
 	logger.Info("Passing transaction to world state...")
 	resp, err := s.kernelClient.OfflineDeposit(ctx, &kernelpb.OfflineDepositRequest{
@@ -219,7 +275,6 @@ func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureReque
 		AccountId: msg.AccountId,
 		Amount:    int64(msg.Amount),
 	})
-
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 	}
@@ -232,19 +287,27 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 
 	msg, ok := sec.VerifySecurity[types.SecureCreateAccountMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 	if msg == nil || !ok {
-		return &pb.SecureResponse{
-			Success: false,
-			Message: "Failed to decrypt and verify message",
-		}, nil
+		return &pb.SecureResponse{Success: false, Message: "Failed to decrypt and verify message"}, nil
 	}
 
 	logger.Info("SECURITY SUCCESS: Pipeline passed!")
 
-	// TODO: Solve this issue
-	// logger.Info("WAL: writing to local disk")
-	// if err := batching.SaveBatchItem(msg, s.LedgerServerClient); err != nil {
-	// 	logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
-	// }
+	createMsg := &ledgerserverpb.CreateAccountMessage{
+		AccountId: msg.AccountId,
+		Balance:   msg.Balance,
+		Nonce:     msg.Nonce,
+		TimeStamp: time.Now().Format(time.RFC3339),
+	}
+	anyCreate, err := anypb.New(createMsg)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to wrap create account message: %v", err))
+		return &pb.SecureResponse{Success: false, Message: "internal error"}, nil
+	}
+
+	logger.Info("WAL: writing to local disk")
+	if err := batching.SaveBatchItem(anyCreate, s.LedgerServerClient); err != nil {
+		logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
+	}
 
 	logger.Info("Passing wallet to the world state...")
 	resp, err := s.kernelClient.CreateAccount(ctx, &kernelpb.CreateAccountRequest{
@@ -252,7 +315,6 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 		AccountId: msg.AccountId,
 		Balance:   int64(msg.Balance),
 	})
-
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected wallet creation: %v", err))
 	}
@@ -317,8 +379,6 @@ func main() {
 	defer storeConn.Close()
 
 	reg := NewBankRegistry()
-
-	// Wire the registry into the batching package
 	batching.SetRegistry(reg)
 
 	grpcServer := grpc.NewServer()

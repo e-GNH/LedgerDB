@@ -28,7 +28,7 @@ const (
 //
 // TransactionsService handles appending transaction batches from LedgerProxy
 type TransactionsServiceClient interface {
-	BatchAppend(ctx context.Context, in *TransactionsBatch, opts ...grpc.CallOption) (*ServerResponse, error)
+	BatchAppend(ctx context.Context, in *BatchToAppend, opts ...grpc.CallOption) (*ServerResponse, error)
 }
 
 type transactionsServiceClient struct {
@@ -39,7 +39,7 @@ func NewTransactionsServiceClient(cc grpc.ClientConnInterface) TransactionsServi
 	return &transactionsServiceClient{cc}
 }
 
-func (c *transactionsServiceClient) BatchAppend(ctx context.Context, in *TransactionsBatch, opts ...grpc.CallOption) (*ServerResponse, error) {
+func (c *transactionsServiceClient) BatchAppend(ctx context.Context, in *BatchToAppend, opts ...grpc.CallOption) (*ServerResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ServerResponse)
 	err := c.cc.Invoke(ctx, TransactionsService_BatchAppend_FullMethodName, in, out, cOpts...)
@@ -55,7 +55,7 @@ func (c *transactionsServiceClient) BatchAppend(ctx context.Context, in *Transac
 //
 // TransactionsService handles appending transaction batches from LedgerProxy
 type TransactionsServiceServer interface {
-	BatchAppend(context.Context, *TransactionsBatch) (*ServerResponse, error)
+	BatchAppend(context.Context, *BatchToAppend) (*ServerResponse, error)
 	mustEmbedUnimplementedTransactionsServiceServer()
 }
 
@@ -66,7 +66,7 @@ type TransactionsServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedTransactionsServiceServer struct{}
 
-func (UnimplementedTransactionsServiceServer) BatchAppend(context.Context, *TransactionsBatch) (*ServerResponse, error) {
+func (UnimplementedTransactionsServiceServer) BatchAppend(context.Context, *BatchToAppend) (*ServerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BatchAppend not implemented")
 }
 func (UnimplementedTransactionsServiceServer) mustEmbedUnimplementedTransactionsServiceServer() {}
@@ -91,7 +91,7 @@ func RegisterTransactionsServiceServer(s grpc.ServiceRegistrar, srv Transactions
 }
 
 func _TransactionsService_BatchAppend_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TransactionsBatch)
+	in := new(BatchToAppend)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func _TransactionsService_BatchAppend_Handler(srv interface{}, ctx context.Conte
 		FullMethod: TransactionsService_BatchAppend_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TransactionsServiceServer).BatchAppend(ctx, req.(*TransactionsBatch))
+		return srv.(TransactionsServiceServer).BatchAppend(ctx, req.(*BatchToAppend))
 	}
 	return interceptor(ctx, in, info, handler)
 }

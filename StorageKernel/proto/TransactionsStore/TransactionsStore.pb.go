@@ -22,150 +22,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Transaction struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        bool                   `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	FromWallet    string                 `protobuf:"bytes,2,opt,name=from_wallet,json=fromWallet,proto3" json:"from_wallet,omitempty"`
-	ToWallet      string                 `protobuf:"bytes,3,opt,name=to_wallet,json=toWallet,proto3" json:"to_wallet,omitempty"`
-	Amount        float32                `protobuf:"fixed32,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	Message       string                 `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
-	Nonce         string                 `protobuf:"bytes,6,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Hash          string                 `protobuf:"bytes,7,opt,name=hash,proto3" json:"hash,omitempty"`
-	TimeStamp     string                 `protobuf:"bytes,8,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Transaction) Reset() {
-	*x = Transaction{}
-	mi := &file_TransactionsStore_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Transaction) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Transaction) ProtoMessage() {}
-
-func (x *Transaction) ProtoReflect() protoreflect.Message {
-	mi := &file_TransactionsStore_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Transaction.ProtoReflect.Descriptor instead.
-func (*Transaction) Descriptor() ([]byte, []int) {
-	return file_TransactionsStore_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Transaction) GetStatus() bool {
-	if x != nil {
-		return x.Status
-	}
-	return false
-}
-
-func (x *Transaction) GetFromWallet() string {
-	if x != nil {
-		return x.FromWallet
-	}
-	return ""
-}
-
-func (x *Transaction) GetToWallet() string {
-	if x != nil {
-		return x.ToWallet
-	}
-	return ""
-}
-
-func (x *Transaction) GetAmount() float32 {
-	if x != nil {
-		return x.Amount
-	}
-	return 0
-}
-
-func (x *Transaction) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *Transaction) GetNonce() string {
-	if x != nil {
-		return x.Nonce
-	}
-	return ""
-}
-
-func (x *Transaction) GetHash() string {
-	if x != nil {
-		return x.Hash
-	}
-	return ""
-}
-
-func (x *Transaction) GetTimeStamp() string {
-	if x != nil {
-		return x.TimeStamp
-	}
-	return ""
-}
-
-type TransactionBatchRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Transactions  []*Transaction         `protobuf:"bytes,1,rep,name=transactions,proto3" json:"transactions,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TransactionBatchRequest) Reset() {
-	*x = TransactionBatchRequest{}
-	mi := &file_TransactionsStore_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TransactionBatchRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TransactionBatchRequest) ProtoMessage() {}
-
-func (x *TransactionBatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_TransactionsStore_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TransactionBatchRequest.ProtoReflect.Descriptor instead.
-func (*TransactionBatchRequest) Descriptor() ([]byte, []int) {
-	return file_TransactionsStore_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *TransactionBatchRequest) GetTransactions() []*Transaction {
-	if x != nil {
-		return x.Transactions
-	}
-	return nil
-}
-
 // Simple ack
 type StoreAck struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -177,7 +33,7 @@ type StoreAck struct {
 
 func (x *StoreAck) Reset() {
 	*x = StoreAck{}
-	mi := &file_TransactionsStore_proto_msgTypes[2]
+	mi := &file_TransactionsStore_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -189,7 +45,7 @@ func (x *StoreAck) String() string {
 func (*StoreAck) ProtoMessage() {}
 
 func (x *StoreAck) ProtoReflect() protoreflect.Message {
-	mi := &file_TransactionsStore_proto_msgTypes[2]
+	mi := &file_TransactionsStore_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -202,7 +58,7 @@ func (x *StoreAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoreAck.ProtoReflect.Descriptor instead.
 func (*StoreAck) Descriptor() ([]byte, []int) {
-	return file_TransactionsStore_proto_rawDescGZIP(), []int{2}
+	return file_TransactionsStore_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *StoreAck) GetSuccess() bool {
@@ -223,20 +79,7 @@ var File_TransactionsStore_proto protoreflect.FileDescriptor
 
 const file_TransactionsStore_proto_rawDesc = "" +
 	"\n" +
-	"\x17TransactionsStore.proto\x12\x11TransactionsStore\x1a\x19google/protobuf/any.proto\"\xde\x01\n" +
-	"\vTransaction\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\bR\x06status\x12\x1f\n" +
-	"\vfrom_wallet\x18\x02 \x01(\tR\n" +
-	"fromWallet\x12\x1b\n" +
-	"\tto_wallet\x18\x03 \x01(\tR\btoWallet\x12\x16\n" +
-	"\x06amount\x18\x04 \x01(\x02R\x06amount\x12\x18\n" +
-	"\amessage\x18\x05 \x01(\tR\amessage\x12\x14\n" +
-	"\x05nonce\x18\x06 \x01(\tR\x05nonce\x12\x12\n" +
-	"\x04hash\x18\a \x01(\tR\x04hash\x12\x1d\n" +
-	"\n" +
-	"time_stamp\x18\b \x01(\tR\ttimeStamp\"]\n" +
-	"\x17TransactionBatchRequest\x12B\n" +
-	"\ftransactions\x18\x01 \x03(\v2\x1e.TransactionsStore.TransactionR\ftransactions\"?\n" +
+	"\x17TransactionsStore.proto\x12\x11TransactionsStore\x1a\x19google/protobuf/any.proto\"?\n" +
 	"\bStoreAck\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x19\n" +
 	"\bbatch_id\x18\x02 \x01(\tR\abatchId2V\n" +
@@ -255,22 +98,19 @@ func file_TransactionsStore_proto_rawDescGZIP() []byte {
 	return file_TransactionsStore_proto_rawDescData
 }
 
-var file_TransactionsStore_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_TransactionsStore_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_TransactionsStore_proto_goTypes = []any{
-	(*Transaction)(nil),             // 0: TransactionsStore.Transaction
-	(*TransactionBatchRequest)(nil), // 1: TransactionsStore.TransactionBatchRequest
-	(*StoreAck)(nil),                // 2: TransactionsStore.StoreAck
-	(*anypb.Any)(nil),               // 3: google.protobuf.Any
+	(*StoreAck)(nil),  // 0: TransactionsStore.StoreAck
+	(*anypb.Any)(nil), // 1: google.protobuf.Any
 }
 var file_TransactionsStore_proto_depIdxs = []int32{
-	0, // 0: TransactionsStore.TransactionBatchRequest.transactions:type_name -> TransactionsStore.Transaction
-	3, // 1: TransactionsStore.TransactionsStoreService.Store:input_type -> google.protobuf.Any
-	2, // 2: TransactionsStore.TransactionsStoreService.Store:output_type -> TransactionsStore.StoreAck
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	1, // 0: TransactionsStore.TransactionsStoreService.Store:input_type -> google.protobuf.Any
+	0, // 1: TransactionsStore.TransactionsStoreService.Store:output_type -> TransactionsStore.StoreAck
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_TransactionsStore_proto_init() }
@@ -284,7 +124,7 @@ func file_TransactionsStore_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_TransactionsStore_proto_rawDesc), len(file_TransactionsStore_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

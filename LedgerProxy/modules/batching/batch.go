@@ -3,17 +3,20 @@ package batching
 import (
 	"bufio"
 	"context"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"os"
 	"sync"
-	"time"
+
+	"encoding/hex"
 
 	"LedgerDB/services/logging"
 	pb "LedgerProxy/api"
 	types "LedgerProxy/types"
 	ledgerserverpb "LedgerServer/api"
+
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // SendStream is the only method batching needs from a bank stream
@@ -40,7 +43,7 @@ func SetRegistry(r Registry) {
 	reg = r
 }
 
-func SaveBatchItem(item *types.SecureMessage, client ledgerserverpb.TransactionsServiceClient) error {
+func SaveBatchItem[T proto.Message](item T, client ledgerserverpb.TransactionsServiceClient) error {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -50,7 +53,7 @@ func SaveBatchItem(item *types.SecureMessage, client ledgerserverpb.Transactions
 
 	const filename = "ledger_batches.jsonl"
 
-	jsonData, err := json.Marshal(*item)
+	jsonData, err := protojson.Marshal(item)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to marshal batch item: %v", err))
 		return err
@@ -61,7 +64,6 @@ func SaveBatchItem(item *types.SecureMessage, client ledgerserverpb.Transactions
 		logger.Error(fmt.Sprintf("failed to open batch file: %v", err))
 		return err
 	}
-
 	if _, err := file.Write(append(jsonData, '\n')); err != nil {
 		logger.Error(fmt.Sprintf("failed to write to batch file: %v", err))
 		file.Close()
@@ -69,53 +71,65 @@ func SaveBatchItem(item *types.SecureMessage, client ledgerserverpb.Transactions
 	}
 	file.Close()
 
-	// Stream receipt to bank(s) immediately after WAL write
-	StreamReceipt(item)
-
-	count, err := getFileLineCount(filename)
+	lines, err := readFileLines(filename)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to get file line count: %v", err))
+		logger.Error(fmt.Sprintf("failed to read batch file: %v", err))
 		return err
 	}
 
-	if count >= batchSize {
-		batch, err := GetBatch()
-		if err != nil {
-			logger.Error(fmt.Sprintf("failed to get batch: %v", err))
+	if len(lines) >= batchSize {
+		if err := flushBatch(lines, filename); err != nil {
+			logger.Error(fmt.Sprintf("failed to flush batch: %v", err))
 			return err
-		}
-
-		grpcBatch := &ledgerserverpb.TransactionsBatch{}
-		for _, tx := range batch.Items {
-			grpcBatch.Transactions = append(grpcBatch.Transactions, &ledgerserverpb.Transaction{
-				Status:     tx.Status,
-				TimeStamp:  tx.Timestamp.Format(time.RFC3339),
-				FromWallet: tx.From,
-				ToWallet:   tx.To,
-				Amount:     float32(tx.Amount),
-				Message:    tx.Message,
-				Nonce:      tx.Nonce,
-				Hash:       hex.EncodeToString(tx.Hash),
-			})
-		}
-
-		res, err := LedgerServerClient.BatchAppend(context.Background(), grpcBatch)
-		if err != nil {
-			logger.Error(fmt.Sprintf("failed to send batch: %v", err))
-			return err
-		}
-		if !res.Success {
-			logger.Error("LedgerServer returned failure on BatchAppend")
-			return fmt.Errorf("batch append failed")
-		}
-
-		if err := os.Truncate(filename, 0); err != nil {
-			logger.Error(fmt.Sprintf("failed to clear batch file: %v", err))
-			return fmt.Errorf("failed to clear batch file: %v", err)
 		}
 	}
 
 	return nil
+}
+
+func flushBatch(lines []string, filename string) error {
+	batch := &ledgerserverpb.BatchToAppend{}
+
+	for _, line := range lines {
+		var anyMsg anypb.Any
+		if err := protojson.Unmarshal([]byte(line), &anyMsg); err != nil {
+			logger.Error(fmt.Sprintf("failed to unmarshal WAL line, skipping: %v", err))
+			continue
+		}
+		batch.Logs = append(batch.Logs, &anyMsg)
+	}
+
+	if len(batch.Logs) == 0 {
+		return nil
+	}
+
+	res, err := LedgerServerClient.BatchAppend(context.Background(), batch)
+	if err != nil {
+		return fmt.Errorf("failed to send batch: %w", err)
+	}
+	if !res.Success {
+		return fmt.Errorf("batch append failed")
+	}
+
+	return os.Truncate(filename, 0)
+}
+
+func readFileLines(filename string) ([]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line != "" {
+			lines = append(lines, line)
+		}
+	}
+	return lines, scanner.Err()
 }
 
 func StreamReceipt(item *types.SecureMessage) {
@@ -135,7 +149,7 @@ func StreamReceipt(item *types.SecureMessage) {
 		Amount:     float32(item.Amount),
 		Message:    item.Message,
 		Nonce:      item.Nonce,
-		TimeStamp:  item.Timestamp.Format(time.RFC3339),
+		TimeStamp:  item.Timestamp.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	sendReceipt(fromPrefix, receipt)
@@ -161,44 +175,4 @@ func walletPrefix(walletID string) string {
 		return walletID
 	}
 	return walletID[:3]
-}
-
-func getFileLineCount(filename string) (int, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return 0, err
-	}
-	defer file.Close()
-
-	count := 0
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		count++
-	}
-	return count, scanner.Err()
-}
-
-func GetBatch() (types.Batch, error) {
-	filename := "ledger_batches.jsonl"
-	var batch types.Batch
-
-	file, err := os.Open(filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return batch, nil
-		}
-		return batch, err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		var item types.SecureMessage
-		if err := json.Unmarshal(scanner.Bytes(), &item); err != nil {
-			continue
-		}
-		batch.Items = append(batch.Items, item)
-	}
-
-	return batch, scanner.Err()
 }
