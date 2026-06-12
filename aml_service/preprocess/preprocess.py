@@ -62,7 +62,7 @@ def compute_cycled_money(account):
 if __name__ == '__main__':
     start_time = time.time()
     cycled_money = {}
-    all_accounts = df["From_Account"].append(df["To_Account"]).unique()
+    all_accounts = set(df["From_Account"]).union(set(df["To_Account"]))
     total = len(all_accounts)
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         
