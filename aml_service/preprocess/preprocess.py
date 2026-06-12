@@ -72,6 +72,7 @@ if __name__ == '__main__':
             cycled_money[account] = cycled_amt
     print("Total time taken to compute cycled money for all accounts:", time.time() - start_time, "seconds")
     ## dump cycled_money to json
+    os.makedirs(os.path.join(BASE_DIR, 'output'), exist_ok=True)
     with open(os.path.join(BASE_DIR, 'output', 'cycled_money.json'), 'w') as f:
         json.dump(cycled_money, f)
     
@@ -79,4 +80,4 @@ if __name__ == '__main__':
     accounts_df["Cycled_Money"] = accounts_df["Account_ID"].map(cycled_money)
     accounts_df["Input_Money"] = accounts_df["Account_ID"].apply(lambda x: graph.get_input_money(x))
     accounts_df["Output_Money"] = accounts_df["Account_ID"].apply(lambda x: graph.get_output_money(x))
-    accounts_df.to_csv(('accounts_cycled_money.csv'), index=False)
+    accounts_df.to_csv(os.path.join(BASE_DIR, 'output', 'accounts_cycled_money.csv'), index=False)
