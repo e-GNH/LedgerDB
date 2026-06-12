@@ -81,7 +81,7 @@ class TransactionsGraph:
     
     def fast_get_money_cycled(self, account):
         remaining_capacity = {}
-        def dfs(node, target, path_length_threshold, curr_timestamp, paths, current_path):
+        def dfs(node, target, path_length_threshold, curr_timestamp, paths, current_path, visited):
             if path_length_threshold <= 0:
                 return
             if node == target:
@@ -89,18 +89,22 @@ class TransactionsGraph:
                 return
             for edge in self.graph.out_edges(node, data=True, keys=True):
                 u, v, key, data = edge
+                if v in visited:
+                    continue
                 if ((u, v, key) not in remaining_capacity):
                     remaining_capacity[(u, v, key)] = data['amount']
                 if curr_timestamp == 0 or data['timestamp'] >= curr_timestamp:
                     current_path.append((u , v, key))
-                    dfs(v, target, path_length_threshold - 1, data['timestamp'], paths, current_path)
-                    current_path.pop()     
+                    visited.add(node)
+                    dfs(v, target, path_length_threshold - 1, data['timestamp'], paths, current_path, visited)
+                    current_path.pop()
+                    visited.remove(node)
             return
         
         loops_total_received = 0
         for successor in set(self.graph.successors(account)): 
                 simple_paths = []
-                dfs(successor, account, self.LOOP_CUTOFF, 0, simple_paths, [])
+                dfs(successor, account, self.LOOP_CUTOFF, 0, simple_paths, [], set())
                 simple_paths = sorted(
                     list(simple_paths)
                     , key = len)
