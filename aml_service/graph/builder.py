@@ -21,22 +21,31 @@ class TransactionsGraph:
         self.graph.remove_nodes_from(list(nx.isolates(self.graph)))
     
     def get_indegree(self, account):
+        if account not in self.graph:
+            return 0
         return len(set(self.graph.predecessors(account)))
     
     def get_outdegree(self, account):
+        if account not in self.graph:
+            return 0
         return  len(set(self.graph.successors(account)))
     
     def get_input_money(self, account):
+        if account not in self.graph:
+            return 0
         return sum(data['amount'] for _, _, data in self.graph.in_edges(account, data=True))
     
     def get_output_money(self, account):
+        if account not in self.graph:
+            return 0
         return sum(data['amount'] for _, _, data in self.graph.out_edges(account, data=True))
     
     # TODO implement own version of all simple paths with pruning for timestamps to avoid generating all paths and then filtering them, which can be expensive
     # NOTE: This is an approximation and is affected by order of generated paths from networkx
     # Better than generating all paths with combinations of nodes then running full max flow algorithm to respect timing
     def get_money_cycled(self, account):
-                
+        if account not in self.graph:
+            return 0
         loops_total_received = 0
         remaining_capacity = {}
         for u, v, key, data in self.graph.edges(keys=True, data=True):
@@ -80,6 +89,8 @@ class TransactionsGraph:
         return self.graph.number_of_nodes()
     
     def fast_get_money_cycled(self, account):
+        if account not in self.graph:
+            return 0
         remaining_capacity = {}
         def dfs(node, target, path_length_threshold, curr_timestamp, paths, current_path, visited):
             if path_length_threshold <= 0:

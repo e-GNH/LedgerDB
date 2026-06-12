@@ -61,9 +61,9 @@ def compute_cycled_money(account):
 
 if __name__ == '__main__':
     start_time = time.time()
-    total = len(graph.graph.nodes)
     cycled_money = {}
-    all_accounts = list(graph.graph.nodes)
+    all_accounts = df["From_Account"].append(df["To_Account"]).unique()
+    total = len(all_accounts)
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         
         futures = [executor.submit(compute_cycled_money, acc) for acc in all_accounts]
