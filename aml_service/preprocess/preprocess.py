@@ -63,7 +63,7 @@ if __name__ == '__main__':
     total = len(graph.graph.nodes)
     cycled_money = {}
     all_accounts = list(graph.graph.nodes)
-    with concurrent.futures.ProcessPoolExecutor(num_workers=4) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         
         futures = [executor.submit(compute_cycled_money, acc) for acc in all_accounts]
         for future in tqdm(concurrent.futures.as_completed(futures), total=total):
