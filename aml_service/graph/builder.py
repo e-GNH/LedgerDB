@@ -6,6 +6,8 @@ class TransactionsGraph:
         self.LOOP_CUTOFF = 4
         
     def add_transaction(self, from_account, to_account, amount, timestamp):
+        if from_account == to_account:
+            return ## ignore self loops
         self.graph.add_edge(from_account, to_account, amount=amount, timestamp=timestamp)
      
     ## TODO: CALL that asynchronously with locks
