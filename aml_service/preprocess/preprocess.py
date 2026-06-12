@@ -15,6 +15,7 @@ from graph.builder import TransactionsGraph
 csv_path = "/Users/zeyaddaowd/Desktop/GP/LedgerDB/aml_service/IBM/amlWORLD/HI-Small_Trans.csv"
 import pandas as pd
 df = pd.read_csv(csv_path)
+df["Timestamp"] = pd.to_datetime(df["Timestamp"])
 df["From_Account"] = (
     df["From Bank"].astype("string")
     .str.cat(df["Account"].astype("string"), sep="_")
@@ -63,7 +64,7 @@ if __name__ == '__main__':
     total = len(graph.graph.nodes)
     cycled_money = {}
     all_accounts = list(graph.graph.nodes)
-    with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         
         futures = [executor.submit(compute_cycled_money, acc) for acc in all_accounts]
         for future in tqdm(concurrent.futures.as_completed(futures), total=total):
