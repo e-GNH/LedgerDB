@@ -101,7 +101,11 @@ class TransactionsGraph:
             return 0
         remaining_capacity = {}
         def dfs(node, target, path_length_threshold, curr_timestamp, current_path, visited, path_bottleneck):
-            if path_length_threshold <= 0:
+            if path_length_threshold <= 0 or path_bottleneck <= 0:
+                if path_bottleneck < 0:
+                    assert False, "path_bottleneck should never be negative"
+                if path_length_threshold < 0:
+                    assert False, "path_length_threshold should never be negative"
                 return 0
             if node == target:
                 for u, v, key in current_path:
@@ -127,6 +131,8 @@ class TransactionsGraph:
                     total_returned_from_path += current_path_cycled
                     current_path.pop()
                     visited.remove(node)
+                    if path_bottleneck <= 0:
+                        break
             return total_returned_from_path
         
         loops_total_received = 0
@@ -136,6 +142,9 @@ class TransactionsGraph:
             u, successor, key, data = edge 
             if ((u, successor, key) not in remaining_capacity):
                 remaining_capacity[(u, successor, key)] = data['amount']
-            loops_total_received += dfs(successor, account, self.LOOP_CUTOFF, data["timestamp"], [(u , successor, key)],  set(), data["amount"])
+            initial_bottleneck = remaining_capacity[(u, successor, key)]
+            if initial_bottleneck <= 0:
+                continue
+            loops_total_received += dfs(successor, account, self.LOOP_CUTOFF, data["timestamp"], [(u , successor, key)],  set(), initial_bottleneck)
            
         return loops_total_received
