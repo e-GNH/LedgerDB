@@ -3,6 +3,7 @@ import numpy as np
 class GargIndex:
     def __init__(self, df, key_from, key_to):
         edges = df[[key_from, key_to]]
+        edges = edges[edges[key_from] != edges[key_to]]  ## remove self loops
         edges = edges.drop_duplicates()
         self.garg_graph = nx.from_pandas_edgelist(edges, source=key_from, target=key_to, create_using=nx.Graph())
         self.communities = None
