@@ -114,24 +114,23 @@ class TransactionsGraph:
         
         loops_total_received = 0
         for successor in set(self.graph.successors(account)): 
+            for edge in self.graph.out_edges(account, data=True, keys=True):
+                u, v, key, data = edge
+                if v != successor:
+                    continue
                 simple_paths = []
-                dfs(successor, account, self.LOOP_CUTOFF, 0, simple_paths, [], set())
+                dfs(successor, account, self.LOOP_CUTOFF, data["timestamp"], simple_paths, [], set())
                 simple_paths = sorted(
                     list(simple_paths)
-                    , key = len)
-                successor_min_amount = sum(data['amount'] for _, dest, data in self.graph.out_edges(account, data=True) if dest == successor)
-                ## This will catch false positives where there are multiple transactions from account to successor
-                # but only one of them is part of a loop. 
-                # but it is okay to have false positives here because we care more about recall than precision in AML
-                # Case: A->B 1000 B->A 1500 A->B 500, this will return 1500 as amount cycled back 
-                # but it is better than missing other cases where A->B 1000 A->B 500 B->A 1500 which needs 1500 to be returned
-                successor_timestamp = min(data['timestamp'] for _, dest, data in self.graph.out_edges(account, data=True) if dest == successor)
-                remaining_source_capacity = successor_min_amount
+                    , key=lambda path: self.graph.get_edge_data(*path[-1])['timestamp']) ## sort paths by the timestamp of the last edge in the path, so that we can process the earliest paths first
+                edge_min_amount = data["amount"]
+                successor_current_timestamp = data["timestamp"]
+                remaining_source_capacity = edge_min_amount
                 for path in simple_paths:
                     if remaining_source_capacity <= 0:
                         break
                     min_amount = remaining_source_capacity ## initialize min_amount with the amount of the first transaction from account to successor, as this is the maximum amount that can be cycled back through this path
-                    timestamp = successor_timestamp ## initialize timestamp with the timestamp of the first transaction from account to successor
+                    timestamp = successor_current_timestamp ## initialize timestamp with the timestamp of the first transaction from account to successor
                     for u, v, key in path:
                         edge_data = self.graph.get_edge_data(u, v, key=key)
                         if edge_data['timestamp'] >= timestamp:
@@ -139,6 +138,7 @@ class TransactionsGraph:
                             timestamp = edge_data['timestamp']
                         else:
                             min_amount = 0
+                            assert False, f"DFS returned invalid path: edge {u}->{v} timestamp {edge_data['timestamp']} < {timestamp}"
                             break ## if we encounter an edge with timestamp older than the initial transaction, we can stop checking this path as it won't contribute to the loop amount
                     remaining_source_capacity -= min_amount
                     loops_total_received += min_amount
