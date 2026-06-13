@@ -92,56 +92,42 @@ class TransactionsGraph:
         if account not in self.graph:
             return 0
         remaining_capacity = {}
-        def dfs(node, target, path_length_threshold, curr_timestamp, paths, current_path, visited):
+        def dfs(node, target, path_length_threshold, curr_timestamp, current_path, visited, path_bottleneck):
             if path_length_threshold <= 0:
-                return
+                return 0
             if node == target:
-                paths.append(list(current_path))
-                return
-            for edge in self.graph.out_edges(node, data=True, keys=True):
+                for u, v, key in current_path:
+                    remaining_capacity[(u, v, key)] -= path_bottleneck
+                return path_bottleneck
+            edges_out = self.graph.out_edges(node, data=True, keys=True)
+            edges_out = sorted(edges_out, key=lambda x: x[3]['timestamp']) ## sort edges by timestamp to respect chronological order
+            total_returned_from_path = 0
+            for edge in edges_out:
                 u, v, key, data = edge
                 if v in visited:
                     continue
                 if ((u, v, key) not in remaining_capacity):
                     remaining_capacity[(u, v, key)] = data['amount']
-                if curr_timestamp == 0 or data['timestamp'] >= curr_timestamp:
+                edge_path_bottleneck = min(path_bottleneck, remaining_capacity[(u, v, key)])
+                if edge_path_bottleneck <= 0:
+                    continue
+                if data['timestamp'] >= curr_timestamp:
                     current_path.append((u , v, key))
                     visited.add(node)
-                    dfs(v, target, path_length_threshold - 1, data['timestamp'], paths, current_path, visited)
+                    current_path_cycled = dfs(v, target, path_length_threshold - 1, data['timestamp'], current_path, visited, edge_path_bottleneck)
+                    path_bottleneck -= current_path_cycled
+                    total_returned_from_path += current_path_cycled
                     current_path.pop()
                     visited.remove(node)
-            return
+            return total_returned_from_path
         
         loops_total_received = 0
-        for successor in set(self.graph.successors(account)): 
-            for edge in self.graph.out_edges(account, data=True, keys=True):
-                u, v, key, data = edge
-                if v != successor:
-                    continue
-                simple_paths = []
-                dfs(successor, account, self.LOOP_CUTOFF, data["timestamp"], simple_paths, [], set())
-                simple_paths = sorted(
-                    list(simple_paths)
-                    , key=lambda path: self.graph.get_edge_data(*path[-1])['timestamp']) ## sort paths by the timestamp of the last edge in the path, so that we can process the earliest paths first
-                edge_min_amount = data["amount"]
-                successor_current_timestamp = data["timestamp"]
-                remaining_source_capacity = edge_min_amount
-                for path in simple_paths:
-                    if remaining_source_capacity <= 0:
-                        break
-                    min_amount = remaining_source_capacity ## initialize min_amount with the amount of the first transaction from account to successor, as this is the maximum amount that can be cycled back through this path
-                    timestamp = successor_current_timestamp ## initialize timestamp with the timestamp of the first transaction from account to successor
-                    for u, v, key in path:
-                        edge_data = self.graph.get_edge_data(u, v, key=key)
-                        if edge_data['timestamp'] >= timestamp:
-                            min_amount = min(min_amount, remaining_capacity[(u, v, key)])
-                            timestamp = edge_data['timestamp']
-                        else:
-                            min_amount = 0
-                            assert False, f"DFS returned invalid path: edge {u}->{v} timestamp {edge_data['timestamp']} < {timestamp}"
-                            break ## if we encounter an edge with timestamp older than the initial transaction, we can stop checking this path as it won't contribute to the loop amount
-                    remaining_source_capacity -= min_amount
-                    loops_total_received += min_amount
-                    for u, v, key in path:
-                        remaining_capacity[(u, v, key)] -= min_amount
+        source_edges = self.graph.out_edges(account, data=True, keys=True)
+        source_edges = sorted(source_edges, key=lambda x: x[3]['timestamp']) ## sort edges by timestamp to respect chronological order
+        for edge in source_edges:
+            u, successor, key, data = edge 
+            if ((u, successor, key) not in remaining_capacity):
+                remaining_capacity[(u, successor, key)] = data['amount']
+            loops_total_received += dfs(successor, account, self.LOOP_CUTOFF, data["timestamp"], [(u , successor, key)],  set(), data["amount"])
+           
         return loops_total_received
