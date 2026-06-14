@@ -148,3 +148,6 @@ class TransactionsGraph:
             loops_total_received += dfs(successor, account, self.LOOP_CUTOFF, data["timestamp"], [(u , successor, key)],  set(), initial_bottleneck)
            
         return loops_total_received
+    
+    def get_accounts(self):
+        return self.graph.nodes()
