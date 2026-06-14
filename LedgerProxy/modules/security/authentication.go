@@ -160,7 +160,6 @@ func VerifySecurity[T any](encryptedData []byte, myPrivKey *rsa.PrivateKey, trus
 	}
 	log.Debug("Message is timely")
 
-	// Now unmarshal into the caller's desired type
 	var result T
 	if err := json.Unmarshal(unpacked.Data, &result); err != nil {
 		log.Error(fmt.Sprintf("Failed to unmarshal into target type: %v", err))
