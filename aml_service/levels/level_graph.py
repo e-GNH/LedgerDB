@@ -74,3 +74,6 @@ def check_account(account, account_type):
         if cycled_money >= limits["output_money_amount_check_cycles"] * limits["cycle_amount_percentage"]:
             return False, f"Output money cycled back to account exceeds threshold, {cycled_money} cycled back out of {account_output_money} total output money"
     return True, ""
+
+def get_graph():
+    return graph
