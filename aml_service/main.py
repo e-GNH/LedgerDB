@@ -109,7 +109,7 @@ def check_accounts():
                 })
         for account in level_3_results:
             result = level_3_results[account]
-            if not result[0]:  ## result[0] is the boolean indicating if the account passed level 3 check
+            if result[0]:  ## result[0] is the boolean indicating if the account is flagged in level 3 check
                 level_3_response.append({
                     "account": account,
                     "score": result[1]  ## result[1] is the score from the ML model
