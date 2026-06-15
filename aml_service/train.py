@@ -1,6 +1,4 @@
 import logging
-from cv2 import threshold
-import pandas as pd
 from datetime import datetime
 import json
 import sys
