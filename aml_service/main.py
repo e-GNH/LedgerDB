@@ -37,8 +37,8 @@ def check_transaction(transaction_data: Transaction):
         account_types[transaction["receiver"]] = transaction["receiver_account_type"]
         logger.info("Received transaction: %s", transaction)
         ok, reason = level_1_check_transaction(transaction)
-        
-        level_2_add_transaction(transaction)
+        if ok:
+            level_2_add_transaction(transaction)
         print("return result from level 1 check:", (ok, reason))
         
         return {

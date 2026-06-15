@@ -38,7 +38,7 @@ def check_transaction(transaction):
         
         receiver_output_money = graph.get_output_money(receiver)
         if receiver_output_money >= limits["output_money_amount_check_cycles"]:
-            cycled_money = graph.get_money_cycled(receiver)
+            cycled_money = graph.fast_get_money_cycled(receiver)
             if cycled_money >= limits["output_money_amount_check_cycles"] * limits["cycle_amount_percentage"]:
                 return False, f"Output money cycled back to receiver exceeds threshold, {cycled_money} cycled back out of {receiver_output_money} total output money"
         
@@ -70,7 +70,7 @@ def check_account(account, account_type):
     
     account_output_money = graph.get_output_money(account)
     if account_output_money >= limits["output_money_amount_check_cycles"]:
-        cycled_money = graph.get_money_cycled(account)
+        cycled_money = graph.fast_get_money_cycled(account)
         if cycled_money >= limits["output_money_amount_check_cycles"] * limits["cycle_amount_percentage"]:
             return False, f"Output money cycled back to account exceeds threshold, {cycled_money} cycled back out of {account_output_money} total output money"
     return True, ""

@@ -82,7 +82,7 @@ class TransactionsGraph:
                     
                     for u, v, key in path:
                         remaining_capacity[(u, v, key)] -= min_amount
-        
+
         return loops_total_received
     
     def get_nodes(self):
@@ -146,7 +146,7 @@ class TransactionsGraph:
             if initial_bottleneck <= 0:
                 continue
             loops_total_received += dfs(successor, account, self.LOOP_CUTOFF, data["timestamp"], [(u , successor, key)],  set(), initial_bottleneck)
-           
+
         return loops_total_received
     
     def get_accounts(self):
