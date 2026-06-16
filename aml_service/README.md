@@ -114,3 +114,6 @@ if not is_valid_graph:
 **https://arxiv.org/pdf/2112.07508**
 **https://arxiv.org/pdf/2405.19383v1**
 
+## How to run service
+`uvicorn main:app --reload`
+
