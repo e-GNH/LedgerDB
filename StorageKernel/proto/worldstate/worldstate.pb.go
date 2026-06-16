@@ -7,12 +7,11 @@
 package worldstate
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -379,6 +378,7 @@ type CreateAccountRequest struct {
 	Nonce         string                 `protobuf:"bytes,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	AccountId     string                 `protobuf:"bytes,2,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	Balance       int64                  `protobuf:"varint,3,opt,name=balance,proto3" json:"balance,omitempty"`
+	Tier          string                 `protobuf:"bytes,4,opt,name=tier,proto3" json:"tier,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -432,6 +432,13 @@ func (x *CreateAccountRequest) GetBalance() int64 {
 		return x.Balance
 	}
 	return 0
+}
+
+func (x *CreateAccountRequest) GetTier() string {
+	if x != nil {
+		return x.Tier
+	}
+	return ""
 }
 
 type CreateAccountResponse struct {
@@ -516,12 +523,13 @@ const file_worldstate_proto_rawDesc = "" +
 	"\x06amount\x18\x03 \x01(\x03R\x06amount\"B\n" +
 	"\x16OfflineDepositResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"e\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"y\n" +
 	"\x14CreateAccountRequest\x12\x14\n" +
 	"\x05nonce\x18\x01 \x01(\tR\x05nonce\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x02 \x01(\tR\taccountId\x12\x18\n" +
-	"\abalance\x18\x03 \x01(\x03R\abalance\"A\n" +
+	"\abalance\x18\x03 \x01(\x03R\abalance\x12\x12\n" +
+	"\x04tier\x18\x04 \x01(\tR\x04tier\"A\n" +
 	"\x15CreateAccountResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage2\xe5\x02\n" +

@@ -47,6 +47,7 @@ message CreateAccountRequest {
   string nonce   = 1;
   string account_id = 2;
   int64  balance  = 3;
+  string tier = 4;
 }
 message CreateAccountResponse {
   bool   ok      = 1;

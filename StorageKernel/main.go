@@ -55,10 +55,10 @@ func main() {
 
 	h := &KernelHandler{hdfs: ts_server, rdb: rdb}
 
-	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123s456", AccountId: "000_wallet_A", Balance: 100}); err != nil { // Shall be from onboarding
+	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123s456", AccountId: "000_wallet_A", Balance: 100, Tier: "individual"}); err != nil { // Shall be from onboarding
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123457", AccountId: "001_wallet_B", Balance: 100}); err != nil {
+	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123457", AccountId: "001_wallet_B", Balance: 100, Tier: "individual"}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
 	// test_transfer(h, false)

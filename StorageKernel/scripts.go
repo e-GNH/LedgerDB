@@ -102,7 +102,9 @@ var createAccountScript = redis.NewScript(`
 	-- KEYS[1] = nonce key
 	-- KEYS[2] = account key
 	-- ARGV[1] = balance
+	-- ARGV[2] = tier
 	local balance  = tonumber(ARGV[1])
+	local tier = ARGV[2]
 	if balance < 0 then
 		return {err="INVALID_BALANCE"}
 	end
@@ -115,7 +117,9 @@ var createAccountScript = redis.NewScript(`
 	redis.call("HSET", KEYS[2],
 		"balance", balance,
 		"pending", 0,
-		"offline", 0
+		"offline", 0,
+		"tier", tier,
+		"status", "active"
 	)
 	redis.call("SET",     KEYS[1], 1)
 	local seq = redis.call("INCR", "global:sequence")

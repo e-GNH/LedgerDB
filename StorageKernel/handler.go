@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
+	"slices"
 	"github.com/colinmarc/hdfs/v2"
 	"github.com/redis/go-redis/v9"
 
@@ -28,15 +28,23 @@ type KernelHandler struct {
 	ts.UnimplementedTransactionsStoreServiceServer
 	hdfs *hdfs.Client
 }
-
+var ValidTiers = []string {"individual", "business"}
 func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
 	keys := []string{
 		"nonce:" + req.Nonce,
 		"account:" + req.AccountId,
 	}
-	logger.Info(" - [" + file_name + "] - Account Creation with balance " + fmt.Sprint(req.Balance) + " For " + req.AccountId)
+	if !slices.Contains(ValidTiers, req.Tier) {
+		logger.Error(" - [" + file_name + "] - Invalid tier: " + req.Tier)
+		return nil, status.Error(codes.InvalidArgument, "invalid tier")
+	}
+	values := []string{
+		fmt.Sprint(req.Balance),
+		req.Tier,
+	}
+	logger.Info(" - [" + file_name + "] - Account Creation with balance " + fmt.Sprint(req.Balance) + " For " + req.AccountId + " with tier " + req.Tier)
 
-	res, err := createAccountScript.Run(ctx, h.rdb, keys, req.Balance).Slice()
+	res, err := createAccountScript.Run(ctx, h.rdb, keys, values).Slice()
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 		return nil, mapGrpcError(err)
