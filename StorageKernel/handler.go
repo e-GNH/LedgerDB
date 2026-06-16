@@ -122,6 +122,49 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 	logger.Info(" - [" + file_name + "] - Transfer committed " + fmt.Sprint(sequence))
 	return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
 }
+func (h *KernelHandler) ChangeAccountStatus(ctx context.Context, req *pb.ChangeAccountStatusRequest) (*pb.ChangeAccountStatusResponse, error) {
+	keys := []string{
+		"account:" + req.AccountId,
+	}
+
+	logger.Info(" - [" + file_name + "] - Account Status Update for " + req.AccountId + " to " + req.Status)
+
+	res, err := changeAccountStatusScript.Run(ctx, h.rdb, keys, req.Status).Slice()
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+		return nil, mapGrpcError(err)
+	}
+	if len(res) != 2 {
+		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
+		return nil, status.Error(codes.Internal, "unexpected script result")
+	}
+	sequence := res[1]
+	logger.Info(" - [" + file_name + "] - Account " + req.AccountId + " status updated, sequence: " + fmt.Sprint(sequence))
+	return &pb.ChangeAccountStatusResponse{Ok: true, Message: "Account status updated, sequence: " + fmt.Sprint(sequence)}, nil
+}
+func (h *KernelHandler) GetAccountsTier(ctx context.Context, req *pb.GetAccountsTierRequest) (*pb.GetAccountsTierResponse, error) {
+	keys := []string{
+		"account:" + req.SenderAccountId,
+		"account:" + req.ReceiverAccountId,
+	}
+	logger.Info(" - [" + file_name + "] - Account Tier Request for " + req.SenderAccountId + " and " + req.ReceiverAccountId)
+
+	res, err := getAccountsTierScript.Run(ctx, h.rdb, keys).Slice()
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+		return nil, mapGrpcError(err)
+	}
+	if len(res) != 2 {
+		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
+		return nil, status.Error(codes.Internal, "unexpected script result")
+	}
+	tiers := []string{
+		fmt.Sprint(res[0]),
+		fmt.Sprint(res[1]),
+	}
+	logger.Info(" - [" + file_name + "] - Account " + req.SenderAccountId + " tier is " + tiers[0] + " and Account " + req.ReceiverAccountId + " tier is " + tiers[1])
+	return &pb.GetAccountsTierResponse{Ok: true, Message: "Accounts' tier received", SenderTier: tiers[0], ReceiverTier: tiers[1]}, nil
+}
 
 // %%%%%%%%%%%% JUST TESTING %%%%%%%%%%%%%
 // func (h *KernelHandler) StoreBatch(transactions []*ts.Transaction, fileName string) ([]*ts.TransactionReceipt, bool, error) {

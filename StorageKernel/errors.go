@@ -18,6 +18,7 @@ var (
 	ErrInvalidBalance     = errors.New("INVALID_BALANCE")             // For account creation
 	ErrFromAccountBanned  = errors.New("FROM_ACCOUNT_BANNED")        // For transfer
 	ErrToAccountBanned    = errors.New("TO_ACCOUNT_BANNED")          // For transfer
+	ErrInvalidStatus      = errors.New("INVALID_STATUS")              // For flagging/banning/unbanning accounts
 )
 
 func mapLuaError(err error) error {
@@ -45,6 +46,8 @@ func mapLuaError(err error) error {
 		return ErrFromAccountBanned
 	case "TO_ACCOUNT_BANNED":
 		return ErrToAccountBanned
+	case "INVALID_STATUS":
+		return ErrInvalidStatus
 	default:
 		return err
 	}

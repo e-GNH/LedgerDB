@@ -19,10 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WorldStateService_Transfer_FullMethodName        = "/worldstate.WorldStateService/Transfer"
-	WorldStateService_OfflineWithdraw_FullMethodName = "/worldstate.WorldStateService/OfflineWithdraw"
-	WorldStateService_OfflineDeposit_FullMethodName  = "/worldstate.WorldStateService/OfflineDeposit"
-	WorldStateService_CreateAccount_FullMethodName   = "/worldstate.WorldStateService/CreateAccount"
+	WorldStateService_Transfer_FullMethodName            = "/worldstate.WorldStateService/Transfer"
+	WorldStateService_OfflineWithdraw_FullMethodName     = "/worldstate.WorldStateService/OfflineWithdraw"
+	WorldStateService_OfflineDeposit_FullMethodName      = "/worldstate.WorldStateService/OfflineDeposit"
+	WorldStateService_CreateAccount_FullMethodName       = "/worldstate.WorldStateService/CreateAccount"
+	WorldStateService_ChangeAccountStatus_FullMethodName = "/worldstate.WorldStateService/ChangeAccountStatus"
+	WorldStateService_GetAccountsTier_FullMethodName     = "/worldstate.WorldStateService/GetAccountsTier"
 )
 
 // WorldStateServiceClient is the client API for WorldStateService service.
@@ -33,6 +35,8 @@ type WorldStateServiceClient interface {
 	OfflineWithdraw(ctx context.Context, in *OfflineWithdrawRequest, opts ...grpc.CallOption) (*OfflineWithdrawResponse, error)
 	OfflineDeposit(ctx context.Context, in *OfflineDepositRequest, opts ...grpc.CallOption) (*OfflineDepositResponse, error)
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
+	ChangeAccountStatus(ctx context.Context, in *ChangeAccountStatusRequest, opts ...grpc.CallOption) (*ChangeAccountStatusResponse, error)
+	GetAccountsTier(ctx context.Context, in *GetAccountsTierRequest, opts ...grpc.CallOption) (*GetAccountsTierResponse, error)
 }
 
 type worldStateServiceClient struct {
@@ -83,6 +87,26 @@ func (c *worldStateServiceClient) CreateAccount(ctx context.Context, in *CreateA
 	return out, nil
 }
 
+func (c *worldStateServiceClient) ChangeAccountStatus(ctx context.Context, in *ChangeAccountStatusRequest, opts ...grpc.CallOption) (*ChangeAccountStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChangeAccountStatusResponse)
+	err := c.cc.Invoke(ctx, WorldStateService_ChangeAccountStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *worldStateServiceClient) GetAccountsTier(ctx context.Context, in *GetAccountsTierRequest, opts ...grpc.CallOption) (*GetAccountsTierResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAccountsTierResponse)
+	err := c.cc.Invoke(ctx, WorldStateService_GetAccountsTier_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorldStateServiceServer is the server API for WorldStateService service.
 // All implementations must embed UnimplementedWorldStateServiceServer
 // for forward compatibility.
@@ -91,6 +115,8 @@ type WorldStateServiceServer interface {
 	OfflineWithdraw(context.Context, *OfflineWithdrawRequest) (*OfflineWithdrawResponse, error)
 	OfflineDeposit(context.Context, *OfflineDepositRequest) (*OfflineDepositResponse, error)
 	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
+	ChangeAccountStatus(context.Context, *ChangeAccountStatusRequest) (*ChangeAccountStatusResponse, error)
+	GetAccountsTier(context.Context, *GetAccountsTierRequest) (*GetAccountsTierResponse, error)
 	mustEmbedUnimplementedWorldStateServiceServer()
 }
 
@@ -112,6 +138,12 @@ func (UnimplementedWorldStateServiceServer) OfflineDeposit(context.Context, *Off
 }
 func (UnimplementedWorldStateServiceServer) CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateAccount not implemented")
+}
+func (UnimplementedWorldStateServiceServer) ChangeAccountStatus(context.Context, *ChangeAccountStatusRequest) (*ChangeAccountStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ChangeAccountStatus not implemented")
+}
+func (UnimplementedWorldStateServiceServer) GetAccountsTier(context.Context, *GetAccountsTierRequest) (*GetAccountsTierResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAccountsTier not implemented")
 }
 func (UnimplementedWorldStateServiceServer) mustEmbedUnimplementedWorldStateServiceServer() {}
 func (UnimplementedWorldStateServiceServer) testEmbeddedByValue()                           {}
@@ -206,6 +238,42 @@ func _WorldStateService_CreateAccount_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorldStateService_ChangeAccountStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeAccountStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldStateServiceServer).ChangeAccountStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldStateService_ChangeAccountStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldStateServiceServer).ChangeAccountStatus(ctx, req.(*ChangeAccountStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorldStateService_GetAccountsTier_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccountsTierRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldStateServiceServer).GetAccountsTier(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldStateService_GetAccountsTier_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldStateServiceServer).GetAccountsTier(ctx, req.(*GetAccountsTierRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorldStateService_ServiceDesc is the grpc.ServiceDesc for WorldStateService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +296,14 @@ var WorldStateService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateAccount",
 			Handler:    _WorldStateService_CreateAccount_Handler,
+		},
+		{
+			MethodName: "ChangeAccountStatus",
+			Handler:    _WorldStateService_ChangeAccountStatus_Handler,
+		},
+		{
+			MethodName: "GetAccountsTier",
+			Handler:    _WorldStateService_GetAccountsTier_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -493,6 +493,230 @@ func (x *CreateAccountResponse) GetMessage() string {
 	return ""
 }
 
+type ChangeAccountStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeAccountStatusRequest) Reset() {
+	*x = ChangeAccountStatusRequest{}
+	mi := &file_worldstate_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeAccountStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeAccountStatusRequest) ProtoMessage() {}
+
+func (x *ChangeAccountStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worldstate_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeAccountStatusRequest.ProtoReflect.Descriptor instead.
+func (*ChangeAccountStatusRequest) Descriptor() ([]byte, []int) {
+	return file_worldstate_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ChangeAccountStatusRequest) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *ChangeAccountStatusRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type ChangeAccountStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ok            bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeAccountStatusResponse) Reset() {
+	*x = ChangeAccountStatusResponse{}
+	mi := &file_worldstate_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeAccountStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeAccountStatusResponse) ProtoMessage() {}
+
+func (x *ChangeAccountStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worldstate_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeAccountStatusResponse.ProtoReflect.Descriptor instead.
+func (*ChangeAccountStatusResponse) Descriptor() ([]byte, []int) {
+	return file_worldstate_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ChangeAccountStatusResponse) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *ChangeAccountStatusResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type GetAccountsTierRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	SenderAccountId   string                 `protobuf:"bytes,1,opt,name=sender_account_id,json=senderAccountId,proto3" json:"sender_account_id,omitempty"`
+	ReceiverAccountId string                 `protobuf:"bytes,2,opt,name=receiver_account_id,json=receiverAccountId,proto3" json:"receiver_account_id,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *GetAccountsTierRequest) Reset() {
+	*x = GetAccountsTierRequest{}
+	mi := &file_worldstate_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAccountsTierRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAccountsTierRequest) ProtoMessage() {}
+
+func (x *GetAccountsTierRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worldstate_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAccountsTierRequest.ProtoReflect.Descriptor instead.
+func (*GetAccountsTierRequest) Descriptor() ([]byte, []int) {
+	return file_worldstate_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetAccountsTierRequest) GetSenderAccountId() string {
+	if x != nil {
+		return x.SenderAccountId
+	}
+	return ""
+}
+
+func (x *GetAccountsTierRequest) GetReceiverAccountId() string {
+	if x != nil {
+		return x.ReceiverAccountId
+	}
+	return ""
+}
+
+type GetAccountsTierResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ok            bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	SenderTier    string                 `protobuf:"bytes,3,opt,name=sender_tier,json=senderTier,proto3" json:"sender_tier,omitempty"`
+	ReceiverTier  string                 `protobuf:"bytes,4,opt,name=receiver_tier,json=receiverTier,proto3" json:"receiver_tier,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAccountsTierResponse) Reset() {
+	*x = GetAccountsTierResponse{}
+	mi := &file_worldstate_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAccountsTierResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAccountsTierResponse) ProtoMessage() {}
+
+func (x *GetAccountsTierResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worldstate_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAccountsTierResponse.ProtoReflect.Descriptor instead.
+func (*GetAccountsTierResponse) Descriptor() ([]byte, []int) {
+	return file_worldstate_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetAccountsTierResponse) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *GetAccountsTierResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *GetAccountsTierResponse) GetSenderTier() string {
+	if x != nil {
+		return x.SenderTier
+	}
+	return ""
+}
+
+func (x *GetAccountsTierResponse) GetReceiverTier() string {
+	if x != nil {
+		return x.ReceiverTier
+	}
+	return ""
+}
+
 var File_worldstate_proto protoreflect.FileDescriptor
 
 const file_worldstate_proto_rawDesc = "" +
@@ -532,12 +756,30 @@ const file_worldstate_proto_rawDesc = "" +
 	"\x04tier\x18\x04 \x01(\tR\x04tier\"A\n" +
 	"\x15CreateAccountResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xe5\x02\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"S\n" +
+	"\x1aChangeAccountStatusRequest\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\"G\n" +
+	"\x1bChangeAccountStatusResponse\x12\x0e\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"t\n" +
+	"\x16GetAccountsTierRequest\x12*\n" +
+	"\x11sender_account_id\x18\x01 \x01(\tR\x0fsenderAccountId\x12.\n" +
+	"\x13receiver_account_id\x18\x02 \x01(\tR\x11receiverAccountId\"\x89\x01\n" +
+	"\x17GetAccountsTierResponse\x12\x0e\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1f\n" +
+	"\vsender_tier\x18\x03 \x01(\tR\n" +
+	"senderTier\x12#\n" +
+	"\rreceiver_tier\x18\x04 \x01(\tR\freceiverTier2\xa9\x04\n" +
 	"\x11WorldStateService\x12E\n" +
 	"\bTransfer\x12\x1b.worldstate.TransferRequest\x1a\x1c.worldstate.TransferResponse\x12Z\n" +
 	"\x0fOfflineWithdraw\x12\".worldstate.OfflineWithdrawRequest\x1a#.worldstate.OfflineWithdrawResponse\x12W\n" +
 	"\x0eOfflineDeposit\x12!.worldstate.OfflineDepositRequest\x1a\".worldstate.OfflineDepositResponse\x12T\n" +
-	"\rCreateAccount\x12 .worldstate.CreateAccountRequest\x1a!.worldstate.CreateAccountResponseB Z\x1eStorageKernel/proto/worldstateb\x06proto3"
+	"\rCreateAccount\x12 .worldstate.CreateAccountRequest\x1a!.worldstate.CreateAccountResponse\x12f\n" +
+	"\x13ChangeAccountStatus\x12&.worldstate.ChangeAccountStatusRequest\x1a'.worldstate.ChangeAccountStatusResponse\x12Z\n" +
+	"\x0fGetAccountsTier\x12\".worldstate.GetAccountsTierRequest\x1a#.worldstate.GetAccountsTierResponseB Z\x1eStorageKernel/proto/worldstateb\x06proto3"
 
 var (
 	file_worldstate_proto_rawDescOnce sync.Once
@@ -551,31 +793,39 @@ func file_worldstate_proto_rawDescGZIP() []byte {
 	return file_worldstate_proto_rawDescData
 }
 
-var file_worldstate_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_worldstate_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_worldstate_proto_goTypes = []any{
-	(*TransferRequest)(nil),         // 0: worldstate.TransferRequest
-	(*TransferResponse)(nil),        // 1: worldstate.TransferResponse
-	(*OfflineWithdrawRequest)(nil),  // 2: worldstate.OfflineWithdrawRequest
-	(*OfflineWithdrawResponse)(nil), // 3: worldstate.OfflineWithdrawResponse
-	(*OfflineDepositRequest)(nil),   // 4: worldstate.OfflineDepositRequest
-	(*OfflineDepositResponse)(nil),  // 5: worldstate.OfflineDepositResponse
-	(*CreateAccountRequest)(nil),    // 6: worldstate.CreateAccountRequest
-	(*CreateAccountResponse)(nil),   // 7: worldstate.CreateAccountResponse
+	(*TransferRequest)(nil),             // 0: worldstate.TransferRequest
+	(*TransferResponse)(nil),            // 1: worldstate.TransferResponse
+	(*OfflineWithdrawRequest)(nil),      // 2: worldstate.OfflineWithdrawRequest
+	(*OfflineWithdrawResponse)(nil),     // 3: worldstate.OfflineWithdrawResponse
+	(*OfflineDepositRequest)(nil),       // 4: worldstate.OfflineDepositRequest
+	(*OfflineDepositResponse)(nil),      // 5: worldstate.OfflineDepositResponse
+	(*CreateAccountRequest)(nil),        // 6: worldstate.CreateAccountRequest
+	(*CreateAccountResponse)(nil),       // 7: worldstate.CreateAccountResponse
+	(*ChangeAccountStatusRequest)(nil),  // 8: worldstate.ChangeAccountStatusRequest
+	(*ChangeAccountStatusResponse)(nil), // 9: worldstate.ChangeAccountStatusResponse
+	(*GetAccountsTierRequest)(nil),      // 10: worldstate.GetAccountsTierRequest
+	(*GetAccountsTierResponse)(nil),     // 11: worldstate.GetAccountsTierResponse
 }
 var file_worldstate_proto_depIdxs = []int32{
-	0, // 0: worldstate.WorldStateService.Transfer:input_type -> worldstate.TransferRequest
-	2, // 1: worldstate.WorldStateService.OfflineWithdraw:input_type -> worldstate.OfflineWithdrawRequest
-	4, // 2: worldstate.WorldStateService.OfflineDeposit:input_type -> worldstate.OfflineDepositRequest
-	6, // 3: worldstate.WorldStateService.CreateAccount:input_type -> worldstate.CreateAccountRequest
-	1, // 4: worldstate.WorldStateService.Transfer:output_type -> worldstate.TransferResponse
-	3, // 5: worldstate.WorldStateService.OfflineWithdraw:output_type -> worldstate.OfflineWithdrawResponse
-	5, // 6: worldstate.WorldStateService.OfflineDeposit:output_type -> worldstate.OfflineDepositResponse
-	7, // 7: worldstate.WorldStateService.CreateAccount:output_type -> worldstate.CreateAccountResponse
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: worldstate.WorldStateService.Transfer:input_type -> worldstate.TransferRequest
+	2,  // 1: worldstate.WorldStateService.OfflineWithdraw:input_type -> worldstate.OfflineWithdrawRequest
+	4,  // 2: worldstate.WorldStateService.OfflineDeposit:input_type -> worldstate.OfflineDepositRequest
+	6,  // 3: worldstate.WorldStateService.CreateAccount:input_type -> worldstate.CreateAccountRequest
+	8,  // 4: worldstate.WorldStateService.ChangeAccountStatus:input_type -> worldstate.ChangeAccountStatusRequest
+	10, // 5: worldstate.WorldStateService.GetAccountsTier:input_type -> worldstate.GetAccountsTierRequest
+	1,  // 6: worldstate.WorldStateService.Transfer:output_type -> worldstate.TransferResponse
+	3,  // 7: worldstate.WorldStateService.OfflineWithdraw:output_type -> worldstate.OfflineWithdrawResponse
+	5,  // 8: worldstate.WorldStateService.OfflineDeposit:output_type -> worldstate.OfflineDepositResponse
+	7,  // 9: worldstate.WorldStateService.CreateAccount:output_type -> worldstate.CreateAccountResponse
+	9,  // 10: worldstate.WorldStateService.ChangeAccountStatus:output_type -> worldstate.ChangeAccountStatusResponse
+	11, // 11: worldstate.WorldStateService.GetAccountsTier:output_type -> worldstate.GetAccountsTierResponse
+	6,  // [6:12] is the sub-list for method output_type
+	0,  // [0:6] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_worldstate_proto_init() }
@@ -589,7 +839,7 @@ func file_worldstate_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_worldstate_proto_rawDesc), len(file_worldstate_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
