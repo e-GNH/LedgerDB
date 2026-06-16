@@ -47,21 +47,21 @@ func main() {
 
 	fmt.Println("Successfully loaded Client Private Key and Server Public Key.")
 
-	// payload := types.SecureMessage{
-	// 	Timestamp: time.Now(),
-	// 	From:      "A",
-	// 	To:        "B",
-	// 	Amount:    11,
-	// 	Message:   "Payment for cloud infrastructure",
-	// 	Nonce:     "unique-txn-123s245",
-	// }
-
-	payload := types.SecureOfflineWithdrawMessage{
-		Amount:    11,
-		Nonce:     "unique-txn-123s245",
-		AccountId: "A",
+	payload := types.SecureMessage{
 		Timestamp: time.Now(),
+		From:      "000_wallet_A",
+		To:        "001_wallet_B",
+		Amount:    1000001,
+		Message:   "Payment for cloud infrastructure",
+		Nonce:     "unique-txn-123ss222qazsdsdas22s45",
 	}
+
+	// payload := types.SecureOfflineWithdrawMessage{
+	// 	Amount:    1,
+	// 	Nonce:     "unique-txn-123s245",
+	// 	AccountId: "000_wallet_B",
+	// 	Timestamp: time.Now(),
+	// }
 	payloadBytes, _ := json.Marshal(payload)
 
 	hashRaw := sha256.Sum256(payloadBytes)

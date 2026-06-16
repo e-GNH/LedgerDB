@@ -24,5 +24,11 @@ cd StorageKernel
 go mod tidy
 go run .
 ```
+### Terminal 4 (for AML)
+```
+cd aml_service
+uvicorn main:app --reload
+```
+
 
 

@@ -19,6 +19,7 @@ var (
 	ErrFromAccountBanned  = errors.New("FROM_ACCOUNT_BANNED")        // For transfer
 	ErrToAccountBanned    = errors.New("TO_ACCOUNT_BANNED")          // For transfer
 	ErrInvalidStatus      = errors.New("INVALID_STATUS")              // For flagging/banning/unbanning accounts
+	ErrCannotRollbackOfflineTransfer = errors.New("CANNOT_ROLLBACK_OFFLINE_TRANSFER") // For transfer rollback
 )
 
 func mapLuaError(err error) error {
@@ -48,6 +49,8 @@ func mapLuaError(err error) error {
 		return ErrToAccountBanned
 	case "INVALID_STATUS":
 		return ErrInvalidStatus
+	case "CANNOT_ROLLBACK_OFFLINE_TRANSFER":
+		return ErrCannotRollbackOfflineTransfer
 	default:
 		return err
 	}

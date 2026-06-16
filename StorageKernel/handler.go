@@ -3,11 +3,11 @@ package main
 import (
 	ts "StorageKernel/proto/TransactionsStore"
 	pb "StorageKernel/proto/worldstate"
-	
+	aml_checker "LedgerDB/services/aml"
 	ls "LedgerServer/api"        
 
 	"strconv"
-
+	"errors"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -27,6 +27,7 @@ type KernelHandler struct {
 	rdb *redis.Client
 	ts.UnimplementedTransactionsStoreServiceServer
 	hdfs *hdfs.Client
+	amlURL string
 }
 var ValidTiers = []string {"individual", "business"}
 func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
@@ -119,7 +120,54 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 		return nil, status.Error(codes.Internal, "unexpected script result")
 	}
 	sequence := res[1]
-	logger.Info(" - [" + file_name + "] - Transfer committed " + fmt.Sprint(sequence))
+	logger.Info(" - [" + file_name + "] - Transfer committed to redis: " + fmt.Sprint(sequence))
+	tiers_response, err := h.GetAccountsTier(ctx, &pb.GetAccountsTierRequest{
+		SenderAccountId:   req.FromId,
+		ReceiverAccountId: req.ToId,
+	})
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - Failed to get account tiers, will skip AML Check: " + err.Error())
+		return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
+	}
+	tx := aml_checker.Transaction{
+		Sender:              req.FromId,
+		Receiver:            req.ToId,
+		Amount:              float64(req.Amount) / 100, // Convert qorosh to GNEH
+		Timestamp:          time.Now(),
+		SenderAccountType:   tiers_response.SenderTier,
+		ReceiverAccountType: tiers_response.ReceiverTier,
+	}
+	txCheckResp, err := aml_checker.CheckTransaction(tx, h.amlURL)
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - AML Check failed (internally): " + err.Error())
+		return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
+	}
+	if txCheckResp.Status == "rejected" {
+		logger.Info(" - [" + file_name + "] - Transfer rejected by AML: " + txCheckResp.Status + " - " + txCheckResp.Reason)
+		// roll back transfer
+		if req.OfflineTransaction == false{
+			// Implementation for rolling back transfer
+			keys_revert := []string{
+				"nonce:" + req.Nonce+"_rollback",
+				"account:" + req.FromId,
+				"account:" + req.ToId,
+				strconv.FormatBool(req.OfflineTransaction),
+			}
+			_, err := transferRollBackScript.Run(ctx, h.rdb, keys_revert, req.Amount).Slice()
+			if err != nil {
+				logger.Error(" - [" + file_name + "] - Failed to roll back transfer: " + err.Error())
+				return &pb.TransferResponse{Ok: false, Message: "transfer rejected by AML and failed to roll back: " + err.Error()}, err
+			}
+			logger.Info(" - [" + file_name + "] - rolled back transfer")
+
+			return &pb.TransferResponse{Ok: false, Message: "transfer rejected by AML: " + txCheckResp.Reason}, errors.New("transfer rejected by AML: " + txCheckResp.Reason)
+		}
+	} else if txCheckResp.Status == "INTERNAL_ERROR" {
+		logger.Info(" - [" + file_name + "] - Internal Error in AML: " + txCheckResp.Status + " - " + txCheckResp.Reason)
+	} else {
+		// approved
+		logger.Info(" - [" + file_name + "] - Transfer approved by AML")
+	}
 	return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
 }
 func (h *KernelHandler) ChangeAccountStatus(ctx context.Context, req *pb.ChangeAccountStatusRequest) (*pb.ChangeAccountStatusResponse, error) {

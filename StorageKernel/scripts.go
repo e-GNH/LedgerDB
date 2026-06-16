@@ -47,7 +47,43 @@ var transferScript = redis.NewScript(`
 
 	return {"OK", seq}
 `)
+var transferRollBackScript = redis.NewScript(`
+	-- KEYS[1] = nonce key
+	-- KEYS[2] = from account key
+	-- KEYS[3] = to account key
+	-- KEYS[4] = offline account boolean
+	-- ARGV[1] = amount
+	local amount  = tonumber(ARGV[1])
+	if amount <= 0 then
+		return {err="INVALID_AMOUNT"}
+	end
+	if redis.call("EXISTS", KEYS[1]) == 1 then
+		return {err="NONCE_ALREADY_USED"}
+	end
+	if redis.call("EXISTS", KEYS[2]) == 0 then
+		return {err="FROM_ACCOUNT_NOT_FOUND"}
+	end
+	if redis.call("EXISTS", KEYS[3]) == 0 then
+		return {err="TO_ACCOUNT_NOT_FOUND"}
+	end
+	local balance_key = "balance"
+	local pending_key = "pending"
+	if KEYS[4] == "true" then
+		return {err="CANNOT_ROLLBACK_OFFLINE_TRANSFER"}
+	end
+	-- check pending key of receiver to rollback safely
+	local balance = tonumber(redis.call("HGET", KEYS[3], "pending") or "0") 
+	if balance < amount then
+		return {err="INSUFFICIENT_FUNDS"}
+	end
 
+	redis.call("HINCRBY", KEYS[2], balance_key, amount)
+	redis.call("HINCRBY", KEYS[3], pending_key, -amount)
+	redis.call("SET",     KEYS[1], 1)
+	local seq = redis.call("INCR", "global:sequence")
+
+	return {"OK", seq}
+`)
 var offlineDepositScript = redis.NewScript(`
 	-- KEYS[1] = nonce key
 	-- KEYS[2] = account key
@@ -110,6 +146,9 @@ var createAccountScript = redis.NewScript(`
 	-- KEYS[2] = account key
 	-- ARGV[1] = balance
 	-- ARGV[2] = tier
+	redis.log(redis.LOG_WARNING, "Debugging arguments list")
+	redis.log(redis.LOG_WARNING, "ARGV[1] (Balance): " .. tostring(ARGV[1]))
+	redis.log(redis.LOG_WARNING, "ARGV[2] (Tier): " .. tostring(ARGV[2]))
 	local balance  = tonumber(ARGV[1])
 	local tier = ARGV[2]
 	if balance < 0 then

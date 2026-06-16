@@ -2,40 +2,42 @@ package main
 
 import (
 	"context"
-	"errors"
 	"net"
 
 	// pb "StorageKernel/proto/worldstate"
 	"LedgerDB/services/logging"
 	ts "StorageKernel/proto/TransactionsStore"
 	pb "StorageKernel/proto/worldstate"
-	"fmt"
 	"log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/codes"
+    "google.golang.org/grpc/status"
 )
 
 var ctx = context.Background()
 var logger = logging.New("StorageKernel", "./")
 var file_name = "main.go"
 
-func test_transfer(h *KernelHandler, offline bool) {
+func test_transfer(h *KernelHandler, offline bool, nonce string, amount int64) {
 	logger.Info(" - [" + file_name + "] - Testing Transfer")
-	_, err := h.Transfer(ctx, &pb.TransferRequest{Nonce: "nonce:12333", FromId: "000_wallet_A", ToId: "001_wallet_B", Amount: 10, OfflineTransaction: offline})
+	_, err := h.Transfer(ctx, &pb.TransferRequest{Nonce: nonce, FromId: "000_wallet_A", ToId: "001_wallet_B", Amount: amount, OfflineTransaction: offline})
+	st, ok := status.FromError(err)
 	switch {
 	case err == nil:
 		logger.Info(" - [" + file_name + "] - Test Transfer OK")
-		fmt.Println("test transfer OK")
-	case errors.Is(err, ErrInsufficientFunds):
+		logger.Info("test transfer OK")
+		
+	case ok && st.Code() == codes.FailedPrecondition:
 		logger.Info(" - [" + file_name + "] - Test Transfer Failed due to insufficient funds")
-		fmt.Println("not enough balance")
-	case errors.Is(err, ErrNonceAlreadyUsed):
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	case ok && st.Code() == codes.AlreadyExists:
 		logger.Info(" - [" + file_name + "] - Test Transfer Failed due to nonce already used")
-		fmt.Println("duplicate transaction :(")
+		logger.Error(" - [" + file_name + "] - " + err.Error())
 	default:
 		logger.Error(" - [" + file_name + "] - Test Transfer Failed")
-		log.Fatal(err)
+		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
 
 }
@@ -53,19 +55,25 @@ func main() {
 		return
 	}
 
-	h := &KernelHandler{hdfs: ts_server, rdb: rdb}
+	h := &KernelHandler{
+		hdfs: ts_server, 
+		rdb: rdb,
+		amlURL: "http://127.0.0.1:8000/",
+	}
 
-	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123s456", AccountId: "000_wallet_A", Balance: 100, Tier: "individual"}); err != nil { // Shall be from onboarding
+	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123s456", AccountId: "000_wallet_A", Balance: 2000000, Tier: "individual"}); err != nil { // Shall be from onboarding
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123457", AccountId: "001_wallet_B", Balance: 100, Tier: "business"}); err != nil {
+	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123457", AccountId: "001_wallet_B", Balance: 2000000, Tier: "business"}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	// test_transfer(h, false)
 	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:123456", AccountId: "000_wallet_A", Amount: 99}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	test_transfer(h, true)
+	test_transfer(h, false, "za3bololo", 1000000)
+	test_transfer(h, true, "nonce:1232456", 100)
+	test_transfer(h, false, "nonce:1232426", 100)
+	test_transfer(h, false, "nonce:12324336", 100)
 	if _, err := h.OfflineWithdraw(ctx, &pb.OfflineWithdrawRequest{Nonce: "nonce:12323145", AccountId: "001_wallet_B", Amount: 10}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}

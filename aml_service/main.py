@@ -35,11 +35,13 @@ def check_transaction(transaction_data: Transaction):
         transaction["account_type"] = transaction["sender_account_type"]
         account_types[transaction["sender"]] = transaction["sender_account_type"]
         account_types[transaction["receiver"]] = transaction["receiver_account_type"]
-        logger.info("Received transaction: %s", transaction)
+        logger.info(f"Received transaction: {transaction}")
         ok, reason = level_1_check_transaction(transaction)
+        level_2_check_transaction(transaction)
         if ok:
             level_2_add_transaction(transaction)
-        print("return result from level 1 check:", (ok, reason))
+            
+        logger.info(f"Return result from level 1 check: {(ok, reason)}")
         
         return {
             "status": "approved" if ok else "rejected",

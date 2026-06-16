@@ -21,7 +21,6 @@ def check_transaction(transaction):
 
         if account_type not in THRESHOLDS:
             return False, "invalid account type for transaction"
-        
         graph.add_transaction(sender, receiver, amount, timestamp)
         limits = THRESHOLDS[account_type]
         if limits["max_fan_out"] < graph.get_outdegree(sender):
@@ -37,10 +36,12 @@ def check_transaction(transaction):
                 return False, f"Output money cycled back to sender exceeds threshold, {cycled_money} cycled back out of {sender_output_money} total output money"
         
         receiver_output_money = graph.get_output_money(receiver)
-        if receiver_output_money >= limits["output_money_amount_check_cycles"]:
-            cycled_money = graph.fast_get_money_cycled(receiver)
-            if cycled_money >= limits["output_money_amount_check_cycles"] * limits["cycle_amount_percentage"]:
-                return False, f"Output money cycled back to receiver exceeds threshold, {cycled_money} cycled back out of {receiver_output_money} total output money"
+        if "receiver_account_type" in transaction and transaction["receiver_account_type"] in THRESHOLDS:
+            receiver_limits = THRESHOLDS[transaction["receiver_account_type"]]
+            if receiver_output_money >= receiver_limits["output_money_amount_check_cycles"]:
+                cycled_money = graph.fast_get_money_cycled(receiver)
+                if cycled_money >= receiver_limits["output_money_amount_check_cycles"] * receiver_limits["cycle_amount_percentage"]:
+                    return False, f"Output money cycled back to receiver exceeds threshold, {cycled_money} cycled back out of {receiver_output_money} total output money"
         
         return True, ""
     except Exception as e:
