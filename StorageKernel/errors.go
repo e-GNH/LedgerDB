@@ -16,6 +16,8 @@ var (
 	ErrUserAccountMissing = errors.New("USER_ACCOUNT_NOT_FOUND")      // For offline withdrawal & deposit
 	ErrUserAccountExists  = errors.New("USER_ACCOUNT_ALREADY_EXISTS") // For account creation
 	ErrInvalidBalance     = errors.New("INVALID_BALANCE")             // For account creation
+	ErrFromAccountBanned  = errors.New("FROM_ACCOUNT_BANNED")        // For transfer
+	ErrToAccountBanned    = errors.New("TO_ACCOUNT_BANNED")          // For transfer
 )
 
 func mapLuaError(err error) error {
@@ -39,6 +41,10 @@ func mapLuaError(err error) error {
 		return ErrInvalidBalance
 	case "USER_ACCOUNT_ALREADY_EXISTS":
 		return ErrUserAccountExists
+	case "FROM_ACCOUNT_BANNED":
+		return ErrFromAccountBanned
+	case "TO_ACCOUNT_BANNED":
+		return ErrToAccountBanned
 	default:
 		return err
 	}
