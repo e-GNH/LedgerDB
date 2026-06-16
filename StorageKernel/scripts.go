@@ -28,7 +28,14 @@ var transferScript = redis.NewScript(`
 		pending_key = "offline"
 	end
 	local balance = tonumber(redis.call("HGET", KEYS[2], balance_key) or "0")
-
+	local sender_account_status = redis.call("HGET", KEYS[2], "status")
+	if sender_account_status == "banned" then
+		return {err="FROM_ACCOUNT_BANNED"}
+	end
+	local receiver_account_status = redis.call("HGET", KEYS[3], "status")
+	if receiver_account_status == "banned" then
+		return {err="TO_ACCOUNT_BANNED"}
+	end
 	if balance < amount then
 		return {err="INSUFFICIENT_FUNDS"}
 	end
@@ -102,7 +109,9 @@ var createAccountScript = redis.NewScript(`
 	-- KEYS[1] = nonce key
 	-- KEYS[2] = account key
 	-- ARGV[1] = balance
+	-- ARGV[2] = tier
 	local balance  = tonumber(ARGV[1])
+	local tier = ARGV[2]
 	if balance < 0 then
 		return {err="INVALID_BALANCE"}
 	end
@@ -115,10 +124,47 @@ var createAccountScript = redis.NewScript(`
 	redis.call("HSET", KEYS[2],
 		"balance", balance,
 		"pending", 0,
-		"offline", 0
+		"offline", 0,
+		"tier", tier,
+		"status", "active"
 	)
 	redis.call("SET",     KEYS[1], 1)
 	local seq = redis.call("INCR", "global:sequence")
 
 	return {"OK", seq}
 `)
+
+var changeAccountStatusScript = redis.NewScript(`
+	-- KEYS[1] = account key
+	-- ARGV[1] = status
+	if redis.call("EXISTS", KEYS[1]) == 0 then
+		return {err="USER_ACCOUNT_NOT_FOUND"}
+	end
+	local status = ARGV[1]
+	if status ~= "active" and status ~= "banned" and status ~= "flagged" then
+		return {err="INVALID_STATUS"}
+	end
+	redis.call("HSET", KEYS[1], "status", status)
+	local seq = redis.call("INCR", "global:sequence")
+	
+	return {"OK", seq}
+`)
+
+var getAccountsTierScript = redis.NewScript(`
+	-- KEYS[1] = sender account key
+	-- KEYS[2] = receiver account key
+	if redis.call("EXISTS", KEYS[1]) == 0 then
+		return {err="FROM_ACCOUNT_NOT_FOUND"}
+	end
+	if redis.call("EXISTS", KEYS[2]) == 0 then
+		return {err="TO_ACCOUNT_NOT_FOUND"}
+	end
+
+	local tiers = {}
+
+	tiers[1] = redis.call("HGET", KEYS[1], "tier")
+	tiers[2] = redis.call("HGET", KEYS[2], "tier")
+
+	return tiers
+`)
+

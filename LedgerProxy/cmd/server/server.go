@@ -314,6 +314,7 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 		Nonce:     msg.Nonce,
 		AccountId: msg.AccountId,
 		Balance:   int64(msg.Balance),
+		Tier:      "individual", // TODO: Change Default Tier
 	})
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected wallet creation: %v", err))

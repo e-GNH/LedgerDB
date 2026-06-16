@@ -55,10 +55,10 @@ func main() {
 
 	h := &KernelHandler{hdfs: ts_server, rdb: rdb}
 
-	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123s456", AccountId: "000_wallet_A", Balance: 100}); err != nil { // Shall be from onboarding
+	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123s456", AccountId: "000_wallet_A", Balance: 100, Tier: "individual"}); err != nil { // Shall be from onboarding
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
-	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123457", AccountId: "001_wallet_B", Balance: 100}); err != nil {
+	if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123457", AccountId: "001_wallet_B", Balance: 100, Tier: "business"}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
 	// test_transfer(h, false)
@@ -79,6 +79,15 @@ func main() {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
 	if _, err := h.OfflineDeposit(ctx, &pb.OfflineDepositRequest{Nonce: "nonce:1234256", AccountId: "000_wallet_A", Amount: 89}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	}
+	if res, err := h.GetAccountsTier(ctx, &pb.GetAccountsTierRequest{SenderAccountId: "000_wallet_A", ReceiverAccountId: "001_wallet_B"}); err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+	} else {
+		logger.Info(" - [" + file_name + "] - Sender Tier: " + res.SenderTier)
+		logger.Info(" - [" + file_name + "] - Receiver Tier: " + res.ReceiverTier)
+	}
+	if _, err := h.ChangeAccountStatus(ctx, &pb.ChangeAccountStatusRequest{AccountId: "000_wallet_A", Status: "flagged"}); err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 	}
 	// ==========================================
