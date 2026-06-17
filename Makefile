@@ -11,10 +11,10 @@ proxy: logs-dir
 	cd LedgerProxy && go mod tidy && go run ./cmd/server/ > ../logs/proxy.log 2>&1
 
 kernel: logs-dir
-	cd StorageKernel && go mod tidy && go run . > ../logs/kernel.log 2>&1
+	sleep 3 && cd StorageKernel && go mod tidy && go run . > ../logs/kernel.log 2>&1
 
 aml: logs-dir
 	cd aml_service && uvicorn main:app --reload > ../logs/aml.log 2>&1
 
 run-all:
-	make -j 4 server proxy kernel aml
+	make -j 4 aml server proxy kernel
