@@ -5,7 +5,7 @@ import (
 	pb "StorageKernel/proto/worldstate"
 	aml_checker "LedgerDB/services/aml"
 	ls "LedgerServer/api"        
-
+	"strings"
 	"strconv"
 	"errors"
 	"context"
@@ -115,6 +115,7 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 	file_name = "handler.go"
 	merchant_name := ""
 	to_id := ""
+	to_id_without_prefix := ""
 	if req.ToId != nil {
 		to_id = "account:" + *req.ToId
 	}
@@ -130,6 +131,7 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 		}
 		to_id = fmt.Sprint(res)
 	}
+	to_id_without_prefix = strings.TrimPrefix(to_id, "account:")
 	if to_id == "" && merchant_name == "" {
 		logger.Error(" - [" + file_name + "] - Transfer request must have either ToId or MerchantName")
 		return nil, status.Error(codes.InvalidArgument, "transfer request must have either ToId or MerchantName")
@@ -155,7 +157,7 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 	logger.Info(" - [" + file_name + "] - Transfer committed to redis: " + fmt.Sprint(sequence))
 	tiers_response, err := h.GetAccountsTier(ctx, &pb.GetAccountsTierRequest{
 		SenderAccountId:   req.FromId,
-		ReceiverAccountId: to_id,
+		ReceiverAccountId: to_id_without_prefix,
 	})
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - Failed to get account tiers, will skip AML Check: " + err.Error())
@@ -163,7 +165,7 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 	}
 	tx := aml_checker.Transaction{
 		Sender:              req.FromId,
-		Receiver:            to_id,
+		Receiver:            to_id_without_prefix,
 		Amount:              float64(req.Amount) / 100, // Convert qorosh to GNEH
 		Timestamp:          time.Now(),
 		SenderAccountType:   tiers_response.SenderTier,
