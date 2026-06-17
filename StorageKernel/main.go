@@ -22,7 +22,7 @@ var file_name = "main.go"
 
 func test_transfer(h *KernelHandler, offline bool, from_acc string, to_acc string, nonce string, amount int64) {
 	logger.Info(" - [" + file_name + "] - Testing Transfer")
-	_, err := h.Transfer(ctx, &pb.TransferRequest{Nonce: nonce, FromId: from_acc, ToId: to_acc, Amount: amount, OfflineTransaction: offline})
+	_, err := h.Transfer(ctx, &pb.TransferRequest{Nonce: nonce, FromId: from_acc, ToId: &to_acc, Amount: amount, OfflineTransaction: offline})
 	st, ok := status.FromError(err)
 	switch {
 	case err == nil:

@@ -101,7 +101,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		_, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
 			Nonce:              msg.Nonce,
 			FromId:             msg.From,
-			ToId:               msg.To,
+			ToId:               &msg.To,
 			Amount:             int64(msg.Amount),
 			OfflineTransaction: false,
 		})
@@ -186,7 +186,7 @@ func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*
 		resp, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
 			Nonce:              msg.Nonce,
 			FromId:             msg.From,
-			ToId:               msg.To,
+			ToId:               &msg.To,
 			Amount:             int64(msg.Amount),
 			OfflineTransaction: true,
 		})
