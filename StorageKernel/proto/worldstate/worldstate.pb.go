@@ -498,6 +498,7 @@ type ChangeAccountStatusRequest struct {
 	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	Reason        string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	Score         float32                `protobuf:"fixed32,4,opt,name=score,proto3" json:"score,omitempty"` // for ML prediction
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -551,6 +552,13 @@ func (x *ChangeAccountStatusRequest) GetReason() string {
 		return x.Reason
 	}
 	return ""
+}
+
+func (x *ChangeAccountStatusRequest) GetScore() float32 {
+	if x != nil {
+		return x.Score
+	}
+	return 0
 }
 
 type ChangeAccountStatusResponse struct {
@@ -764,12 +772,13 @@ const file_worldstate_proto_rawDesc = "" +
 	"\x04tier\x18\x04 \x01(\tR\x04tier\"A\n" +
 	"\x15CreateAccountResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"k\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x81\x01\n" +
 	"\x1aChangeAccountStatusRequest\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x16\n" +
-	"\x06reason\x18\x03 \x01(\tR\x06reason\"G\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\x12\x14\n" +
+	"\x05score\x18\x04 \x01(\x02R\x05score\"G\n" +
 	"\x1bChangeAccountStatusResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"t\n" +
