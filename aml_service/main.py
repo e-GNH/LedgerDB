@@ -42,7 +42,7 @@ def check_transaction(transaction_data: Transaction):
                 "reason": "Sender and receiver cannot be the same"
             }
         ok, reason = level_1_check_transaction(transaction)
-        level_2_check_transaction(transaction)
+
         if ok:
             level_2_add_transaction(transaction)
             

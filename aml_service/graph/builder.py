@@ -101,16 +101,16 @@ class TransactionsGraph:
             return 0
         remaining_capacity = {}
         def dfs(node, target, path_length_threshold, curr_timestamp, current_path, visited, path_bottleneck):
+            if node == target:
+                for u, v, key in current_path:
+                    remaining_capacity[(u, v, key)] -= path_bottleneck
+                return path_bottleneck
             if path_length_threshold <= 0 or path_bottleneck <= 0:
                 if path_bottleneck < 0:
                     assert False, "path_bottleneck should never be negative"
                 if path_length_threshold < 0:
                     assert False, "path_length_threshold should never be negative"
                 return 0
-            if node == target:
-                for u, v, key in current_path:
-                    remaining_capacity[(u, v, key)] -= path_bottleneck
-                return path_bottleneck
             edges_out = self.graph.out_edges(node, data=True, keys=True)
             edges_out = sorted(edges_out, key=lambda x: x[3]['timestamp']) ## sort edges by timestamp to respect chronological order
             total_returned_from_path = 0
