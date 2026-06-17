@@ -3,16 +3,16 @@ package main
 import (
 	ts "StorageKernel/proto/TransactionsStore"
 	pb "StorageKernel/proto/worldstate"
-	
+	aml_checker "LedgerDB/services/aml"
 	ls "LedgerServer/api"        
 
 	"strconv"
-
+	"errors"
 	"context"
 	"encoding/json"
 	"fmt"
 	"time"
-
+	"slices"
 	"github.com/colinmarc/hdfs/v2"
 	"github.com/redis/go-redis/v9"
 
@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
     "google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/proto"
 )
 
 type KernelHandler struct {
@@ -27,16 +28,25 @@ type KernelHandler struct {
 	rdb *redis.Client
 	ts.UnimplementedTransactionsStoreServiceServer
 	hdfs *hdfs.Client
+	amlURL string
 }
-
+var ValidTiers = []string {"individual", "business"}
 func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
 	keys := []string{
 		"nonce:" + req.Nonce,
 		"account:" + req.AccountId,
 	}
-	logger.Info(" - [" + file_name + "] - Account Creation with balance " + fmt.Sprint(req.Balance) + " For " + req.AccountId)
+	if !slices.Contains(ValidTiers, req.Tier) {
+		logger.Error(" - [" + file_name + "] - Invalid tier: " + req.Tier)
+		return nil, status.Error(codes.InvalidArgument, "invalid tier")
+	}
+	values := []string{
+		fmt.Sprint(req.Balance),
+		req.Tier,
+	}
+	logger.Info(" - [" + file_name + "] - Account Creation with balance " + fmt.Sprint(req.Balance) + " For " + req.AccountId + " with tier " + req.Tier)
 
-	res, err := createAccountScript.Run(ctx, h.rdb, keys, req.Balance).Slice()
+	res, err := createAccountScript.Run(ctx, h.rdb, keys, values).Slice()
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 		return nil, mapGrpcError(err)
@@ -111,8 +121,108 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 		return nil, status.Error(codes.Internal, "unexpected script result")
 	}
 	sequence := res[1]
-	logger.Info(" - [" + file_name + "] - Transfer committed " + fmt.Sprint(sequence))
+	logger.Info(" - [" + file_name + "] - Transfer committed to redis: " + fmt.Sprint(sequence))
+	tiers_response, err := h.GetAccountsTier(ctx, &pb.GetAccountsTierRequest{
+		SenderAccountId:   req.FromId,
+		ReceiverAccountId: req.ToId,
+	})
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - Failed to get account tiers, will skip AML Check: " + err.Error())
+		return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
+	}
+	tx := aml_checker.Transaction{
+		Sender:              req.FromId,
+		Receiver:            req.ToId,
+		Amount:              float64(req.Amount) / 100, // Convert qorosh to GNEH
+		Timestamp:          time.Now(),
+		SenderAccountType:   tiers_response.SenderTier,
+		ReceiverAccountType: tiers_response.ReceiverTier,
+	}
+	txCheckResp, err := aml_checker.CheckTransaction(tx, h.amlURL)
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - AML Check failed (internally): " + err.Error())
+		return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
+	}
+	if txCheckResp.Status == "rejected" {
+		logger.Info(" - [" + file_name + "] - Transfer rejected by AML: " + txCheckResp.Status + " - " + txCheckResp.Reason)
+		// roll back transfer
+		if req.OfflineTransaction == false{
+			// Implementation for rolling back transfer
+			keys_revert := []string{
+				"nonce:" + req.Nonce+"_rollback",
+				"account:" + req.FromId,
+				"account:" + req.ToId,
+				strconv.FormatBool(req.OfflineTransaction),
+			}
+			_, err := transferRollBackScript.Run(ctx, h.rdb, keys_revert, req.Amount).Slice()
+			if err != nil {
+				logger.Error(" - [" + file_name + "] - Failed to roll back transfer: " + err.Error())
+				return &pb.TransferResponse{Ok: false, Message: "transfer rejected by AML and failed to roll back: " + err.Error()}, err
+			}
+			logger.Info(" - [" + file_name + "] - rolled back transfer")
+
+			return &pb.TransferResponse{Ok: false, Message: "transfer rejected by AML: " + txCheckResp.Reason}, errors.New("transfer rejected by AML: " + txCheckResp.Reason)
+		}
+	} else if txCheckResp.Status == "INTERNAL_ERROR" {
+		logger.Info(" - [" + file_name + "] - Internal Error in AML: " + txCheckResp.Status + " - " + txCheckResp.Reason)
+	} else {
+		// approved
+		logger.Info(" - [" + file_name + "] - Transfer approved by AML")
+	}
 	return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
+}
+func (h *KernelHandler) ChangeAccountStatus(ctx context.Context, req *pb.ChangeAccountStatusRequest) (*pb.ChangeAccountStatusResponse, error) {
+	keys := []string{
+		"account:" + req.AccountId,
+	}
+	if req.Score == nil{
+		req.Score = proto.Float32(-1)
+	}
+	if req.Reason == nil{
+		req.Reason = proto.String("")
+	}
+	values := []string{
+		req.Status,
+		*req.Reason,
+		fmt.Sprintf("%f", *req.Score),
+	}
+	logger.Info(" - [" + file_name + "] - Account Status Update for " + req.AccountId + " to " + req.Status)
+
+	res, err := changeAccountStatusScript.Run(ctx, h.rdb, keys, values).Slice()
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+		return nil, mapGrpcError(err)
+	}
+	if len(res) != 2 {
+		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
+		return nil, status.Error(codes.Internal, "unexpected script result")
+	}
+	sequence := res[1]
+	logger.Info(" - [" + file_name + "] - Account " + req.AccountId + " status updated, sequence: " + fmt.Sprint(sequence))
+	return &pb.ChangeAccountStatusResponse{Ok: true, Message: "Account status updated, sequence: " + fmt.Sprint(sequence)}, nil
+}
+func (h *KernelHandler) GetAccountsTier(ctx context.Context, req *pb.GetAccountsTierRequest) (*pb.GetAccountsTierResponse, error) {
+	keys := []string{
+		"account:" + req.SenderAccountId,
+		"account:" + req.ReceiverAccountId,
+	}
+	logger.Info(" - [" + file_name + "] - Account Tier Request for " + req.SenderAccountId + " and " + req.ReceiverAccountId)
+
+	res, err := getAccountsTierScript.Run(ctx, h.rdb, keys).Slice()
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+		return nil, mapGrpcError(err)
+	}
+	if len(res) != 2 {
+		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
+		return nil, status.Error(codes.Internal, "unexpected script result")
+	}
+	tiers := []string{
+		fmt.Sprint(res[0]),
+		fmt.Sprint(res[1]),
+	}
+	logger.Info(" - [" + file_name + "] - Account " + req.SenderAccountId + " tier is " + tiers[0] + " and Account " + req.ReceiverAccountId + " tier is " + tiers[1])
+	return &pb.GetAccountsTierResponse{Ok: true, Message: "Accounts' tier received", SenderTier: tiers[0], ReceiverTier: tiers[1]}, nil
 }
 
 // %%%%%%%%%%%% JUST TESTING %%%%%%%%%%%%%
