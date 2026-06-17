@@ -20,6 +20,7 @@ var (
 	ErrToAccountBanned    = errors.New("TO_ACCOUNT_BANNED")          // For transfer
 	ErrInvalidStatus      = errors.New("INVALID_STATUS")              // For flagging/banning/unbanning accounts
 	ErrCannotRollbackOfflineTransfer = errors.New("CANNOT_ROLLBACK_OFFLINE_TRANSFER") // For transfer rollback
+	ErrMerchantNameAlreadyExists = errors.New("MERCHANT_NAME_ALREADY_EXISTS") // For merchant account creation
 )
 
 func mapLuaError(err error) error {
@@ -51,6 +52,8 @@ func mapLuaError(err error) error {
 		return ErrInvalidStatus
 	case "CANNOT_ROLLBACK_OFFLINE_TRANSFER":
 		return ErrCannotRollbackOfflineTransfer
+	case "MERCHANT_NAME_ALREADY_EXISTS":
+		return ErrMerchantNameAlreadyExists
 	default:
 		return err
 	}

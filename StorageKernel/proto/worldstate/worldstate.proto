@@ -16,9 +16,10 @@ service WorldStateService {
 message TransferRequest {
   string nonce   = 1;
   string from_id = 2;
-  string to_id   = 3;
+  optional string to_id   = 3;
   int64  amount  = 4;
   bool offline_transaction = 5;
+  optional string merchant_name = 6;
 }
 
 message TransferResponse {
@@ -50,6 +51,7 @@ message CreateAccountRequest {
   string account_id = 2;
   int64  balance  = 3;
   string tier = 4;
+  optional string name = 5;
 }
 message CreateAccountResponse {
   bool   ok      = 1;

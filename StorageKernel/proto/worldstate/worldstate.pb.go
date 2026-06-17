@@ -25,9 +25,10 @@ type TransferRequest struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	Nonce              string                 `protobuf:"bytes,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	FromId             string                 `protobuf:"bytes,2,opt,name=from_id,json=fromId,proto3" json:"from_id,omitempty"`
-	ToId               string                 `protobuf:"bytes,3,opt,name=to_id,json=toId,proto3" json:"to_id,omitempty"`
+	ToId               *string                `protobuf:"bytes,3,opt,name=to_id,json=toId,proto3,oneof" json:"to_id,omitempty"`
 	Amount             int64                  `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
 	OfflineTransaction bool                   `protobuf:"varint,5,opt,name=offline_transaction,json=offlineTransaction,proto3" json:"offline_transaction,omitempty"`
+	MerchantName       *string                `protobuf:"bytes,6,opt,name=merchant_name,json=merchantName,proto3,oneof" json:"merchant_name,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -77,8 +78,8 @@ func (x *TransferRequest) GetFromId() string {
 }
 
 func (x *TransferRequest) GetToId() string {
-	if x != nil {
-		return x.ToId
+	if x != nil && x.ToId != nil {
+		return *x.ToId
 	}
 	return ""
 }
@@ -95,6 +96,13 @@ func (x *TransferRequest) GetOfflineTransaction() bool {
 		return x.OfflineTransaction
 	}
 	return false
+}
+
+func (x *TransferRequest) GetMerchantName() string {
+	if x != nil && x.MerchantName != nil {
+		return *x.MerchantName
+	}
+	return ""
 }
 
 type TransferResponse struct {
@@ -379,6 +387,7 @@ type CreateAccountRequest struct {
 	AccountId     string                 `protobuf:"bytes,2,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	Balance       int64                  `protobuf:"varint,3,opt,name=balance,proto3" json:"balance,omitempty"`
 	Tier          string                 `protobuf:"bytes,4,opt,name=tier,proto3" json:"tier,omitempty"`
+	Name          *string                `protobuf:"bytes,5,opt,name=name,proto3,oneof" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -437,6 +446,13 @@ func (x *CreateAccountRequest) GetBalance() int64 {
 func (x *CreateAccountRequest) GetTier() string {
 	if x != nil {
 		return x.Tier
+	}
+	return ""
+}
+
+func (x *CreateAccountRequest) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
 	}
 	return ""
 }
@@ -738,13 +754,16 @@ var File_worldstate_proto protoreflect.FileDescriptor
 const file_worldstate_proto_rawDesc = "" +
 	"\n" +
 	"\x10worldstate.proto\x12\n" +
-	"worldstate\"\x9e\x01\n" +
+	"worldstate\"\xe9\x01\n" +
 	"\x0fTransferRequest\x12\x14\n" +
 	"\x05nonce\x18\x01 \x01(\tR\x05nonce\x12\x17\n" +
-	"\afrom_id\x18\x02 \x01(\tR\x06fromId\x12\x13\n" +
-	"\x05to_id\x18\x03 \x01(\tR\x04toId\x12\x16\n" +
+	"\afrom_id\x18\x02 \x01(\tR\x06fromId\x12\x18\n" +
+	"\x05to_id\x18\x03 \x01(\tH\x00R\x04toId\x88\x01\x01\x12\x16\n" +
 	"\x06amount\x18\x04 \x01(\x03R\x06amount\x12/\n" +
-	"\x13offline_transaction\x18\x05 \x01(\bR\x12offlineTransaction\"<\n" +
+	"\x13offline_transaction\x18\x05 \x01(\bR\x12offlineTransaction\x12(\n" +
+	"\rmerchant_name\x18\x06 \x01(\tH\x01R\fmerchantName\x88\x01\x01B\b\n" +
+	"\x06_to_idB\x10\n" +
+	"\x0e_merchant_name\"<\n" +
 	"\x10TransferResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"e\n" +
@@ -763,13 +782,15 @@ const file_worldstate_proto_rawDesc = "" +
 	"\x06amount\x18\x03 \x01(\x03R\x06amount\"B\n" +
 	"\x16OfflineDepositResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"y\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x9b\x01\n" +
 	"\x14CreateAccountRequest\x12\x14\n" +
 	"\x05nonce\x18\x01 \x01(\tR\x05nonce\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x02 \x01(\tR\taccountId\x12\x18\n" +
 	"\abalance\x18\x03 \x01(\x03R\abalance\x12\x12\n" +
-	"\x04tier\x18\x04 \x01(\tR\x04tier\"A\n" +
+	"\x04tier\x18\x04 \x01(\tR\x04tier\x12\x17\n" +
+	"\x04name\x18\x05 \x01(\tH\x00R\x04name\x88\x01\x01B\a\n" +
+	"\x05_name\"A\n" +
 	"\x15CreateAccountResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\xa0\x01\n" +
@@ -853,6 +874,8 @@ func file_worldstate_proto_init() {
 	if File_worldstate_proto != nil {
 		return
 	}
+	file_worldstate_proto_msgTypes[0].OneofWrappers = []any{}
+	file_worldstate_proto_msgTypes[6].OneofWrappers = []any{}
 	file_worldstate_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

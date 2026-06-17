@@ -30,11 +30,21 @@ type KernelHandler struct {
 	hdfs *hdfs.Client
 	amlURL string
 }
-var ValidTiers = []string {"individual", "business"}
+var ValidTiers = []string {"individual", "business", "merchant"}
 func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
+	merchent_name := ""
+	if req.Tier == "merchant" {
+		if req.Name != nil {
+			merchent_name = *req.Name
+		} else {
+			logger.Error(" - [" + file_name + "] - Merchant account creation requires a name")
+			return nil, status.Error(codes.InvalidArgument, "merchant account creation requires a name")
+		}
+	}
 	keys := []string{
 		"nonce:" + req.Nonce,
 		"account:" + req.AccountId,
+		"merchant:" + merchent_name,
 	}
 	if !slices.Contains(ValidTiers, req.Tier) {
 		logger.Error(" - [" + file_name + "] - Invalid tier: " + req.Tier)
@@ -103,13 +113,34 @@ func (h *KernelHandler) OfflineDeposit(ctx context.Context, req *pb.OfflineDepos
 }
 func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
 	file_name = "handler.go"
+	merchant_name := ""
+	to_id := ""
+	if req.ToId != nil {
+		to_id = "account:" + *req.ToId
+	}
+	if req.MerchantName != nil {
+		merchant_name = "merchant:" + *req.MerchantName
+		key := []string{
+			merchant_name,
+		}
+		res, err := getMerchantAccountIdScript.Run(ctx, h.rdb, key).Result()
+		if err != nil {
+			logger.Error(" - [" + file_name + "] - Failed to get merchant account ID: " + err.Error())
+			return nil, mapGrpcError(err)
+		}
+		to_id = fmt.Sprint(res)
+	}
+	if to_id == "" && merchant_name == "" {
+		logger.Error(" - [" + file_name + "] - Transfer request must have either ToId or MerchantName")
+		return nil, status.Error(codes.InvalidArgument, "transfer request must have either ToId or MerchantName")
+	}
 	keys := []string{
 		"nonce:" + req.Nonce,
 		"account:" + req.FromId,
-		"account:" + req.ToId,
+		to_id,
 		strconv.FormatBool(req.OfflineTransaction),
 	}
-	logger.Info(" - [" + file_name + "] - Transferring " + fmt.Sprint(req.Amount) + " from " + req.FromId + " to " + req.ToId)
+	logger.Info(" - [" + file_name + "] - Transferring " + fmt.Sprint(req.Amount) + " from " + req.FromId + " to " + to_id + " with merchant " + merchant_name)
 
 	res, err := transferScript.Run(ctx, h.rdb, keys, req.Amount).Slice()
 	if err != nil {
@@ -124,7 +155,7 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 	logger.Info(" - [" + file_name + "] - Transfer committed to redis: " + fmt.Sprint(sequence))
 	tiers_response, err := h.GetAccountsTier(ctx, &pb.GetAccountsTierRequest{
 		SenderAccountId:   req.FromId,
-		ReceiverAccountId: req.ToId,
+		ReceiverAccountId: to_id,
 	})
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - Failed to get account tiers, will skip AML Check: " + err.Error())
@@ -132,7 +163,7 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 	}
 	tx := aml_checker.Transaction{
 		Sender:              req.FromId,
-		Receiver:            req.ToId,
+		Receiver:            to_id,
 		Amount:              float64(req.Amount) / 100, // Convert qorosh to GNEH
 		Timestamp:          time.Now(),
 		SenderAccountType:   tiers_response.SenderTier,
@@ -151,7 +182,7 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 			keys_revert := []string{
 				"nonce:" + req.Nonce+"_rollback",
 				"account:" + req.FromId,
-				"account:" + req.ToId,
+				to_id,
 				strconv.FormatBool(req.OfflineTransaction),
 			}
 			_, err := transferRollBackScript.Run(ctx, h.rdb, keys_revert, req.Amount).Slice()

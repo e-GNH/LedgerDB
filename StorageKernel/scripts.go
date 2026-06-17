@@ -144,6 +144,7 @@ var offlineWithdrawScript = redis.NewScript(`
 var createAccountScript = redis.NewScript(`
 	-- KEYS[1] = nonce key
 	-- KEYS[2] = account key
+	-- KEYS[3] = merchant name key (optional)
 	-- ARGV[1] = balance
 	-- ARGV[2] = tier
 	redis.log(redis.LOG_WARNING, "Debugging arguments list")
@@ -167,6 +168,12 @@ var createAccountScript = redis.NewScript(`
 		"tier", tier,
 		"status", "active"
 	)
+	if tier == "merchant" then
+		if redis.call("EXISTS", KEYS[3]) == 1 then
+			return {err="MERCHANT_NAME_ALREADY_EXISTS"}
+		end
+		redis.call("SET", KEYS[3], KEYS[2])
+	end
 	redis.call("SET",     KEYS[1], 1)
 	local seq = redis.call("INCR", "global:sequence")
 
@@ -205,7 +212,17 @@ var changeAccountStatusScript = redis.NewScript(`
 	
 	return {"OK", seq}
 `)
-
+var getMerchantAccountIdScript = redis.NewScript(`
+	-- KEYS[1] = merchant name key
+	local receiver = ""
+	if KEYS[1] ~= "" then
+		if redis.call("EXISTS", KEYS[1]) == 0 then
+			return {err="TO_ACCOUNT_NOT_FOUND"}
+		end
+		receiver = redis.call("GET", KEYS[1])
+	end
+	return receiver
+`)
 var getAccountsTierScript = redis.NewScript(`
 	-- KEYS[1] = sender account key
 	-- KEYS[2] = receiver account key
