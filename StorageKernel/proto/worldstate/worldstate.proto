@@ -59,8 +59,8 @@ message CreateAccountResponse {
 message ChangeAccountStatusRequest {
   string account_id = 1;
   string status = 2;
-  string reason = 3;
-  float score = 4; // for ML prediction
+  optional string reason = 3;
+  optional float score = 4; // for ML prediction
 }
 message ChangeAccountStatusResponse {
   bool   ok      = 1;

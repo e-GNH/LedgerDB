@@ -497,8 +497,8 @@ type ChangeAccountStatusRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
 	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
-	Reason        string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
-	Score         float32                `protobuf:"fixed32,4,opt,name=score,proto3" json:"score,omitempty"` // for ML prediction
+	Reason        *string                `protobuf:"bytes,3,opt,name=reason,proto3,oneof" json:"reason,omitempty"`
+	Score         *float32               `protobuf:"fixed32,4,opt,name=score,proto3,oneof" json:"score,omitempty"` // for ML prediction
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -548,15 +548,15 @@ func (x *ChangeAccountStatusRequest) GetStatus() string {
 }
 
 func (x *ChangeAccountStatusRequest) GetReason() string {
-	if x != nil {
-		return x.Reason
+	if x != nil && x.Reason != nil {
+		return *x.Reason
 	}
 	return ""
 }
 
 func (x *ChangeAccountStatusRequest) GetScore() float32 {
-	if x != nil {
-		return x.Score
+	if x != nil && x.Score != nil {
+		return *x.Score
 	}
 	return 0
 }
@@ -772,13 +772,15 @@ const file_worldstate_proto_rawDesc = "" +
 	"\x04tier\x18\x04 \x01(\tR\x04tier\"A\n" +
 	"\x15CreateAccountResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\x81\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xa0\x01\n" +
 	"\x1aChangeAccountStatusRequest\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\x12\x16\n" +
-	"\x06reason\x18\x03 \x01(\tR\x06reason\x12\x14\n" +
-	"\x05score\x18\x04 \x01(\x02R\x05score\"G\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x1b\n" +
+	"\x06reason\x18\x03 \x01(\tH\x00R\x06reason\x88\x01\x01\x12\x19\n" +
+	"\x05score\x18\x04 \x01(\x02H\x01R\x05score\x88\x01\x01B\t\n" +
+	"\a_reasonB\b\n" +
+	"\x06_score\"G\n" +
 	"\x1bChangeAccountStatusResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"t\n" +
@@ -851,6 +853,7 @@ func file_worldstate_proto_init() {
 	if File_worldstate_proto != nil {
 		return
 	}
+	file_worldstate_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
