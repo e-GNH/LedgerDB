@@ -27,6 +27,8 @@ message CreateAccountMessage {
     string nonce = 2;
     int64 balance = 3;
     string time_stamp = 4;
+    string tier = 5;
+    optional string name = 6;
 }
 
 message OfflineWithdrawMessage {

@@ -296,13 +296,17 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 	logger.Info("SECURITY SUCCESS: Pipeline passed!")
 
 	createMsg := &ledgerserverpb.CreateAccountMessage{
-		AccountId: msg.AccountId,
-		Balance:   msg.Balance,
-		Nonce:     msg.Nonce,
-		TimeStamp: time.Now().Format(time.RFC3339),
-		Tier:      msg.Tier,
+		AccountId:    msg.AccountId,
+		Balance:      msg.Balance,
+		Nonce:        msg.Nonce,
+		TimeStamp:    time.Now().Format(time.RFC3339),
+		Tier:         msg.Tier,
 	}
-	
+
+	if msg.Name != nil {
+		createMsg.Name = *msg.Name
+	}
+
 	anyCreate, err := anypb.New(createMsg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to wrap create account message: %v", err))
@@ -315,12 +319,18 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 	}
 
 	logger.Info("Passing wallet to the world state...")
-	resp, err := s.kernelClient.CreateAccount(ctx, &kernelpb.CreateAccountRequest{
+	toSendPayload := &kernelpb.CreateAccountRequest{
 		Nonce:     msg.Nonce,
 		AccountId: msg.AccountId,
 		Balance:   int64(msg.Balance),
 		Tier:      msg.Tier,
-	})
+	}
+
+	if msg.Name != nil {
+		toSendPayload.Name = msg.Name
+	}
+
+	resp, err := s.kernelClient.CreateAccount(ctx, toSendPayload)
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected wallet creation: %v", err))

@@ -140,6 +140,8 @@ type CreateAccountMessage struct {
 	Nonce         string                 `protobuf:"bytes,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	Balance       int64                  `protobuf:"varint,3,opt,name=balance,proto3" json:"balance,omitempty"`
 	TimeStamp     string                 `protobuf:"bytes,4,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
+	Tier          string                 `protobuf:"bytes,5,opt,name=tier,proto3" json:"tier,omitempty"`
+	Name          *string                `protobuf:"bytes,6,opt,name=name,proto3,oneof" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -198,6 +200,20 @@ func (x *CreateAccountMessage) GetBalance() int64 {
 func (x *CreateAccountMessage) GetTimeStamp() string {
 	if x != nil {
 		return x.TimeStamp
+	}
+	return ""
+}
+
+func (x *CreateAccountMessage) GetTier() string {
+	if x != nil {
+		return x.Tier
+	}
+	return ""
+}
+
+func (x *CreateAccountMessage) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
 	}
 	return ""
 }
@@ -511,14 +527,17 @@ const file_ledgerserver_proto_rawDesc = "" +
 	"\x05nonce\x18\x02 \x01(\tR\x05nonce\x12\x16\n" +
 	"\x06amount\x18\x03 \x01(\x03R\x06amount\x12\x1d\n" +
 	"\n" +
-	"time_stamp\x18\x04 \x01(\tR\ttimeStamp\"\x84\x01\n" +
+	"time_stamp\x18\x04 \x01(\tR\ttimeStamp\"\xba\x01\n" +
 	"\x14CreateAccountMessage\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x14\n" +
 	"\x05nonce\x18\x02 \x01(\tR\x05nonce\x12\x18\n" +
 	"\abalance\x18\x03 \x01(\x03R\abalance\x12\x1d\n" +
 	"\n" +
-	"time_stamp\x18\x04 \x01(\tR\ttimeStamp\"\x84\x01\n" +
+	"time_stamp\x18\x04 \x01(\tR\ttimeStamp\x12\x12\n" +
+	"\x04tier\x18\x05 \x01(\tR\x04tier\x12\x17\n" +
+	"\x04name\x18\x06 \x01(\tH\x00R\x04name\x88\x01\x01B\a\n" +
+	"\x05_name\"\x84\x01\n" +
 	"\x16OfflineWithdrawMessage\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x14\n" +
@@ -589,6 +608,7 @@ func file_ledgerserver_proto_init() {
 	if File_ledgerserver_proto != nil {
 		return
 	}
+	file_ledgerserver_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

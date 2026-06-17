@@ -31,7 +31,7 @@ type SecureCreateAccountMessage struct {
 	Balance   int64 `json:"balance"`
 	Nonce     string  `json:"nonce"`
 	Tier      string  `json:"tier"`
-	
+	Name      *string `json:"name,omitempty"`
 }
 
 type SecureSyncMessage struct {

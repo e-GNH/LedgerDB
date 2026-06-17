@@ -30,26 +30,39 @@ type KernelHandler struct {
 	hdfs *hdfs.Client
 	amlURL string
 }
-var ValidTiers = []string {"individual", "business", "merchant"}
+
+var ValidTiers = []string {
+	"individual", 
+	"business", 
+	"merchant"
+}
+
+
 func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
-	merchent_name := ""
+	
+	file_name := "handler.go"
+	merchant_name := ""
+
 	if req.Tier == "merchant" {
 		if req.Name != nil {
-			merchent_name = *req.Name
+			merchant_name = *req.Name
 		} else {
 			logger.Error(" - [" + file_name + "] - Merchant account creation requires a name")
 			return nil, status.Error(codes.InvalidArgument, "merchant account creation requires a name")
 		}
 	}
+
 	keys := []string{
 		"nonce:" + req.Nonce,
 		"account:" + req.AccountId,
-		"merchant:" + merchent_name,
+		"merchant:" + merchant_name,
 	}
+
 	if !slices.Contains(ValidTiers, req.Tier) {
 		logger.Error(" - [" + file_name + "] - Invalid tier: " + req.Tier)
 		return nil, status.Error(codes.InvalidArgument, "invalid tier")
 	}
+
 	values := []string{
 		fmt.Sprint(req.Balance),
 		req.Tier,
@@ -61,14 +74,17 @@ func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccount
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 		return nil, mapGrpcError(err)
 	}
+
 	if len(res) != 2 {
 		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
 		return nil, status.Error(codes.Internal, "unexpected script result")
 	}
+
 	sequence := res[1]
 	logger.Info(" - [" + file_name + "] - Create Account committed " + fmt.Sprint(sequence))
 	return &pb.CreateAccountResponse{Ok: true, Message: "Create Account committed, sequence: " + fmt.Sprint(sequence)}, nil
 }
+
 func (h *KernelHandler) OfflineWithdraw(ctx context.Context, req *pb.OfflineWithdrawRequest) (*pb.OfflineWithdrawResponse, error) {
 	file_name = "handler.go"
 	keys := []string{
