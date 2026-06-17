@@ -52,4 +52,5 @@ message TransactionReceipt {
     string message     = 6;
     string nonce       = 7;
     string time_stamp  = 8;
+    bool is_merchant = 9;
 }

@@ -68,7 +68,7 @@ func SaveBatchItem[T proto.Message](item T, client ledgerserverpb.TransactionsSe
 		file.Close()
 		return err
 	}
-	
+
 	file.Close()
 
 	lines, err := readFileLines(filename)
@@ -141,6 +141,11 @@ func StreamReceipt(item *types.SecureMessage) {
 	fromPrefix := walletPrefix(item.From)
 	toPrefix := walletPrefix(item.To)
 
+	isMerchant := false
+	if item.MerchantName != nil {
+		isMerchant = true
+	}
+
 	receipt := &pb.TransactionReceipt{
 		Hash:       hex.EncodeToString(item.Hash),
 		Status:     item.Status,
@@ -150,6 +155,7 @@ func StreamReceipt(item *types.SecureMessage) {
 		Message:    item.Message,
 		Nonce:      item.Nonce,
 		TimeStamp:  item.Timestamp.Format("2006-01-02T15:04:05Z07:00"),
+		IsMerchant: isMerchant,
 	}
 
 	sendReceipt(fromPrefix, receipt)

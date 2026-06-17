@@ -259,6 +259,7 @@ type TransactionReceipt struct {
 	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
 	Nonce         string                 `protobuf:"bytes,7,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	TimeStamp     string                 `protobuf:"bytes,8,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
+	IsMerchant    bool                   `protobuf:"varint,9,opt,name=is_merchant,json=isMerchant,proto3" json:"is_merchant,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -349,6 +350,13 @@ func (x *TransactionReceipt) GetTimeStamp() string {
 	return ""
 }
 
+func (x *TransactionReceipt) GetIsMerchant() bool {
+	if x != nil {
+		return x.IsMerchant
+	}
+	return false
+}
+
 var File_service_proto protoreflect.FileDescriptor
 
 const file_service_proto_rawDesc = "" +
@@ -365,7 +373,7 @@ const file_service_proto_rawDesc = "" +
 	"\tresponses\x18\x01 \x03(\v2\x1b.LedgerProxy.SecureResponseR\tresponses\"3\n" +
 	"\x10SubscribeRequest\x12\x1f\n" +
 	"\vbank_prefix\x18\x01 \x01(\tR\n" +
-	"bankPrefix\"\xe5\x01\n" +
+	"bankPrefix\"\x86\x02\n" +
 	"\x12TransactionReceipt\x12\x12\n" +
 	"\x04hash\x18\x01 \x01(\tR\x04hash\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\bR\x06status\x12\x1f\n" +
@@ -376,7 +384,9 @@ const file_service_proto_rawDesc = "" +
 	"\amessage\x18\x06 \x01(\tR\amessage\x12\x14\n" +
 	"\x05nonce\x18\a \x01(\tR\x05nonce\x12\x1d\n" +
 	"\n" +
-	"time_stamp\x18\b \x01(\tR\ttimeStamp2\x89\x03\n" +
+	"time_stamp\x18\b \x01(\tR\ttimeStamp\x12\x1f\n" +
+	"\vis_merchant\x18\t \x01(\bR\n" +
+	"isMerchant2\x89\x03\n" +
 	"\x0fSecurityService\x12J\n" +
 	"\rCreateAccount\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00\x12D\n" +
 	"\aExecute\x12\x1a.LedgerProxy.SecureRequest\x1a\x1b.LedgerProxy.SecureResponse\"\x00\x12I\n" +

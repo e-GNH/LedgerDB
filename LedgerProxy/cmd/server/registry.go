@@ -46,7 +46,6 @@ func (r *BankRegistry) Unregister(prefix string) {
 	delete(r.streams, prefix)
 }
 
-// Get implements batching.Registry
 func (r *BankRegistry) Get(prefix string) batching.SendStream {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
