@@ -176,6 +176,12 @@ var createAccountScript = redis.NewScript(`
 var changeAccountStatusScript = redis.NewScript(`
 	-- KEYS[1] = account key
 	-- ARGV[1] = status
+	-- ARGV[2] = reason --for level 2 checks
+	-- ARGV[3] = score --for level 3 checks
+	redis.log(redis.LOG_WARNING, "Debugging arguments list")
+	redis.log(redis.LOG_WARNING, "ARGV[1] (status): " .. tostring(ARGV[1]))
+	redis.log(redis.LOG_WARNING, "ARGV[2] (Reason): " .. tostring(ARGV[2]))
+	redis.log(redis.LOG_WARNING, "ARGV[3] (Score): " .. tostring(ARGV[3]))
 	if redis.call("EXISTS", KEYS[1]) == 0 then
 		return {err="USER_ACCOUNT_NOT_FOUND"}
 	end
@@ -184,6 +190,17 @@ var changeAccountStatusScript = redis.NewScript(`
 		return {err="INVALID_STATUS"}
 	end
 	redis.call("HSET", KEYS[1], "status", status)
+	if ARGV[2] ~= "" then
+		redis.call("HSET", KEYS[1], "reason", ARGV[2])
+	end
+	if tonumber(ARGV[3]) ~= -1 then
+		redis.call("HSET", KEYS[1], "score", ARGV[3])
+	end
+	-- delete reason if status is active and score
+	if status == "active" then
+		redis.call("HDEL", KEYS[1], "reason")
+		redis.call("HDEL", KEYS[1], "score")
+	end
 	local seq = redis.call("INCR", "global:sequence")
 	
 	return {"OK", seq}

@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
     "google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/proto"
 )
 
 type KernelHandler struct {
@@ -174,10 +175,20 @@ func (h *KernelHandler) ChangeAccountStatus(ctx context.Context, req *pb.ChangeA
 	keys := []string{
 		"account:" + req.AccountId,
 	}
-
+	if req.Score == nil{
+		req.Score = proto.Float32(-1)
+	}
+	if req.Reason == nil{
+		req.Reason = proto.String("")
+	}
+	values := []string{
+		req.Status,
+		*req.Reason,
+		fmt.Sprintf("%f", *req.Score),
+	}
 	logger.Info(" - [" + file_name + "] - Account Status Update for " + req.AccountId + " to " + req.Status)
 
-	res, err := changeAccountStatusScript.Run(ctx, h.rdb, keys, req.Status).Slice()
+	res, err := changeAccountStatusScript.Run(ctx, h.rdb, keys, values).Slice()
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 		return nil, mapGrpcError(err)

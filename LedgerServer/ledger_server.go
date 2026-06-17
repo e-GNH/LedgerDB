@@ -11,7 +11,9 @@ import (
 	"LedgerDB/services/logging"
 	pb "LedgerServer/api"
 	ts "LedgerServer/modules/transactions"
+	aml_batch "LedgerServer/modules/aml"
 	ts_store "StorageKernel/proto/TransactionsStore"
+	worldstate "StorageKernel/proto/worldstate"
 )
 
 var logger = logging.New("server", "./")
@@ -25,22 +27,23 @@ func main() {
 		panic(fmt.Sprintf("Failed to listen: %v", err))
 	}
 
-	TsStoreConn, err := grpc.Dial("localhost:50058", grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	StorageKernelConn, err := grpc.Dial("localhost:50058", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to StorageKernel: %v", err))
 		panic(fmt.Sprintf("Failed to connect to StorageKernel: %v", err))
 	}
-	defer TsStoreConn.Close()
+	defer StorageKernelConn.Close()
 
 	grpcServer := grpc.NewServer()
 
 	serverInstance := &ts.LedgerServer{
-		TransactionsStoreClient: ts_store.NewTransactionsStoreServiceClient(TsStoreConn),
+		TransactionsStoreClient: ts_store.NewTransactionsStoreServiceClient(StorageKernelConn),
 	}
 
 	pb.RegisterTransactionsServiceServer(grpcServer, serverInstance)
 	reflection.Register(grpcServer)
-
+	go aml_batch.PeriodicAMLCheck("http://localhost:8000/", 5, logger, worldstate.NewWorldStateServiceClient(StorageKernelConn))
 	logger.Info("LedgerServer running on port 50003...")
 	if err := grpcServer.Serve(lis); err != nil {
 		logger.Error(fmt.Sprintf("Failed to serve: %v", err))

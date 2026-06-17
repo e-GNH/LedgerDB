@@ -6,6 +6,7 @@ package aml_checker
     "net/http"
 	"bytes"
 	"time"
+	"os"
   )
 
 	type TransactionCheckResponse struct {
@@ -44,7 +45,24 @@ package aml_checker
 	var batchAccountChecksClient = &http.Client{
 		Timeout: 2 * time.Hour, 
 	}
-  func CheckTransaction(tx Transaction, URL string) (*TransactionCheckResponse, error) {
+
+	func GetBatchClientTimeout() time.Duration {
+		return batchAccountChecksClient.Timeout
+	}
+
+	func GetTransactionClientTimeout() time.Duration {
+		return checkTransactionClient.Timeout
+	}
+
+	func SetBatchClientTimeout(timeout time.Duration) {
+		batchAccountChecksClient.Timeout = timeout
+	}
+
+	func SetTransactionClientTimeout(timeout time.Duration) {
+		checkTransactionClient.Timeout = timeout
+	}
+
+  	func CheckTransaction(tx Transaction, URL string) (*TransactionCheckResponse, error) {
 
 	payload, err := json.Marshal(tx) // tx to JSON
 	if err != nil {
@@ -58,6 +76,9 @@ package aml_checker
 	response, err := checkTransactionClient.Post(URL + "check_transaction", "application/json", requestBody)
 
 	if err != nil {
+		if os.IsTimeout(err) {
+			return nil, fmt.Errorf("request timed out")
+		}
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 	

@@ -36,6 +36,11 @@ def check_transaction(transaction_data: Transaction):
         account_types[transaction["sender"]] = transaction["sender_account_type"]
         account_types[transaction["receiver"]] = transaction["receiver_account_type"]
         logger.info(f"Received transaction: {transaction}")
+        if transaction["receiver"] == transaction["sender"]:
+            return {
+                "status": "rejected",
+                "reason": "Sender and receiver cannot be the same"
+            }
         ok, reason = level_1_check_transaction(transaction)
         level_2_check_transaction(transaction)
         if ok:
