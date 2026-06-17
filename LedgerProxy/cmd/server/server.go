@@ -300,7 +300,9 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 		Balance:   msg.Balance,
 		Nonce:     msg.Nonce,
 		TimeStamp: time.Now().Format(time.RFC3339),
+		Tier:      msg.Tier,
 	}
+	
 	anyCreate, err := anypb.New(createMsg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to wrap create account message: %v", err))
@@ -317,8 +319,9 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 		Nonce:     msg.Nonce,
 		AccountId: msg.AccountId,
 		Balance:   int64(msg.Balance),
-		Tier:      "individual", // TODO: Change Default Tier
+		Tier:      msg.Tier,
 	})
+
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected wallet creation: %v", err))
 	}
