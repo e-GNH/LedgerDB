@@ -3,3 +3,7 @@ numpy
 fastapi
 uvicorn
 loguru
+pandas
+lightgbm
+joblib
+scikit-learn
