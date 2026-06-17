@@ -7,6 +7,7 @@ type SecureMessage struct {
 	Timestamp time.Time `json:"timestamp"`
 	From      string    `json:"from"`
 	To        string    `json:"to"`
+	MerchantName *string `json:"merchant_name,omitempty"`
 	Amount    int64   `json:"amount"`
 	Message   string    `json:"message"`
 	Nonce     string    `json:"nonce"`

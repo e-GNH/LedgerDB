@@ -87,6 +87,7 @@ func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccount
 
 func (h *KernelHandler) OfflineWithdraw(ctx context.Context, req *pb.OfflineWithdrawRequest) (*pb.OfflineWithdrawResponse, error) {
 	file_name = "handler.go"
+
 	keys := []string{
 		"nonce:" + req.Nonce,
 		"account:" + req.AccountId,
@@ -94,6 +95,7 @@ func (h *KernelHandler) OfflineWithdraw(ctx context.Context, req *pb.OfflineWith
 	logger.Info(" - [" + file_name + "] - Offline Withdrawal " + fmt.Sprint(req.Amount) + " For " + req.AccountId)
 
 	res, err := offlineWithdrawScript.Run(ctx, h.rdb, keys, req.Amount).Slice()
+
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 		return nil, mapGrpcError(err)
@@ -102,12 +104,15 @@ func (h *KernelHandler) OfflineWithdraw(ctx context.Context, req *pb.OfflineWith
 		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
 		return nil, status.Error(codes.Internal, "unexpected script result")
 	}
+
 	sequence := res[1]
 	logger.Info(" - [" + file_name + "] - Offline Withdrawal committed " + fmt.Sprint(sequence))
 	return &pb.OfflineWithdrawResponse{Ok: true, Message: "Offline Withdrawal committed, sequence: " + fmt.Sprint(sequence)}, nil
 }
+
 func (h *KernelHandler) OfflineDeposit(ctx context.Context, req *pb.OfflineDepositRequest) (*pb.OfflineDepositResponse, error) {
 	file_name = "handler.go"
+	
 	keys := []string{
 		"nonce:" + req.Nonce,
 		"account:" + req.AccountId,
@@ -119,45 +124,57 @@ func (h *KernelHandler) OfflineDeposit(ctx context.Context, req *pb.OfflineDepos
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 		return nil, mapGrpcError(err)
 	}
+
 	if len(res) != 2 {
 		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
 		return nil, status.Error(codes.Internal, "unexpected script result")
 	}
+
 	sequence := res[1]
 	logger.Info(" - [" + file_name + "] - Offline Deposit committed " + fmt.Sprint(sequence))
 	return &pb.OfflineDepositResponse{Ok: true, Message: "Offline Deposit committed, sequence: " + fmt.Sprint(sequence)}, nil
 }
+
 func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
+	
 	file_name = "handler.go"
 	merchant_name := ""
+
 	to_id := ""
 	to_id_without_prefix := ""
+
 	if req.ToId != nil {
 		to_id = "account:" + *req.ToId
 	}
+
 	if req.MerchantName != nil {
 		merchant_name = "merchant:" + *req.MerchantName
 		key := []string{
 			merchant_name,
 		}
+
 		res, err := getMerchantAccountIdScript.Run(ctx, h.rdb, key).Result()
 		if err != nil {
 			logger.Error(" - [" + file_name + "] - Failed to get merchant account ID: " + err.Error())
 			return nil, mapGrpcError(err)
 		}
+
 		to_id = fmt.Sprint(res)
 	}
+
 	to_id_without_prefix = strings.TrimPrefix(to_id, "account:")
 	if to_id == "" && merchant_name == "" {
 		logger.Error(" - [" + file_name + "] - Transfer request must have either ToId or MerchantName")
 		return nil, status.Error(codes.InvalidArgument, "transfer request must have either ToId or MerchantName")
 	}
+
 	keys := []string{
 		"nonce:" + req.Nonce,
 		"account:" + req.FromId,
 		to_id,
 		strconv.FormatBool(req.OfflineTransaction),
 	}
+
 	logger.Info(" - [" + file_name + "] - Transferring " + fmt.Sprint(req.Amount) + " from " + req.FromId + " to " + to_id + " with merchant " + merchant_name)
 
 	res, err := transferScript.Run(ctx, h.rdb, keys, req.Amount).Slice()
@@ -165,20 +182,24 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 		logger.Error(" - [" + file_name + "] - " + err.Error())
 		return nil, mapGrpcError(err)
 	}
+
 	if len(res) != 2 {
 		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
 		return nil, status.Error(codes.Internal, "unexpected script result")
 	}
+
 	sequence := res[1]
 	logger.Info(" - [" + file_name + "] - Transfer committed to redis: " + fmt.Sprint(sequence))
 	tiers_response, err := h.GetAccountsTier(ctx, &pb.GetAccountsTierRequest{
 		SenderAccountId:   req.FromId,
 		ReceiverAccountId: to_id_without_prefix,
 	})
+
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - Failed to get account tiers, will skip AML Check: " + err.Error())
 		return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
 	}
+
 	tx := aml_checker.Transaction{
 		Sender:              req.FromId,
 		Receiver:            to_id_without_prefix,
@@ -187,11 +208,13 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 		SenderAccountType:   tiers_response.SenderTier,
 		ReceiverAccountType: tiers_response.ReceiverTier,
 	}
+
 	txCheckResp, err := aml_checker.CheckTransaction(tx, h.amlURL)
 	if err != nil {
 		logger.Error(" - [" + file_name + "] - AML Check failed (internally): " + err.Error())
 		return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
 	}
+	
 	if txCheckResp.Status == "rejected" {
 		logger.Info(" - [" + file_name + "] - Transfer rejected by AML: " + txCheckResp.Status + " - " + txCheckResp.Reason)
 		// roll back transfer

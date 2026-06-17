@@ -63,7 +63,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	msg, ok := sec.VerifySecurity[types.SecureMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 	
 	message := "Transaction rejected due to security"
-	if msg == nil {
+	if msg == nil || !ok {
 		return &pb.SecureResponse{Success: false, Message: message}, nil
 	}
 
@@ -84,6 +84,10 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		Hash:       hex.EncodeToString(msg.Hash),
 	}
 
+	if msg.MerchantName != nil {
+		tx.MerchantName = msg.MerchantName
+	}
+
 	anyTx, err := anypb.New(tx)
 	
 	if err != nil {
@@ -98,13 +102,19 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 
 	if ok {
 		logger.Info("Passing transaction to world state...")
-		_, err := s.kernelClient.Transfer(ctx, &kernelpb.TransferRequest{
+		toTransferPayload := &kernelpb.TransferRequest{
 			Nonce:              msg.Nonce,
 			FromId:             msg.From,
 			ToId:               &msg.To,
 			Amount:             int64(msg.Amount),
 			OfflineTransaction: false,
-		})
+		}
+
+		if msg.MerchantName != nil {
+			toTransferPayload.MerchantName = msg.MerchantName
+		}
+		
+		_, err := s.kernelClient.Transfer(ctx, toTransferPayload)
 		if err != nil {
 			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 			msg.Status = false
@@ -119,6 +129,11 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 				Nonce:      msg.Nonce,
 				Hash:       hex.EncodeToString(msg.Hash),
 			}
+
+			if msg.MerchantName != nil {
+				undoTx.MerchantName = msg.MerchantName
+			}
+
 			anyUndo, err := anypb.New(undoTx)
 			if err != nil {
 				logger.Error(fmt.Sprintf("Failed to wrap undo transaction: %v", err))
@@ -170,6 +185,7 @@ func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*
 			OfflineTransaction: true,
 			TimeStamp:          time.Now().Format(time.RFC3339),
 		}
+
 		anySync, err := anypb.New(syncMsg)
 		if err != nil {
 			logger.Error(fmt.Sprintf("Failed to wrap sync message: %v", err))
@@ -190,6 +206,7 @@ func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*
 			Amount:             int64(msg.Amount),
 			OfflineTransaction: true,
 		})
+
 		if err != nil {
 			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 			responses = append(responses, &pb.SecureResponse{Success: false, Message: err.Error()})

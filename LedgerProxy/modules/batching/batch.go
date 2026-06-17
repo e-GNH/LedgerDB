@@ -19,12 +19,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-// SendStream is the only method batching needs from a bank stream
 type SendStream interface {
 	Send(*pb.TransactionReceipt) error
 }
 
-// Registry is the interface batching uses to reach active bank streams
 type Registry interface {
 	Get(prefix string) SendStream
 	Unregister(prefix string)
@@ -64,11 +62,13 @@ func SaveBatchItem[T proto.Message](item T, client ledgerserverpb.TransactionsSe
 		logger.Error(fmt.Sprintf("failed to open batch file: %v", err))
 		return err
 	}
+
 	if _, err := file.Write(append(jsonData, '\n')); err != nil {
 		logger.Error(fmt.Sprintf("failed to write to batch file: %v", err))
 		file.Close()
 		return err
 	}
+	
 	file.Close()
 
 	lines, err := readFileLines(filename)

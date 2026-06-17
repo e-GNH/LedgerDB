@@ -380,6 +380,7 @@ type Transaction struct {
 	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
 	Nonce         string                 `protobuf:"bytes,7,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	TimeStamp     string                 `protobuf:"bytes,8,opt,name=time_stamp,json=timeStamp,proto3" json:"time_stamp,omitempty"`
+	MerchantName  *string                `protobuf:"bytes,9,opt,name=merchant_name,json=merchantName,proto3,oneof" json:"merchant_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -470,6 +471,13 @@ func (x *Transaction) GetTimeStamp() string {
 	return ""
 }
 
+func (x *Transaction) GetMerchantName() string {
+	if x != nil && x.MerchantName != nil {
+		return *x.MerchantName
+	}
+	return ""
+}
+
 type ServerResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -552,7 +560,7 @@ const file_ledgerserver_proto_rawDesc = "" +
 	"\x06amount\x18\x04 \x01(\x03R\x06amount\x12/\n" +
 	"\x13offline_transaction\x18\x05 \x01(\bR\x12offlineTransaction\x12\x1d\n" +
 	"\n" +
-	"time_stamp\x18\x06 \x01(\tR\ttimeStamp\"\xde\x01\n" +
+	"time_stamp\x18\x06 \x01(\tR\ttimeStamp\"\x9a\x02\n" +
 	"\vTransaction\x12\x12\n" +
 	"\x04hash\x18\x01 \x01(\tR\x04hash\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\bR\x06status\x12\x1f\n" +
@@ -563,7 +571,9 @@ const file_ledgerserver_proto_rawDesc = "" +
 	"\amessage\x18\x06 \x01(\tR\amessage\x12\x14\n" +
 	"\x05nonce\x18\a \x01(\tR\x05nonce\x12\x1d\n" +
 	"\n" +
-	"time_stamp\x18\b \x01(\tR\ttimeStamp\"*\n" +
+	"time_stamp\x18\b \x01(\tR\ttimeStamp\x12(\n" +
+	"\rmerchant_name\x18\t \x01(\tH\x00R\fmerchantName\x88\x01\x01B\x10\n" +
+	"\x0e_merchant_name\"*\n" +
 	"\x0eServerResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess2a\n" +
 	"\x13TransactionsService\x12J\n" +
@@ -609,6 +619,7 @@ func file_ledgerserver_proto_init() {
 		return
 	}
 	file_ledgerserver_proto_msgTypes[2].OneofWrappers = []any{}
+	file_ledgerserver_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
