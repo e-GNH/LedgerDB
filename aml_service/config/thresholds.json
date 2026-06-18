@@ -1,5 +1,5 @@
 {
-    "individual": {
+    "PERSON": {
         "tx_threshold": 10000,
         "daily_limit": 50000,
         "structuring_percentage": 0.9,
@@ -11,7 +11,7 @@
         "output_money_amount_check_cycles": 10000,
         "cycle_amount_percentage": 0.7
     },
-    "business": {
+    "MERCHANT": {
         "tx_threshold": 100000,
         "daily_limit": 1000000,
         "structuring_percentage": 0.9,
@@ -23,7 +23,7 @@
         "output_money_amount_check_cycles": 1000000,
         "cycle_amount_percentage": 0.5
     },
-    "merchant": {
+    "POS": {
         "tx_threshold": 100000,
         "daily_limit": 1000000,
         "structuring_percentage": 0.9,

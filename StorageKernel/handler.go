@@ -33,9 +33,9 @@ type KernelHandler struct {
 }
 
 var ValidTiers = []string{
-	"individual",
-	"business",
-	"merchant",
+	"PERSON",
+	"POS",
+	"MERCHANT",
 }
 
 func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
@@ -43,7 +43,7 @@ func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccount
 	file_name := "handler.go"
 	merchant_name := ""
 
-	if req.Tier == "merchant" {
+	if req.Tier == "MERCHANT" {
 		if req.Name != nil {
 			merchant_name = *req.Name
 		} else {

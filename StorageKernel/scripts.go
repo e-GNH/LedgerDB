@@ -199,7 +199,7 @@ var createAccountScript = redis.NewScript(`
 		"tier", tier,
 		"status", "active"
 	)
-	if tier == "merchant" then
+	if tier == "MERCHANT" then
 		if redis.call("EXISTS", KEYS[3]) == 1 then
 			return {err="MERCHANT_NAME_ALREADY_EXISTS"}
 		end
