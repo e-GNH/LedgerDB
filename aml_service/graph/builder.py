@@ -90,12 +90,8 @@ class TransactionsGraph:
     
     def fast_get_money_cycled(self, account):
         """
-        Calculates total money cycled back to an origin account within LOOP_CUTOFF hops.
-        
-        Uses a time-aware DFS to simulate max-flow capacity routing. Evaluates paths 
-        chronologically and deducts capacities dynamically on-the-fly. Maintains an 
-        O(Depth) memory footprint by avoiding path array materialization, utilizing early 
-        stopping when branch capacity reaches zero.
+        Calculates total money cycled back to from an account within a certain path length threshold
+        only moves in DFS if time is non-decreasing along the path and keeps track of remaining capacity per edge
         """
         if account not in self.graph:
             return 0
@@ -133,6 +129,7 @@ class TransactionsGraph:
                     visited.remove(node)
                     if path_bottleneck <= 0:
                         break
+                    
             return total_returned_from_path
         
         loops_total_received = 0
