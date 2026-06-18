@@ -20,6 +20,7 @@ type LedgerServer struct {
 	pb.UnimplementedTransactionsServiceServer
 
 	TransactionsStoreClient ts_store.TransactionsStoreServiceClient
+	WorldStateClient        worldstate.WorldStateServiceClient
 }
 
 func extractTransaction(a *anypb.Any) (*worldstate.TransferRequest, bool) {
@@ -54,16 +55,15 @@ func (s *LedgerServer) BatchAppend(ctx context.Context, req *pb.BatchToAppend) (
 	if len(req.Logs) == 0 {
 		return &pb.ServerResponse{Success: false}, nil
 	}
-
+	txs := []*worldstate.TransferRequest{}
 	for _, item := range req.Logs {
 		tx, ok := extractTransaction(item)
 		if !ok {
 			logger.Error("Failed to unmarshal transaction")
-			// TODO: Zeyad
 			continue
+		} else {
+			txs = append(txs, tx)
 		}
-		_ = tx
-		// TODO: Zeyad
 	}
 
 	batch := &pb.BatchToAppend{Logs: req.Logs}
@@ -79,6 +79,12 @@ func (s *LedgerServer) BatchAppend(ctx context.Context, req *pb.BatchToAppend) (
 	if !ack.Success {
 		logger.Error("Storage Kernel returned failure ack")
 		return &pb.ServerResponse{Success: false}, nil
+	}
+	for _, tx := range txs {
+		_, err := s.WorldStateClient.CommitTransfer(ctx, tx)
+		if err != nil {
+			logger.Error(fmt.Sprintf("World state didn't commit transaction %v", err))
+		}
 	}
 	logger.Info(fmt.Sprintf("Batch committed by Storage Kernel, batch_id=%s", ack.BatchId))
 	return &pb.ServerResponse{Success: true}, nil

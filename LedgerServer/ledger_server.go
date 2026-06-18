@@ -10,8 +10,8 @@ import (
 
 	"LedgerDB/services/logging"
 	pb "LedgerServer/api"
-	ts "LedgerServer/modules/transactions"
 	aml_batch "LedgerServer/modules/aml"
+	ts "LedgerServer/modules/transactions"
 	ts_store "StorageKernel/proto/TransactionsStore"
 	worldstate "StorageKernel/proto/worldstate"
 )
@@ -27,7 +27,6 @@ func main() {
 		panic(fmt.Sprintf("Failed to listen: %v", err))
 	}
 
-
 	StorageKernelConn, err := grpc.Dial("localhost:50058", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to StorageKernel: %v", err))
@@ -39,6 +38,7 @@ func main() {
 
 	serverInstance := &ts.LedgerServer{
 		TransactionsStoreClient: ts_store.NewTransactionsStoreServiceClient(StorageKernelConn),
+		WorldStateClient:        worldstate.NewWorldStateServiceClient(StorageKernelConn),
 	}
 
 	pb.RegisterTransactionsServiceServer(grpcServer, serverInstance)

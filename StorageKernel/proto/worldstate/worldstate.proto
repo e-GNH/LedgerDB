@@ -6,6 +6,7 @@ option go_package = "StorageKernel/proto/worldstate";
 
 service WorldStateService {
   rpc Transfer(TransferRequest) returns (TransferResponse);
+  rpc CommitTransfer(TransferRequest) returns (TransferResponse);
   rpc OfflineWithdraw(OfflineWithdrawRequest) returns (OfflineWithdrawResponse);
   rpc OfflineDeposit(OfflineDepositRequest) returns (OfflineDepositResponse);
   rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);

@@ -134,7 +134,60 @@ func (h *KernelHandler) OfflineDeposit(ctx context.Context, req *pb.OfflineDepos
 	logger.Info(" - [" + file_name + "] - Offline Deposit committed " + fmt.Sprint(sequence))
 	return &pb.OfflineDepositResponse{Ok: true, Message: "Offline Deposit committed, sequence: " + fmt.Sprint(sequence)}, nil
 }
+func (h *KernelHandler) CommitTransfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
 
+	file_name = "handler.go"
+	merchant_name := ""
+
+	to_id := ""
+
+	if req.ToId != nil {
+		to_id = "account:" + *req.ToId
+	}
+
+	if req.MerchantName != nil {
+		merchant_name = "merchant:" + *req.MerchantName
+		key := []string{
+			merchant_name,
+		}
+
+		res, err := getMerchantAccountIdScript.Run(ctx, h.rdb, key).Result()
+		if err != nil {
+			logger.Error(" - [" + file_name + "] - Failed to get merchant account ID: " + err.Error())
+			return nil, mapGrpcError(err)
+		}
+
+		to_id = fmt.Sprint(res)
+	}
+
+	if to_id == "" && merchant_name == "" {
+		logger.Error(" - [" + file_name + "] - Transfer request must have either ToId or MerchantName")
+		return nil, status.Error(codes.InvalidArgument, "transfer request must have either ToId or MerchantName")
+	}
+
+	keys := []string{
+		"nonce:" + req.Nonce + "_commit",
+		to_id,
+	}
+
+	logger.Info(" - [" + file_name + "] - Transferring " + fmt.Sprint(req.Amount) + " from " + req.FromId + " to " + to_id + " with merchant " + merchant_name)
+
+	res, err := commitTransferScript.Run(ctx, h.rdb, keys, req.Amount).Slice()
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - " + err.Error())
+		return nil, mapGrpcError(err)
+	}
+
+	if len(res) != 2 {
+		logger.Error(" - [" + file_name + "] - Unexpected script result: " + fmt.Sprint(res))
+		return nil, status.Error(codes.Internal, "unexpected script result")
+	}
+
+	sequence := res[1]
+	logger.Info(" - [" + file_name + "] - Transfer committed to redis: " + fmt.Sprint(sequence))
+
+	return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
+}
 func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
 
 	file_name = "handler.go"

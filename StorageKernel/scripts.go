@@ -2,6 +2,37 @@ package main
 
 import "github.com/redis/go-redis/v9"
 
+var commitTransferScript = redis.NewScript(`
+	-- KEYS[1] = nonce key
+	-- KEYS[2] = to account key
+	-- ARGV[1] = amount
+	local amount  = tonumber(ARGV[1])
+	if amount <= 0 then
+		return {err="INVALID_AMOUNT"}
+	end
+	if redis.call("EXISTS", KEYS[1]) == 1 then
+		return {err="NONCE_ALREADY_USED"}
+	end
+	if redis.call("EXISTS", KEYS[2]) == 0 then
+		return {err="TO_ACCOUNT_NOT_FOUND"}
+	end
+	local balance_key = "balance"
+	local pending_key = "pending"
+	local current_pending = tonumber(redis.call("HGET", KEYS[2], pending_key) or "0")
+	redis.log(redis.LOG_WARNING, "Debugging safasf list")
+	redis.log(redis.LOG_WARNING, "ACCOUNT " .. tostring(KEYS[2]))
+	redis.log(redis.LOG_WARNING, "CURR BALANCE " .. tostring(current_pending))
+	if current_pending < amount then
+		return {err="INSUFFICIENT_FUNDS"}
+	end
+
+	redis.call("HINCRBY", KEYS[2], balance_key, amount)
+	redis.call("HINCRBY", KEYS[2], pending_key, -amount)
+	redis.call("SET",     KEYS[1], 1)
+	local seq = redis.call("INCR", "global:sequence")
+
+	return {"OK", seq}
+`)
 var transferScript = redis.NewScript(`
 	-- KEYS[1] = nonce key
 	-- KEYS[2] = from account key
@@ -240,4 +271,3 @@ var getAccountsTierScript = redis.NewScript(`
 
 	return tiers
 `)
-

@@ -813,9 +813,10 @@ const file_worldstate_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1f\n" +
 	"\vsender_tier\x18\x03 \x01(\tR\n" +
 	"senderTier\x12#\n" +
-	"\rreceiver_tier\x18\x04 \x01(\tR\freceiverTier2\xa9\x04\n" +
+	"\rreceiver_tier\x18\x04 \x01(\tR\freceiverTier2\xf6\x04\n" +
 	"\x11WorldStateService\x12E\n" +
-	"\bTransfer\x12\x1b.worldstate.TransferRequest\x1a\x1c.worldstate.TransferResponse\x12Z\n" +
+	"\bTransfer\x12\x1b.worldstate.TransferRequest\x1a\x1c.worldstate.TransferResponse\x12K\n" +
+	"\x0eCommitTransfer\x12\x1b.worldstate.TransferRequest\x1a\x1c.worldstate.TransferResponse\x12Z\n" +
 	"\x0fOfflineWithdraw\x12\".worldstate.OfflineWithdrawRequest\x1a#.worldstate.OfflineWithdrawResponse\x12W\n" +
 	"\x0eOfflineDeposit\x12!.worldstate.OfflineDepositRequest\x1a\".worldstate.OfflineDepositResponse\x12T\n" +
 	"\rCreateAccount\x12 .worldstate.CreateAccountRequest\x1a!.worldstate.CreateAccountResponse\x12f\n" +
@@ -851,19 +852,21 @@ var file_worldstate_proto_goTypes = []any{
 }
 var file_worldstate_proto_depIdxs = []int32{
 	0,  // 0: worldstate.WorldStateService.Transfer:input_type -> worldstate.TransferRequest
-	2,  // 1: worldstate.WorldStateService.OfflineWithdraw:input_type -> worldstate.OfflineWithdrawRequest
-	4,  // 2: worldstate.WorldStateService.OfflineDeposit:input_type -> worldstate.OfflineDepositRequest
-	6,  // 3: worldstate.WorldStateService.CreateAccount:input_type -> worldstate.CreateAccountRequest
-	8,  // 4: worldstate.WorldStateService.ChangeAccountStatus:input_type -> worldstate.ChangeAccountStatusRequest
-	10, // 5: worldstate.WorldStateService.GetAccountsTier:input_type -> worldstate.GetAccountsTierRequest
-	1,  // 6: worldstate.WorldStateService.Transfer:output_type -> worldstate.TransferResponse
-	3,  // 7: worldstate.WorldStateService.OfflineWithdraw:output_type -> worldstate.OfflineWithdrawResponse
-	5,  // 8: worldstate.WorldStateService.OfflineDeposit:output_type -> worldstate.OfflineDepositResponse
-	7,  // 9: worldstate.WorldStateService.CreateAccount:output_type -> worldstate.CreateAccountResponse
-	9,  // 10: worldstate.WorldStateService.ChangeAccountStatus:output_type -> worldstate.ChangeAccountStatusResponse
-	11, // 11: worldstate.WorldStateService.GetAccountsTier:output_type -> worldstate.GetAccountsTierResponse
-	6,  // [6:12] is the sub-list for method output_type
-	0,  // [0:6] is the sub-list for method input_type
+	0,  // 1: worldstate.WorldStateService.CommitTransfer:input_type -> worldstate.TransferRequest
+	2,  // 2: worldstate.WorldStateService.OfflineWithdraw:input_type -> worldstate.OfflineWithdrawRequest
+	4,  // 3: worldstate.WorldStateService.OfflineDeposit:input_type -> worldstate.OfflineDepositRequest
+	6,  // 4: worldstate.WorldStateService.CreateAccount:input_type -> worldstate.CreateAccountRequest
+	8,  // 5: worldstate.WorldStateService.ChangeAccountStatus:input_type -> worldstate.ChangeAccountStatusRequest
+	10, // 6: worldstate.WorldStateService.GetAccountsTier:input_type -> worldstate.GetAccountsTierRequest
+	1,  // 7: worldstate.WorldStateService.Transfer:output_type -> worldstate.TransferResponse
+	1,  // 8: worldstate.WorldStateService.CommitTransfer:output_type -> worldstate.TransferResponse
+	3,  // 9: worldstate.WorldStateService.OfflineWithdraw:output_type -> worldstate.OfflineWithdrawResponse
+	5,  // 10: worldstate.WorldStateService.OfflineDeposit:output_type -> worldstate.OfflineDepositResponse
+	7,  // 11: worldstate.WorldStateService.CreateAccount:output_type -> worldstate.CreateAccountResponse
+	9,  // 12: worldstate.WorldStateService.ChangeAccountStatus:output_type -> worldstate.ChangeAccountStatusResponse
+	11, // 13: worldstate.WorldStateService.GetAccountsTier:output_type -> worldstate.GetAccountsTierResponse
+	7,  // [7:14] is the sub-list for method output_type
+	0,  // [0:7] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

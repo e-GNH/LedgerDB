@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	WorldStateService_Transfer_FullMethodName            = "/worldstate.WorldStateService/Transfer"
+	WorldStateService_CommitTransfer_FullMethodName      = "/worldstate.WorldStateService/CommitTransfer"
 	WorldStateService_OfflineWithdraw_FullMethodName     = "/worldstate.WorldStateService/OfflineWithdraw"
 	WorldStateService_OfflineDeposit_FullMethodName      = "/worldstate.WorldStateService/OfflineDeposit"
 	WorldStateService_CreateAccount_FullMethodName       = "/worldstate.WorldStateService/CreateAccount"
@@ -32,6 +33,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WorldStateServiceClient interface {
 	Transfer(ctx context.Context, in *TransferRequest, opts ...grpc.CallOption) (*TransferResponse, error)
+	CommitTransfer(ctx context.Context, in *TransferRequest, opts ...grpc.CallOption) (*TransferResponse, error)
 	OfflineWithdraw(ctx context.Context, in *OfflineWithdrawRequest, opts ...grpc.CallOption) (*OfflineWithdrawResponse, error)
 	OfflineDeposit(ctx context.Context, in *OfflineDepositRequest, opts ...grpc.CallOption) (*OfflineDepositResponse, error)
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
@@ -51,6 +53,16 @@ func (c *worldStateServiceClient) Transfer(ctx context.Context, in *TransferRequ
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TransferResponse)
 	err := c.cc.Invoke(ctx, WorldStateService_Transfer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *worldStateServiceClient) CommitTransfer(ctx context.Context, in *TransferRequest, opts ...grpc.CallOption) (*TransferResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TransferResponse)
+	err := c.cc.Invoke(ctx, WorldStateService_CommitTransfer_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +124,7 @@ func (c *worldStateServiceClient) GetAccountsTier(ctx context.Context, in *GetAc
 // for forward compatibility.
 type WorldStateServiceServer interface {
 	Transfer(context.Context, *TransferRequest) (*TransferResponse, error)
+	CommitTransfer(context.Context, *TransferRequest) (*TransferResponse, error)
 	OfflineWithdraw(context.Context, *OfflineWithdrawRequest) (*OfflineWithdrawResponse, error)
 	OfflineDeposit(context.Context, *OfflineDepositRequest) (*OfflineDepositResponse, error)
 	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
@@ -129,6 +142,9 @@ type UnimplementedWorldStateServiceServer struct{}
 
 func (UnimplementedWorldStateServiceServer) Transfer(context.Context, *TransferRequest) (*TransferResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Transfer not implemented")
+}
+func (UnimplementedWorldStateServiceServer) CommitTransfer(context.Context, *TransferRequest) (*TransferResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CommitTransfer not implemented")
 }
 func (UnimplementedWorldStateServiceServer) OfflineWithdraw(context.Context, *OfflineWithdrawRequest) (*OfflineWithdrawResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method OfflineWithdraw not implemented")
@@ -180,6 +196,24 @@ func _WorldStateService_Transfer_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorldStateServiceServer).Transfer(ctx, req.(*TransferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorldStateService_CommitTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldStateServiceServer).CommitTransfer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldStateService_CommitTransfer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldStateServiceServer).CommitTransfer(ctx, req.(*TransferRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -284,6 +318,10 @@ var WorldStateService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Transfer",
 			Handler:    _WorldStateService_Transfer_Handler,
+		},
+		{
+			MethodName: "CommitTransfer",
+			Handler:    _WorldStateService_CommitTransfer_Handler,
 		},
 		{
 			MethodName: "OfflineWithdraw",
