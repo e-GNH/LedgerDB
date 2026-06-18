@@ -6,6 +6,7 @@ import (
 
 	"LedgerDB/services/logging"
 
+	ledgerserverpb "LedgerServer/api"
 	pb "LedgerServer/api"
 	ts_store "StorageKernel/proto/TransactionsStore"
 	worldstate "StorageKernel/proto/worldstate"
@@ -21,26 +22,30 @@ type LedgerServer struct {
 	TransactionsStoreClient ts_store.TransactionsStoreServiceClient
 }
 
-// TODO: Zeyad, I don't remeber which object you would like to map.
-type DummyTransaction struct {
-	From      string
-	To        string
-	Amount    int64
-	Timestamp string
-	Nonce     string
-	Status    bool
-}
-
 func extractTransaction(a *anypb.Any) (*worldstate.TransferRequest, bool) {
-	if !a.MessageIs(&worldstate.TransferRequest{}) {
+	if !a.MessageIs(&ledgerserverpb.Transaction{}) {
 		return nil, false
 	}
-	var tx worldstate.TransferRequest
-	if err := a.UnmarshalTo(&tx); err != nil {
+	var tx_object ledgerserverpb.Transaction
+	if err := a.UnmarshalTo(&tx_object); err != nil {
+		logger.Info(fmt.Sprintf("Failed to unmarshal transaction: this was the object provided: %+v", a))
 		return nil, false
 	}
 	// print tx
-	logger.Info(fmt.Sprintf("%+v is the transaction extracted from the batch", tx))
+	to_wallet_string := tx_object.ToWallet
+	to_id := &to_wallet_string
+	if to_wallet_string == "" {
+		to_id = nil
+	}
+	tx := worldstate.TransferRequest{
+		FromId:             tx_object.FromWallet,
+		ToId:               to_id,
+		Amount:             tx_object.Amount,
+		Nonce:              tx_object.Nonce,
+		MerchantName:       tx_object.MerchantName,
+		OfflineTransaction: true,
+	}
+	logger.Info(fmt.Sprintf("we extracted transaction from %v to %v with amount %v merchant %v", tx.FromId, to_wallet_string, tx.Amount, tx.MerchantName))
 	return &tx, true
 }
 
