@@ -21,6 +21,94 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type GetMerchantAccountIdRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MerchantName  string                 `protobuf:"bytes,1,opt,name=merchant_name,json=merchantName,proto3" json:"merchant_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMerchantAccountIdRequest) Reset() {
+	*x = GetMerchantAccountIdRequest{}
+	mi := &file_worldstate_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMerchantAccountIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMerchantAccountIdRequest) ProtoMessage() {}
+
+func (x *GetMerchantAccountIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worldstate_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMerchantAccountIdRequest.ProtoReflect.Descriptor instead.
+func (*GetMerchantAccountIdRequest) Descriptor() ([]byte, []int) {
+	return file_worldstate_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetMerchantAccountIdRequest) GetMerchantName() string {
+	if x != nil {
+		return x.MerchantName
+	}
+	return ""
+}
+
+type GetMerchantAccountIdResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMerchantAccountIdResponse) Reset() {
+	*x = GetMerchantAccountIdResponse{}
+	mi := &file_worldstate_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMerchantAccountIdResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMerchantAccountIdResponse) ProtoMessage() {}
+
+func (x *GetMerchantAccountIdResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worldstate_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMerchantAccountIdResponse.ProtoReflect.Descriptor instead.
+func (*GetMerchantAccountIdResponse) Descriptor() ([]byte, []int) {
+	return file_worldstate_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetMerchantAccountIdResponse) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
 type TransferRequest struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	Nonce              string                 `protobuf:"bytes,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
@@ -35,7 +123,7 @@ type TransferRequest struct {
 
 func (x *TransferRequest) Reset() {
 	*x = TransferRequest{}
-	mi := &file_worldstate_proto_msgTypes[0]
+	mi := &file_worldstate_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +135,7 @@ func (x *TransferRequest) String() string {
 func (*TransferRequest) ProtoMessage() {}
 
 func (x *TransferRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[0]
+	mi := &file_worldstate_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +148,7 @@ func (x *TransferRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferRequest.ProtoReflect.Descriptor instead.
 func (*TransferRequest) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{0}
+	return file_worldstate_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TransferRequest) GetNonce() string {
@@ -115,7 +203,7 @@ type TransferResponse struct {
 
 func (x *TransferResponse) Reset() {
 	*x = TransferResponse{}
-	mi := &file_worldstate_proto_msgTypes[1]
+	mi := &file_worldstate_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -127,7 +215,7 @@ func (x *TransferResponse) String() string {
 func (*TransferResponse) ProtoMessage() {}
 
 func (x *TransferResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[1]
+	mi := &file_worldstate_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -140,7 +228,7 @@ func (x *TransferResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferResponse.ProtoReflect.Descriptor instead.
 func (*TransferResponse) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{1}
+	return file_worldstate_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *TransferResponse) GetOk() bool {
@@ -168,7 +256,7 @@ type OfflineWithdrawRequest struct {
 
 func (x *OfflineWithdrawRequest) Reset() {
 	*x = OfflineWithdrawRequest{}
-	mi := &file_worldstate_proto_msgTypes[2]
+	mi := &file_worldstate_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -180,7 +268,7 @@ func (x *OfflineWithdrawRequest) String() string {
 func (*OfflineWithdrawRequest) ProtoMessage() {}
 
 func (x *OfflineWithdrawRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[2]
+	mi := &file_worldstate_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -193,7 +281,7 @@ func (x *OfflineWithdrawRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OfflineWithdrawRequest.ProtoReflect.Descriptor instead.
 func (*OfflineWithdrawRequest) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{2}
+	return file_worldstate_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *OfflineWithdrawRequest) GetNonce() string {
@@ -227,7 +315,7 @@ type OfflineWithdrawResponse struct {
 
 func (x *OfflineWithdrawResponse) Reset() {
 	*x = OfflineWithdrawResponse{}
-	mi := &file_worldstate_proto_msgTypes[3]
+	mi := &file_worldstate_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -239,7 +327,7 @@ func (x *OfflineWithdrawResponse) String() string {
 func (*OfflineWithdrawResponse) ProtoMessage() {}
 
 func (x *OfflineWithdrawResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[3]
+	mi := &file_worldstate_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -252,7 +340,7 @@ func (x *OfflineWithdrawResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OfflineWithdrawResponse.ProtoReflect.Descriptor instead.
 func (*OfflineWithdrawResponse) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{3}
+	return file_worldstate_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *OfflineWithdrawResponse) GetOk() bool {
@@ -280,7 +368,7 @@ type OfflineDepositRequest struct {
 
 func (x *OfflineDepositRequest) Reset() {
 	*x = OfflineDepositRequest{}
-	mi := &file_worldstate_proto_msgTypes[4]
+	mi := &file_worldstate_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -292,7 +380,7 @@ func (x *OfflineDepositRequest) String() string {
 func (*OfflineDepositRequest) ProtoMessage() {}
 
 func (x *OfflineDepositRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[4]
+	mi := &file_worldstate_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -305,7 +393,7 @@ func (x *OfflineDepositRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OfflineDepositRequest.ProtoReflect.Descriptor instead.
 func (*OfflineDepositRequest) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{4}
+	return file_worldstate_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *OfflineDepositRequest) GetNonce() string {
@@ -339,7 +427,7 @@ type OfflineDepositResponse struct {
 
 func (x *OfflineDepositResponse) Reset() {
 	*x = OfflineDepositResponse{}
-	mi := &file_worldstate_proto_msgTypes[5]
+	mi := &file_worldstate_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -351,7 +439,7 @@ func (x *OfflineDepositResponse) String() string {
 func (*OfflineDepositResponse) ProtoMessage() {}
 
 func (x *OfflineDepositResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[5]
+	mi := &file_worldstate_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -364,7 +452,7 @@ func (x *OfflineDepositResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OfflineDepositResponse.ProtoReflect.Descriptor instead.
 func (*OfflineDepositResponse) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{5}
+	return file_worldstate_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *OfflineDepositResponse) GetOk() bool {
@@ -394,7 +482,7 @@ type CreateAccountRequest struct {
 
 func (x *CreateAccountRequest) Reset() {
 	*x = CreateAccountRequest{}
-	mi := &file_worldstate_proto_msgTypes[6]
+	mi := &file_worldstate_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -406,7 +494,7 @@ func (x *CreateAccountRequest) String() string {
 func (*CreateAccountRequest) ProtoMessage() {}
 
 func (x *CreateAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[6]
+	mi := &file_worldstate_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -419,7 +507,7 @@ func (x *CreateAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccountRequest.ProtoReflect.Descriptor instead.
 func (*CreateAccountRequest) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{6}
+	return file_worldstate_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CreateAccountRequest) GetNonce() string {
@@ -467,7 +555,7 @@ type CreateAccountResponse struct {
 
 func (x *CreateAccountResponse) Reset() {
 	*x = CreateAccountResponse{}
-	mi := &file_worldstate_proto_msgTypes[7]
+	mi := &file_worldstate_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -479,7 +567,7 @@ func (x *CreateAccountResponse) String() string {
 func (*CreateAccountResponse) ProtoMessage() {}
 
 func (x *CreateAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[7]
+	mi := &file_worldstate_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -492,7 +580,7 @@ func (x *CreateAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccountResponse.ProtoReflect.Descriptor instead.
 func (*CreateAccountResponse) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{7}
+	return file_worldstate_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CreateAccountResponse) GetOk() bool {
@@ -521,7 +609,7 @@ type ChangeAccountStatusRequest struct {
 
 func (x *ChangeAccountStatusRequest) Reset() {
 	*x = ChangeAccountStatusRequest{}
-	mi := &file_worldstate_proto_msgTypes[8]
+	mi := &file_worldstate_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -533,7 +621,7 @@ func (x *ChangeAccountStatusRequest) String() string {
 func (*ChangeAccountStatusRequest) ProtoMessage() {}
 
 func (x *ChangeAccountStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[8]
+	mi := &file_worldstate_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -546,7 +634,7 @@ func (x *ChangeAccountStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeAccountStatusRequest.ProtoReflect.Descriptor instead.
 func (*ChangeAccountStatusRequest) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{8}
+	return file_worldstate_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ChangeAccountStatusRequest) GetAccountId() string {
@@ -587,7 +675,7 @@ type ChangeAccountStatusResponse struct {
 
 func (x *ChangeAccountStatusResponse) Reset() {
 	*x = ChangeAccountStatusResponse{}
-	mi := &file_worldstate_proto_msgTypes[9]
+	mi := &file_worldstate_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -599,7 +687,7 @@ func (x *ChangeAccountStatusResponse) String() string {
 func (*ChangeAccountStatusResponse) ProtoMessage() {}
 
 func (x *ChangeAccountStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[9]
+	mi := &file_worldstate_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -612,7 +700,7 @@ func (x *ChangeAccountStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeAccountStatusResponse.ProtoReflect.Descriptor instead.
 func (*ChangeAccountStatusResponse) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{9}
+	return file_worldstate_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ChangeAccountStatusResponse) GetOk() bool {
@@ -639,7 +727,7 @@ type GetAccountsTierRequest struct {
 
 func (x *GetAccountsTierRequest) Reset() {
 	*x = GetAccountsTierRequest{}
-	mi := &file_worldstate_proto_msgTypes[10]
+	mi := &file_worldstate_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -651,7 +739,7 @@ func (x *GetAccountsTierRequest) String() string {
 func (*GetAccountsTierRequest) ProtoMessage() {}
 
 func (x *GetAccountsTierRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[10]
+	mi := &file_worldstate_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -664,7 +752,7 @@ func (x *GetAccountsTierRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccountsTierRequest.ProtoReflect.Descriptor instead.
 func (*GetAccountsTierRequest) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{10}
+	return file_worldstate_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetAccountsTierRequest) GetSenderAccountId() string {
@@ -693,7 +781,7 @@ type GetAccountsTierResponse struct {
 
 func (x *GetAccountsTierResponse) Reset() {
 	*x = GetAccountsTierResponse{}
-	mi := &file_worldstate_proto_msgTypes[11]
+	mi := &file_worldstate_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -705,7 +793,7 @@ func (x *GetAccountsTierResponse) String() string {
 func (*GetAccountsTierResponse) ProtoMessage() {}
 
 func (x *GetAccountsTierResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worldstate_proto_msgTypes[11]
+	mi := &file_worldstate_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -718,7 +806,7 @@ func (x *GetAccountsTierResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccountsTierResponse.ProtoReflect.Descriptor instead.
 func (*GetAccountsTierResponse) Descriptor() ([]byte, []int) {
-	return file_worldstate_proto_rawDescGZIP(), []int{11}
+	return file_worldstate_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetAccountsTierResponse) GetOk() bool {
@@ -754,7 +842,12 @@ var File_worldstate_proto protoreflect.FileDescriptor
 const file_worldstate_proto_rawDesc = "" +
 	"\n" +
 	"\x10worldstate.proto\x12\n" +
-	"worldstate\"\xe9\x01\n" +
+	"worldstate\"B\n" +
+	"\x1bGetMerchantAccountIdRequest\x12#\n" +
+	"\rmerchant_name\x18\x01 \x01(\tR\fmerchantName\"=\n" +
+	"\x1cGetMerchantAccountIdResponse\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\"\xe9\x01\n" +
 	"\x0fTransferRequest\x12\x14\n" +
 	"\x05nonce\x18\x01 \x01(\tR\x05nonce\x12\x17\n" +
 	"\afrom_id\x18\x02 \x01(\tR\x06fromId\x12\x18\n" +
@@ -813,7 +906,7 @@ const file_worldstate_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1f\n" +
 	"\vsender_tier\x18\x03 \x01(\tR\n" +
 	"senderTier\x12#\n" +
-	"\rreceiver_tier\x18\x04 \x01(\tR\freceiverTier2\xf6\x04\n" +
+	"\rreceiver_tier\x18\x04 \x01(\tR\freceiverTier2\xe1\x05\n" +
 	"\x11WorldStateService\x12E\n" +
 	"\bTransfer\x12\x1b.worldstate.TransferRequest\x1a\x1c.worldstate.TransferResponse\x12K\n" +
 	"\x0eCommitTransfer\x12\x1b.worldstate.TransferRequest\x1a\x1c.worldstate.TransferResponse\x12Z\n" +
@@ -821,7 +914,8 @@ const file_worldstate_proto_rawDesc = "" +
 	"\x0eOfflineDeposit\x12!.worldstate.OfflineDepositRequest\x1a\".worldstate.OfflineDepositResponse\x12T\n" +
 	"\rCreateAccount\x12 .worldstate.CreateAccountRequest\x1a!.worldstate.CreateAccountResponse\x12f\n" +
 	"\x13ChangeAccountStatus\x12&.worldstate.ChangeAccountStatusRequest\x1a'.worldstate.ChangeAccountStatusResponse\x12Z\n" +
-	"\x0fGetAccountsTier\x12\".worldstate.GetAccountsTierRequest\x1a#.worldstate.GetAccountsTierResponseB Z\x1eStorageKernel/proto/worldstateb\x06proto3"
+	"\x0fGetAccountsTier\x12\".worldstate.GetAccountsTierRequest\x1a#.worldstate.GetAccountsTierResponse\x12i\n" +
+	"\x14GetMerchantAccountId\x12'.worldstate.GetMerchantAccountIdRequest\x1a(.worldstate.GetMerchantAccountIdResponseB Z\x1eStorageKernel/proto/worldstateb\x06proto3"
 
 var (
 	file_worldstate_proto_rawDescOnce sync.Once
@@ -835,38 +929,42 @@ func file_worldstate_proto_rawDescGZIP() []byte {
 	return file_worldstate_proto_rawDescData
 }
 
-var file_worldstate_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_worldstate_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_worldstate_proto_goTypes = []any{
-	(*TransferRequest)(nil),             // 0: worldstate.TransferRequest
-	(*TransferResponse)(nil),            // 1: worldstate.TransferResponse
-	(*OfflineWithdrawRequest)(nil),      // 2: worldstate.OfflineWithdrawRequest
-	(*OfflineWithdrawResponse)(nil),     // 3: worldstate.OfflineWithdrawResponse
-	(*OfflineDepositRequest)(nil),       // 4: worldstate.OfflineDepositRequest
-	(*OfflineDepositResponse)(nil),      // 5: worldstate.OfflineDepositResponse
-	(*CreateAccountRequest)(nil),        // 6: worldstate.CreateAccountRequest
-	(*CreateAccountResponse)(nil),       // 7: worldstate.CreateAccountResponse
-	(*ChangeAccountStatusRequest)(nil),  // 8: worldstate.ChangeAccountStatusRequest
-	(*ChangeAccountStatusResponse)(nil), // 9: worldstate.ChangeAccountStatusResponse
-	(*GetAccountsTierRequest)(nil),      // 10: worldstate.GetAccountsTierRequest
-	(*GetAccountsTierResponse)(nil),     // 11: worldstate.GetAccountsTierResponse
+	(*GetMerchantAccountIdRequest)(nil),  // 0: worldstate.GetMerchantAccountIdRequest
+	(*GetMerchantAccountIdResponse)(nil), // 1: worldstate.GetMerchantAccountIdResponse
+	(*TransferRequest)(nil),              // 2: worldstate.TransferRequest
+	(*TransferResponse)(nil),             // 3: worldstate.TransferResponse
+	(*OfflineWithdrawRequest)(nil),       // 4: worldstate.OfflineWithdrawRequest
+	(*OfflineWithdrawResponse)(nil),      // 5: worldstate.OfflineWithdrawResponse
+	(*OfflineDepositRequest)(nil),        // 6: worldstate.OfflineDepositRequest
+	(*OfflineDepositResponse)(nil),       // 7: worldstate.OfflineDepositResponse
+	(*CreateAccountRequest)(nil),         // 8: worldstate.CreateAccountRequest
+	(*CreateAccountResponse)(nil),        // 9: worldstate.CreateAccountResponse
+	(*ChangeAccountStatusRequest)(nil),   // 10: worldstate.ChangeAccountStatusRequest
+	(*ChangeAccountStatusResponse)(nil),  // 11: worldstate.ChangeAccountStatusResponse
+	(*GetAccountsTierRequest)(nil),       // 12: worldstate.GetAccountsTierRequest
+	(*GetAccountsTierResponse)(nil),      // 13: worldstate.GetAccountsTierResponse
 }
 var file_worldstate_proto_depIdxs = []int32{
-	0,  // 0: worldstate.WorldStateService.Transfer:input_type -> worldstate.TransferRequest
-	0,  // 1: worldstate.WorldStateService.CommitTransfer:input_type -> worldstate.TransferRequest
-	2,  // 2: worldstate.WorldStateService.OfflineWithdraw:input_type -> worldstate.OfflineWithdrawRequest
-	4,  // 3: worldstate.WorldStateService.OfflineDeposit:input_type -> worldstate.OfflineDepositRequest
-	6,  // 4: worldstate.WorldStateService.CreateAccount:input_type -> worldstate.CreateAccountRequest
-	8,  // 5: worldstate.WorldStateService.ChangeAccountStatus:input_type -> worldstate.ChangeAccountStatusRequest
-	10, // 6: worldstate.WorldStateService.GetAccountsTier:input_type -> worldstate.GetAccountsTierRequest
-	1,  // 7: worldstate.WorldStateService.Transfer:output_type -> worldstate.TransferResponse
-	1,  // 8: worldstate.WorldStateService.CommitTransfer:output_type -> worldstate.TransferResponse
-	3,  // 9: worldstate.WorldStateService.OfflineWithdraw:output_type -> worldstate.OfflineWithdrawResponse
-	5,  // 10: worldstate.WorldStateService.OfflineDeposit:output_type -> worldstate.OfflineDepositResponse
-	7,  // 11: worldstate.WorldStateService.CreateAccount:output_type -> worldstate.CreateAccountResponse
-	9,  // 12: worldstate.WorldStateService.ChangeAccountStatus:output_type -> worldstate.ChangeAccountStatusResponse
-	11, // 13: worldstate.WorldStateService.GetAccountsTier:output_type -> worldstate.GetAccountsTierResponse
-	7,  // [7:14] is the sub-list for method output_type
-	0,  // [0:7] is the sub-list for method input_type
+	2,  // 0: worldstate.WorldStateService.Transfer:input_type -> worldstate.TransferRequest
+	2,  // 1: worldstate.WorldStateService.CommitTransfer:input_type -> worldstate.TransferRequest
+	4,  // 2: worldstate.WorldStateService.OfflineWithdraw:input_type -> worldstate.OfflineWithdrawRequest
+	6,  // 3: worldstate.WorldStateService.OfflineDeposit:input_type -> worldstate.OfflineDepositRequest
+	8,  // 4: worldstate.WorldStateService.CreateAccount:input_type -> worldstate.CreateAccountRequest
+	10, // 5: worldstate.WorldStateService.ChangeAccountStatus:input_type -> worldstate.ChangeAccountStatusRequest
+	12, // 6: worldstate.WorldStateService.GetAccountsTier:input_type -> worldstate.GetAccountsTierRequest
+	0,  // 7: worldstate.WorldStateService.GetMerchantAccountId:input_type -> worldstate.GetMerchantAccountIdRequest
+	3,  // 8: worldstate.WorldStateService.Transfer:output_type -> worldstate.TransferResponse
+	3,  // 9: worldstate.WorldStateService.CommitTransfer:output_type -> worldstate.TransferResponse
+	5,  // 10: worldstate.WorldStateService.OfflineWithdraw:output_type -> worldstate.OfflineWithdrawResponse
+	7,  // 11: worldstate.WorldStateService.OfflineDeposit:output_type -> worldstate.OfflineDepositResponse
+	9,  // 12: worldstate.WorldStateService.CreateAccount:output_type -> worldstate.CreateAccountResponse
+	11, // 13: worldstate.WorldStateService.ChangeAccountStatus:output_type -> worldstate.ChangeAccountStatusResponse
+	13, // 14: worldstate.WorldStateService.GetAccountsTier:output_type -> worldstate.GetAccountsTierResponse
+	1,  // 15: worldstate.WorldStateService.GetMerchantAccountId:output_type -> worldstate.GetMerchantAccountIdResponse
+	8,  // [8:16] is the sub-list for method output_type
+	0,  // [0:8] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name
@@ -877,16 +975,16 @@ func file_worldstate_proto_init() {
 	if File_worldstate_proto != nil {
 		return
 	}
-	file_worldstate_proto_msgTypes[0].OneofWrappers = []any{}
-	file_worldstate_proto_msgTypes[6].OneofWrappers = []any{}
+	file_worldstate_proto_msgTypes[2].OneofWrappers = []any{}
 	file_worldstate_proto_msgTypes[8].OneofWrappers = []any{}
+	file_worldstate_proto_msgTypes[10].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_worldstate_proto_rawDesc), len(file_worldstate_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

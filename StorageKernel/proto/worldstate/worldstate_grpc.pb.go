@@ -19,13 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WorldStateService_Transfer_FullMethodName            = "/worldstate.WorldStateService/Transfer"
-	WorldStateService_CommitTransfer_FullMethodName      = "/worldstate.WorldStateService/CommitTransfer"
-	WorldStateService_OfflineWithdraw_FullMethodName     = "/worldstate.WorldStateService/OfflineWithdraw"
-	WorldStateService_OfflineDeposit_FullMethodName      = "/worldstate.WorldStateService/OfflineDeposit"
-	WorldStateService_CreateAccount_FullMethodName       = "/worldstate.WorldStateService/CreateAccount"
-	WorldStateService_ChangeAccountStatus_FullMethodName = "/worldstate.WorldStateService/ChangeAccountStatus"
-	WorldStateService_GetAccountsTier_FullMethodName     = "/worldstate.WorldStateService/GetAccountsTier"
+	WorldStateService_Transfer_FullMethodName             = "/worldstate.WorldStateService/Transfer"
+	WorldStateService_CommitTransfer_FullMethodName       = "/worldstate.WorldStateService/CommitTransfer"
+	WorldStateService_OfflineWithdraw_FullMethodName      = "/worldstate.WorldStateService/OfflineWithdraw"
+	WorldStateService_OfflineDeposit_FullMethodName       = "/worldstate.WorldStateService/OfflineDeposit"
+	WorldStateService_CreateAccount_FullMethodName        = "/worldstate.WorldStateService/CreateAccount"
+	WorldStateService_ChangeAccountStatus_FullMethodName  = "/worldstate.WorldStateService/ChangeAccountStatus"
+	WorldStateService_GetAccountsTier_FullMethodName      = "/worldstate.WorldStateService/GetAccountsTier"
+	WorldStateService_GetMerchantAccountId_FullMethodName = "/worldstate.WorldStateService/GetMerchantAccountId"
 )
 
 // WorldStateServiceClient is the client API for WorldStateService service.
@@ -39,6 +40,7 @@ type WorldStateServiceClient interface {
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
 	ChangeAccountStatus(ctx context.Context, in *ChangeAccountStatusRequest, opts ...grpc.CallOption) (*ChangeAccountStatusResponse, error)
 	GetAccountsTier(ctx context.Context, in *GetAccountsTierRequest, opts ...grpc.CallOption) (*GetAccountsTierResponse, error)
+	GetMerchantAccountId(ctx context.Context, in *GetMerchantAccountIdRequest, opts ...grpc.CallOption) (*GetMerchantAccountIdResponse, error)
 }
 
 type worldStateServiceClient struct {
@@ -119,6 +121,16 @@ func (c *worldStateServiceClient) GetAccountsTier(ctx context.Context, in *GetAc
 	return out, nil
 }
 
+func (c *worldStateServiceClient) GetMerchantAccountId(ctx context.Context, in *GetMerchantAccountIdRequest, opts ...grpc.CallOption) (*GetMerchantAccountIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetMerchantAccountIdResponse)
+	err := c.cc.Invoke(ctx, WorldStateService_GetMerchantAccountId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorldStateServiceServer is the server API for WorldStateService service.
 // All implementations must embed UnimplementedWorldStateServiceServer
 // for forward compatibility.
@@ -130,6 +142,7 @@ type WorldStateServiceServer interface {
 	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
 	ChangeAccountStatus(context.Context, *ChangeAccountStatusRequest) (*ChangeAccountStatusResponse, error)
 	GetAccountsTier(context.Context, *GetAccountsTierRequest) (*GetAccountsTierResponse, error)
+	GetMerchantAccountId(context.Context, *GetMerchantAccountIdRequest) (*GetMerchantAccountIdResponse, error)
 	mustEmbedUnimplementedWorldStateServiceServer()
 }
 
@@ -160,6 +173,9 @@ func (UnimplementedWorldStateServiceServer) ChangeAccountStatus(context.Context,
 }
 func (UnimplementedWorldStateServiceServer) GetAccountsTier(context.Context, *GetAccountsTierRequest) (*GetAccountsTierResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAccountsTier not implemented")
+}
+func (UnimplementedWorldStateServiceServer) GetMerchantAccountId(context.Context, *GetMerchantAccountIdRequest) (*GetMerchantAccountIdResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMerchantAccountId not implemented")
 }
 func (UnimplementedWorldStateServiceServer) mustEmbedUnimplementedWorldStateServiceServer() {}
 func (UnimplementedWorldStateServiceServer) testEmbeddedByValue()                           {}
@@ -308,6 +324,24 @@ func _WorldStateService_GetAccountsTier_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorldStateService_GetMerchantAccountId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMerchantAccountIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldStateServiceServer).GetMerchantAccountId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldStateService_GetMerchantAccountId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldStateServiceServer).GetMerchantAccountId(ctx, req.(*GetMerchantAccountIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorldStateService_ServiceDesc is the grpc.ServiceDesc for WorldStateService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -342,6 +376,10 @@ var WorldStateService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAccountsTier",
 			Handler:    _WorldStateService_GetAccountsTier_Handler,
+		},
+		{
+			MethodName: "GetMerchantAccountId",
+			Handler:    _WorldStateService_GetMerchantAccountId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

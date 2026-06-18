@@ -12,8 +12,14 @@ service WorldStateService {
   rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
   rpc ChangeAccountStatus(ChangeAccountStatusRequest) returns (ChangeAccountStatusResponse);
   rpc GetAccountsTier(GetAccountsTierRequest) returns (GetAccountsTierResponse);
+  rpc GetMerchantAccountId(GetMerchantAccountIdRequest) returns (GetMerchantAccountIdResponse);
 }
-
+message GetMerchantAccountIdRequest {
+  string merchant_name = 1;
+}
+message GetMerchantAccountIdResponse {
+  string account_id = 1;
+}
 message TransferRequest {
   string nonce   = 1;
   string from_id = 2;

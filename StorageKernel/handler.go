@@ -188,6 +188,22 @@ func (h *KernelHandler) CommitTransfer(ctx context.Context, req *pb.TransferRequ
 
 	return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
 }
+func (h *KernelHandler) GetMerchantAccountId(ctx context.Context, req *pb.GetMerchantAccountIdRequest) (*pb.GetMerchantAccountIdResponse, error) {
+	merchant_name := "merchant:" + req.MerchantName
+	key := []string{
+		merchant_name,
+	}
+
+	res, err := getMerchantAccountIdScript.Run(ctx, h.rdb, key).Result()
+	if err != nil {
+		logger.Error(" - [" + file_name + "] - Failed to get merchant account ID: " + err.Error())
+		return nil, mapGrpcError(err)
+	}
+
+	to_id := fmt.Sprint(res)
+	return &pb.GetMerchantAccountIdResponse{AccountId: to_id}, nil
+}
+
 func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
 
 	file_name = "handler.go"
