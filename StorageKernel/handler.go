@@ -201,6 +201,7 @@ func (h *KernelHandler) GetMerchantAccountId(ctx context.Context, req *pb.GetMer
 	}
 
 	to_id := fmt.Sprint(res)
+	to_id = strings.TrimPrefix(to_id, "account:")
 	return &pb.GetMerchantAccountIdResponse{AccountId: to_id}, nil
 }
 
