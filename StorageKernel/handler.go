@@ -401,7 +401,6 @@ func (h *KernelHandler) writeBatchToHDFS(req *anypb.Any, fileName string) (strin
         return "", status.Error(codes.Internal, "failed to marshal batch JSON")
     }
 
-    // Write to HDFS
     ledgerDir := "/ledger/transactions"
     batchId := fmt.Sprintf("batch_%d", time.Now().UnixNano())
     filePath := fmt.Sprintf("%s/%s.json", ledgerDir, batchId)
