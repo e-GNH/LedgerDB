@@ -36,6 +36,8 @@ var (
 )
 
 var logger = logging.New("batching/batch", "./")
+const filename = "ledger_batches.jsonl"
+
 
 func SetRegistry(r Registry) {
 	reg = r
@@ -48,8 +50,6 @@ func SaveBatchItem[T proto.Message](item T, client ledgerserverpb.TransactionsSe
 	if LedgerServerClient == nil {
 		LedgerServerClient = client
 	}
-
-	const filename = "ledger_batches.jsonl"
 
 	jsonData, err := protojson.Marshal(item)
 	if err != nil {
@@ -71,23 +71,18 @@ func SaveBatchItem[T proto.Message](item T, client ledgerserverpb.TransactionsSe
 
 	file.Close()
 
-	lines, err := readFileLines(filename)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to read batch file: %v", err))
-		return err
-	}
-
-	if len(lines) >= batchSize {
-		if err := flushBatch(lines, filename); err != nil {
-			logger.Error(fmt.Sprintf("failed to flush batch: %v", err))
-			return err
-		}
-	}
-
 	return nil
 }
 
-func flushBatch(lines []string, filename string) error {
+func FlushBatch() error {
+
+	lines, err := readFileLines(filename)
+	if err != nil {
+		return err
+	}
+	if len(lines) < batchSize {
+		return nil
+	}
 	batch := &ledgerserverpb.BatchToAppend{}
 
 	for _, line := range lines {

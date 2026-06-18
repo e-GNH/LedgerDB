@@ -145,6 +145,10 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 				batching.SaveBatchItem(anyUndo, s.LedgerServerClient)
 			}
 			batching.StreamReceipt(msg)
+			
+			if err := batching.FlushBatch(); err != nil {
+				logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
+			}
 
 			return &pb.SecureResponse{
 				Success: false,
@@ -155,6 +159,10 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		msg.Status = true
 		batching.StreamReceipt(msg)
 		message = "Transaction validated & successfully added to world state"
+	}
+
+	if err := batching.FlushBatch(); err != nil {
+		logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
 	}
 
 	return &pb.SecureResponse{Success: ok, Message: message}, nil
@@ -223,6 +231,10 @@ func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*
 		})
 	}
 
+	if err := batching.FlushBatch(); err != nil {
+		logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
+	}
+
 	return &pb.SecureResponseList{Responses: responses}, nil
 }
 
@@ -259,8 +271,13 @@ func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequ
 		AccountId: msg.AccountId,
 		Amount:    int64(msg.Amount),
 	})
+
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+	}
+
+	if err := batching.FlushBatch(); err != nil {
+		logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
 	}
 
 	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
@@ -299,8 +316,13 @@ func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureReque
 		AccountId: msg.AccountId,
 		Amount:    int64(msg.Amount),
 	})
+
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+	}
+
+	if err := batching.FlushBatch(); err != nil {
+		logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
 	}
 
 	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
@@ -355,6 +377,10 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("Kernel rejected wallet creation: %v", err))
+	}
+
+	if err := batching.FlushBatch(); err != nil {
+		logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
 	}
 
 	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
