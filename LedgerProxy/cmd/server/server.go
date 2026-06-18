@@ -61,7 +61,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	logger.Info("--> Received gRPC Secure() request")
 
 	msg, ok := sec.VerifySecurity[types.SecureMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
-	
+
 	message := "Transaction rejected due to security"
 	if msg == nil || !ok {
 		return &pb.SecureResponse{Success: false, Message: message}, nil
@@ -72,7 +72,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	if ok {
 		logger.Info("SECURITY SUCCESS: Pipeline passed!")
 	}
-	
+
 	tx := &ledgerserverpb.Transaction{
 		Status:     msg.Status,
 		TimeStamp:  msg.Timestamp.Format(time.RFC3339),
@@ -89,7 +89,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	}
 
 	anyTx, err := anypb.New(tx)
-	
+
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to wrap transaction: %v", err))
 		return &pb.SecureResponse{Success: false, Message: message}, nil
@@ -102,10 +102,14 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 
 	if ok {
 		logger.Info("Passing transaction to world state...")
+		transfer_to := &msg.To
+		if msg.To == "" {
+			transfer_to = nil
+		}
 		toTransferPayload := &kernelpb.TransferRequest{
 			Nonce:              msg.Nonce,
 			FromId:             msg.From,
-			ToId:               &msg.To,
+			ToId:               transfer_to,
 			Amount:             int64(msg.Amount),
 			OfflineTransaction: false,
 		}
@@ -113,7 +117,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		if msg.MerchantName != nil {
 			toTransferPayload.MerchantName = msg.MerchantName
 		}
-		
+
 		_, err := s.kernelClient.Transfer(ctx, toTransferPayload)
 		if err != nil {
 			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
@@ -313,15 +317,15 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 	logger.Info("SECURITY SUCCESS: Pipeline passed!")
 
 	createMsg := &ledgerserverpb.CreateAccountMessage{
-		AccountId:    msg.AccountId,
-		Balance:      msg.Balance,
-		Nonce:        msg.Nonce,
-		TimeStamp:    time.Now().Format(time.RFC3339),
-		Tier:         msg.Tier,
+		AccountId: msg.AccountId,
+		Balance:   msg.Balance,
+		Nonce:     msg.Nonce,
+		TimeStamp: time.Now().Format(time.RFC3339),
+		Tier:      msg.Tier,
 	}
 
 	if msg.Name != nil {
-		createMsg.Name = *msg.Name
+		createMsg.Name = msg.Name
 	}
 
 	anyCreate, err := anypb.New(createMsg)

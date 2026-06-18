@@ -1,45 +1,45 @@
 package main
 
 import (
+	aml_checker "LedgerDB/services/aml"
+	ls "LedgerServer/api"
 	ts "StorageKernel/proto/TransactionsStore"
 	pb "StorageKernel/proto/worldstate"
-	aml_checker "LedgerDB/services/aml"
-	ls "LedgerServer/api"        
-	"strings"
-	"strconv"
-	"errors"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"time"
 	"slices"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/colinmarc/hdfs/v2"
 	"github.com/redis/go-redis/v9"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
-    "google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type KernelHandler struct {
 	pb.UnimplementedWorldStateServiceServer
 	rdb *redis.Client
 	ts.UnimplementedTransactionsStoreServiceServer
-	hdfs *hdfs.Client
+	hdfs   *hdfs.Client
 	amlURL string
 }
 
-var ValidTiers = []string {
-	"individual", 
-	"business", 
-	"merchant"
+var ValidTiers = []string{
+	"individual",
+	"business",
+	"merchant",
 }
 
-
 func (h *KernelHandler) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
-	
+
 	file_name := "handler.go"
 	merchant_name := ""
 
@@ -112,7 +112,7 @@ func (h *KernelHandler) OfflineWithdraw(ctx context.Context, req *pb.OfflineWith
 
 func (h *KernelHandler) OfflineDeposit(ctx context.Context, req *pb.OfflineDepositRequest) (*pb.OfflineDepositResponse, error) {
 	file_name = "handler.go"
-	
+
 	keys := []string{
 		"nonce:" + req.Nonce,
 		"account:" + req.AccountId,
@@ -136,7 +136,7 @@ func (h *KernelHandler) OfflineDeposit(ctx context.Context, req *pb.OfflineDepos
 }
 
 func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
-	
+
 	file_name = "handler.go"
 	merchant_name := ""
 
@@ -204,7 +204,7 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 		Sender:              req.FromId,
 		Receiver:            to_id_without_prefix,
 		Amount:              float64(req.Amount) / 100, // Convert qorosh to GNEH
-		Timestamp:          time.Now(),
+		Timestamp:           time.Now(),
 		SenderAccountType:   tiers_response.SenderTier,
 		ReceiverAccountType: tiers_response.ReceiverTier,
 	}
@@ -214,14 +214,14 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 		logger.Error(" - [" + file_name + "] - AML Check failed (internally): " + err.Error())
 		return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
 	}
-	
+
 	if txCheckResp.Status == "rejected" {
 		logger.Info(" - [" + file_name + "] - Transfer rejected by AML: " + txCheckResp.Status + " - " + txCheckResp.Reason)
 		// roll back transfer
-		if req.OfflineTransaction == false{
+		if req.OfflineTransaction == false {
 			// Implementation for rolling back transfer
 			keys_revert := []string{
-				"nonce:" + req.Nonce+"_rollback",
+				"nonce:" + req.Nonce + "_rollback",
 				"account:" + req.FromId,
 				to_id,
 				strconv.FormatBool(req.OfflineTransaction),
@@ -247,10 +247,10 @@ func (h *KernelHandler) ChangeAccountStatus(ctx context.Context, req *pb.ChangeA
 	keys := []string{
 		"account:" + req.AccountId,
 	}
-	if req.Score == nil{
+	if req.Score == nil {
 		req.Score = proto.Float32(-1)
 	}
-	if req.Reason == nil{
+	if req.Reason == nil {
 		req.Reason = proto.String("")
 	}
 	values := []string{
@@ -360,68 +360,68 @@ func (h *KernelHandler) GetAccountsTier(ctx context.Context, req *pb.GetAccounts
 // %%%%%%%%%%% END JUST TESTING %%%%%%%%%%%%
 
 func (h *KernelHandler) Store(ctx context.Context, req *anypb.Any) (*ts.StoreAck, error) {
-    fileName := "handler.go"
-    logger.Info(" - [" + fileName + "] - Storing Batch")
+	fileName := "handler.go"
+	logger.Info(" - [" + fileName + "] - Storing Batch")
 
-    batchId, err := h.writeBatchToHDFS(req, fileName)
-    if err != nil {
-        return nil, err
-    }
+	batchId, err := h.writeBatchToHDFS(req, fileName)
+	if err != nil {
+		return nil, err
+	}
 
-    logger.Info(" - [" + fileName + "] - Successfully stored batch: " + batchId)
-    return &ts.StoreAck{
-        Success: true,
-        BatchId: batchId,
-    }, nil
+	logger.Info(" - [" + fileName + "] - Successfully stored batch: " + batchId)
+	return &ts.StoreAck{
+		Success: true,
+		BatchId: batchId,
+	}, nil
 }
 
 func (h *KernelHandler) writeBatchToHDFS(req *anypb.Any, fileName string) (string, error) {
 
 	var batch ls.BatchToAppend
-    if err := req.UnmarshalTo(&batch); err != nil {
-        logger.Error(" - [" + fileName + "] - failed to unmarshal batch: " + err.Error())
-        return "", status.Error(codes.Internal, "failed to unmarshal batch")
-    }
+	if err := req.UnmarshalTo(&batch); err != nil {
+		logger.Error(" - [" + fileName + "] - failed to unmarshal batch: " + err.Error())
+		return "", status.Error(codes.Internal, "failed to unmarshal batch")
+	}
 
-    marshaler := protojson.MarshalOptions{EmitUnpopulated: false}
-    entries := make([]json.RawMessage, 0, len(batch.Logs))
+	marshaler := protojson.MarshalOptions{EmitUnpopulated: false}
+	entries := make([]json.RawMessage, 0, len(batch.Logs))
 
-    for _, anyMsg := range batch.Logs {
-        jsonBytes, err := marshaler.Marshal(anyMsg)
-        if err != nil {
-            logger.Error(fmt.Sprintf(" - [%s] - failed to marshal entry: %v", fileName, err))
-            return "", status.Error(codes.Internal, "failed to marshal entry")
-        }
-        entries = append(entries, json.RawMessage(jsonBytes))
-    }
+	for _, anyMsg := range batch.Logs {
+		jsonBytes, err := marshaler.Marshal(anyMsg)
+		if err != nil {
+			logger.Error(fmt.Sprintf(" - [%s] - failed to marshal entry: %v", fileName, err))
+			return "", status.Error(codes.Internal, "failed to marshal entry")
+		}
+		entries = append(entries, json.RawMessage(jsonBytes))
+	}
 
-    txData, err := json.Marshal(entries)
-    if err != nil {
-        logger.Error(" - [" + fileName + "] - failed to marshal JSON array: " + err.Error())
-        return "", status.Error(codes.Internal, "failed to marshal batch JSON")
-    }
+	txData, err := json.Marshal(entries)
+	if err != nil {
+		logger.Error(" - [" + fileName + "] - failed to marshal JSON array: " + err.Error())
+		return "", status.Error(codes.Internal, "failed to marshal batch JSON")
+	}
 
-    ledgerDir := "/ledger/transactions"
-    batchId := fmt.Sprintf("batch_%d", time.Now().UnixNano())
-    filePath := fmt.Sprintf("%s/%s.json", ledgerDir, batchId)
+	ledgerDir := "/ledger/transactions"
+	batchId := fmt.Sprintf("batch_%d", time.Now().UnixNano())
+	filePath := fmt.Sprintf("%s/%s.json", ledgerDir, batchId)
 
-    writer, err := h.hdfs.Create(filePath)
-    if err != nil {
-        logger.Error(" - [" + fileName + "] - failed to create file: " + err.Error())
-        return "", status.Error(codes.Internal, "failed to create file in HDFS")
-    }
-    defer func() {
-        if cerr := writer.Close(); cerr != nil {
-            logger.Error(" - [" + fileName + "] - failed to close writer: " + cerr.Error())
-        }
-    }()
+	writer, err := h.hdfs.Create(filePath)
+	if err != nil {
+		logger.Error(" - [" + fileName + "] - failed to create file: " + err.Error())
+		return "", status.Error(codes.Internal, "failed to create file in HDFS")
+	}
+	defer func() {
+		if cerr := writer.Close(); cerr != nil {
+			logger.Error(" - [" + fileName + "] - failed to close writer: " + cerr.Error())
+		}
+	}()
 
-    if _, err = writer.Write(txData); err != nil {
-        logger.Error(" - [" + fileName + "] - failed to write data: " + err.Error())
-        return "", status.Error(codes.Internal, "failed to write data to HDFS")
-    }
+	if _, err = writer.Write(txData); err != nil {
+		logger.Error(" - [" + fileName + "] - failed to write data: " + err.Error())
+		return "", status.Error(codes.Internal, "failed to write data to HDFS")
+	}
 
-    return batchId, nil
+	return batchId, nil
 }
 
 // func (h *KernelHandler) generateReceipts(transactions []*ts.Transaction, fileName string) []*ts.TransactionReceipt {
