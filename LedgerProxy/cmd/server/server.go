@@ -59,7 +59,7 @@ func (s *securityServer) Subscribe(req *pb.SubscribeRequest, stream pb.ReceiptSe
 
 func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
 	logger.Info("--> Received gRPC Secure() request")
-
+	merchantTx := false
 	msg, ok := sec.VerifySecurity[types.SecureMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 
 	message := "Transaction rejected due to security"
@@ -86,6 +86,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 
 	if msg.MerchantName != nil {
 		tx.MerchantName = msg.MerchantName
+		merchantTx = true
 	}
 
 	anyTx, err := anypb.New(tx)
@@ -106,6 +107,22 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		if msg.To == "" {
 			transfer_to = nil
 		}
+
+		undoTx := false
+		toReceipt := ""
+
+		if merchantTx {
+			resp, err := s.kernelClient.GetMerchantAccountId(ctx, &kernelpb.GetMerchantAccountIdRequest{
+				MerchantName: *msg.MerchantName,
+			})
+			if err != nil {
+				logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+				undoTx = true
+			} else {
+				toReceipt = resp.AccountId
+			}
+		}
+
 		toTransferPayload := &kernelpb.TransferRequest{
 			Nonce:              msg.Nonce,
 			FromId:             msg.From,
@@ -114,12 +131,19 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 			OfflineTransaction: false,
 		}
 
-		if msg.MerchantName != nil {
+		if merchantTx {
 			toTransferPayload.MerchantName = msg.MerchantName
 		}
 
-		_, err := s.kernelClient.Transfer(ctx, toTransferPayload)
-		if err != nil {
+		if !undoTx {
+			_, err := s.kernelClient.Transfer(ctx, toTransferPayload)
+			if err != nil {
+				logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
+				undoTx = true
+			}
+		}
+
+		if undoTx {
 			logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 			msg.Status = false
 
@@ -134,7 +158,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 				Hash:       hex.EncodeToString(msg.Hash),
 			}
 
-			if msg.MerchantName != nil {
+			if merchantTx {
 				undoTx.MerchantName = msg.MerchantName
 			}
 
@@ -144,6 +168,11 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 			} else {
 				batching.SaveBatchItem(anyUndo, s.LedgerServerClient)
 			}
+
+			if merchantTx {
+				msg.To = toReceipt
+			}
+			
 			batching.StreamReceipt(msg)
 			
 			if err := batching.FlushBatch(); err != nil {
@@ -157,6 +186,10 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		}
 
 		msg.Status = true
+		if merchantTx {
+			msg.To = toReceipt
+		}
+
 		batching.StreamReceipt(msg)
 		message = "Transaction validated & successfully added to world state"
 	}

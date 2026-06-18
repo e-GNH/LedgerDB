@@ -36,8 +36,8 @@ var (
 )
 
 var logger = logging.New("batching/batch", "./")
-const filename = "ledger_batches.jsonl"
 
+const filename = "ledger_batches.jsonl"
 
 func SetRegistry(r Registry) {
 	reg = r
