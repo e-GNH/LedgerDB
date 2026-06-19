@@ -53,5 +53,5 @@ def check_transaction(transaction):
         return True, ""
         
     except Exception as e:
-        return False, f"error at level 1 checks {e}"
+        return False, f"error at level 1 (rules) checks {e}"
         
