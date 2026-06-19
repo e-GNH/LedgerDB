@@ -46,8 +46,10 @@ var transferScript = redis.NewScript(`
 	if redis.call("EXISTS", KEYS[1]) == 1 then
 		return {err="NONCE_ALREADY_USED"}
 	end
-	if redis.call("EXISTS", KEYS[2]) == 0 then
-		return {err="FROM_ACCOUNT_NOT_FOUND"}
+	if KEYS[2] ~= "account:BANK_ACCOUNT" then 
+		if redis.call("EXISTS", KEYS[2]) == 0 then
+			return {err="FROM_ACCOUNT_NOT_FOUND"}
+		end
 	end
 	if redis.call("EXISTS", KEYS[3]) == 0 then
 		return {err="TO_ACCOUNT_NOT_FOUND"}
@@ -58,20 +60,26 @@ var transferScript = redis.NewScript(`
 		balance_key = "offline"
 		pending_key = "offline"
 	end
-	local balance = tonumber(redis.call("HGET", KEYS[2], balance_key) or "0")
-	local sender_account_status = redis.call("HGET", KEYS[2], "status")
-	if sender_account_status == "banned" then
-		return {err="FROM_ACCOUNT_BANNED"}
-	end
 	local receiver_account_status = redis.call("HGET", KEYS[3], "status")
 	if receiver_account_status == "banned" then
 		return {err="TO_ACCOUNT_BANNED"}
 	end
+	
+	local balance = amount
+	if KEYS[2] ~= "account:BANK_ACCOUNT" then 
+		balance = tonumber(redis.call("HGET", KEYS[2], balance_key) or "0")
+		local sender_account_status = redis.call("HGET", KEYS[2], "status")
+		if sender_account_status == "banned" then
+			return {err="FROM_ACCOUNT_BANNED"}
+		end
+	end
+
 	if balance < amount then
 		return {err="INSUFFICIENT_FUNDS"}
 	end
-
-	redis.call("HINCRBY", KEYS[2], balance_key, -amount)
+	if KEYS[2] ~= "account:BANK_ACCOUNT" then 
+		redis.call("HINCRBY", KEYS[2], balance_key, -amount)
+	end
 	redis.call("HINCRBY", KEYS[3], pending_key,  amount)
 	redis.call("SET",     KEYS[1], 1)
 	local seq = redis.call("INCR", "global:sequence")
@@ -91,8 +99,11 @@ var transferRollBackScript = redis.NewScript(`
 	if redis.call("EXISTS", KEYS[1]) == 1 then
 		return {err="NONCE_ALREADY_USED"}
 	end
-	if redis.call("EXISTS", KEYS[2]) == 0 then
-		return {err="FROM_ACCOUNT_NOT_FOUND"}
+	if KEYS[2] ~= "account:BANK_ACCOUNT" then 
+
+		if redis.call("EXISTS", KEYS[2]) == 0 then
+			return {err="FROM_ACCOUNT_NOT_FOUND"}
+		end
 	end
 	if redis.call("EXISTS", KEYS[3]) == 0 then
 		return {err="TO_ACCOUNT_NOT_FOUND"}
@@ -108,7 +119,9 @@ var transferRollBackScript = redis.NewScript(`
 		return {err="INSUFFICIENT_FUNDS"}
 	end
 
-	redis.call("HINCRBY", KEYS[2], balance_key, amount)
+	if KEYS[2] ~= "account:BANK_ACCOUNT" then 
+		redis.call("HINCRBY", KEYS[2], balance_key, amount)
+	end
 	redis.call("HINCRBY", KEYS[3], pending_key, -amount)
 	redis.call("SET",     KEYS[1], 1)
 	local seq = redis.call("INCR", "global:sequence")

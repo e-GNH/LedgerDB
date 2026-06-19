@@ -260,6 +260,9 @@ func (h *KernelHandler) Transfer(ctx context.Context, req *pb.TransferRequest) (
 
 	sequence := res[1]
 	logger.Info(" - [" + file_name + "] - Transfer committed to redis: " + fmt.Sprint(sequence))
+	if req.FromId == "BANK_ACCOUNT" {
+		return &pb.TransferResponse{Ok: true, Message: "transfer committed, sequence: " + fmt.Sprint(sequence)}, nil
+	}
 	tiers_response, err := h.GetAccountsTier(ctx, &pb.GetAccountsTierRequest{
 		SenderAccountId:   req.FromId,
 		ReceiverAccountId: to_id_without_prefix,
