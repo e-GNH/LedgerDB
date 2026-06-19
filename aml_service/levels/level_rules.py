@@ -1,51 +1,57 @@
 import json
-from datetime import datetime, timedelta
 from collections import defaultdict
-import os
+import os, sys
+from datetime import timedelta
+from datetime import datetime
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # two dirname to get to aml_service path 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-with open(os.path.join(BASE_DIR, 'config', 'thresholds.json')) as f:
+
+with open(os.path.join(BASE_DIR, "config", "thresholds.json"), 'r') as f:
     THRESHOLDS = json.load(f)
 
-# { sender_id: [{ amount, timestamp }, ...] }
-daily_window = defaultdict(list)
+## {senderID: [(amount1, timestamp1), (amount2, timestamp2), ,,,,]}
+daily_transactions = defaultdict(list)
 
-def clean_sender_window(sender, timestamp):
+def clean_daily(sender, timestamp):
     cutoff = timestamp - timedelta(hours=24)
-    daily_window[sender] = [tx for tx in daily_window[sender] if tx[1] > cutoff]
-
+    daily_transactions[sender] = [tx for tx in daily_transactions[sender] if tx[1] > cutoff]
+    
 def check_transaction(transaction):
     try:
-        account_type, amount, sender = transaction["account_type"], transaction["amount"], transaction["sender"]
-        if account_type not in THRESHOLDS:
-            return False, "invalid account type for transaction"
-        
-        limits = THRESHOLDS[account_type]
-        
-        if amount > limits["tx_threshold"]:
-            return False, "Transaction amount exceeds transaction limit"
-      
+        sender = transaction["sender"]
+        amount = transaction["amount"]
         timestamp = transaction.get("timestamp", datetime.now())
-        clean_sender_window(sender, timestamp)
-        total_tx_day = sum([tx[0] for tx in daily_window[sender]])
+        sender_account_type = transaction["sender_account_type"]
         
-        if(total_tx_day + amount > limits["daily_limit"]):
-            return False, "Daily Transaction Amount exceeded"
+        if sender_account_type not in THRESHOLDS:
+            return False, "Transaction sender account type is wrong"
         
-        ## structuring
-        structuring_check_amount = limits["structuring_percentage"] * limits["tx_threshold"]
-        if amount >= structuring_check_amount:
-            count = sum([1 for tx in daily_window[sender] if tx[0] >= structuring_check_amount])
-            if count + 1 >= limits["structuring_limit"]:
+        sender_limits = THRESHOLDS[sender_account_type]
+        
+        if amount > sender_limits["tx_threshold"]:
+            return False, "Transaction amount exceeds transaction limit"
+        
+        clean_daily(sender, timestamp)
+        daily_sum = sum([tx[0] for tx in daily_transactions[sender]])
+        
+        if amount + daily_sum > sender_limits["daily_limit"]:
+            return False, "Daily transaction limit exceeded"
+        
+        structuring_threshold =  sender_limits["tx_threshold"] * sender_limits["structuring_percentage"]
+        if amount >= structuring_threshold:
+            count_structuring = 1 + sum([1 for tx in daily_transactions[sender] if tx[0] >= structuring_threshold])
+            if count_structuring >= sender_limits["structuring_limit"]:
                 return False, "Too many transactions nearing limit"
-        ## rapid transactions
-        count_near_interval = sum([1 for tx in daily_window[sender] if timestamp - tx[1] <= timedelta(minutes=limits["velocity_window_minutes"])])
-        if count_near_interval + 1 >= limits["velocity_limit"]:
-            return False, "Too many transactions in short time"
-        
-        daily_window[sender].append([amount, timestamp])
-        
+            
+        count_near_transactions = 1 + sum([1 for tx in daily_transactions[sender] if timestamp - tx[1] <= timedelta(minutes=sender_limits["velocity_window_minutes"])])
+        if count_near_transactions >= sender_limits["velocity_limit"]:
+            return False, "Too many in short time"
+
+        daily_transactions[sender].append([amount, timestamp])
+
         return True, ""
+        
     except Exception as e:
-        return False, f"invalid transaction: {e}"
+        return False, f"error at level 1 checks {e}"
+        
