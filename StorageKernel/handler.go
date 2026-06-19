@@ -478,6 +478,11 @@ func (h *KernelHandler) writeBatchToHDFS(req *anypb.Any, fileName string) (strin
 	batchId := fmt.Sprintf("batch_%d", time.Now().UnixNano())
 	filePath := fmt.Sprintf("%s/%s.json", ledgerDir, batchId)
 
+	if err = h.hdfs.MkdirAll(ledgerDir, 0755); err != nil {
+		logger.Error(" - [" + fileName + "] - failed to create HDFS directory: " + err.Error())
+		return "", status.Error(codes.Internal, "failed to create HDFS directory")
+	}
+
 	writer, err := h.hdfs.Create(filePath)
 	if err != nil {
 		logger.Error(" - [" + fileName + "] - failed to create file: " + err.Error())
