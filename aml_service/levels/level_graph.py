@@ -26,8 +26,10 @@ def check_transaction(transaction):
         if limits["max_fan_out"] < graph.get_outdegree(sender):
             return False, "Fan out limit exceeded for sender"
         
-        if limits["max_fan_in"] < graph.get_indegree(receiver):
-            return False, "Fan in limit exceeded for receiver"
+        if "receiver_account_type" in transaction and transaction["receiver_account_type"] in THRESHOLDS:
+            receiver_limits = THRESHOLDS[transaction["receiver_account_type"]]
+            if receiver_limits["max_fan_in"] < graph.get_indegree(receiver):
+                return False, "Fan in limit exceeded for receiver"
         
         sender_output_money = graph.get_output_money(sender)
         if sender_output_money >= limits["output_money_amount_check_cycles"]:
