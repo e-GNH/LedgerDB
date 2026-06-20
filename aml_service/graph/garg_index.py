@@ -2,7 +2,7 @@ import networkx as nx
 import numpy as np
 
 class LouvainCommunities():
-    def __init__(self, graph, resolution = 1, use_weight = False):
+    def __init__(self, graph, resolution = 1, use_weight = False, use_delta_modularity = True):
         self.graph = graph
         self.resolution = resolution ## For controlling size of communities
         self.mapping = dict()
@@ -14,10 +14,48 @@ class LouvainCommunities():
         weight = 'weight' if use_weight else None
         self.adjacency_matrix = nx.adjacency_matrix(graph, weight=weight).toarray()
         self.cached_modularities = dict()
+        self.use_delta_modularity = use_delta_modularity
+        
+        self.MAX_ITERATIONS = 1000
     
-    def _compute_delta_modularity(sef):
+    def _compute_delta_modularity_one_community(self, community, node_new, adjacency_matrix):
         #TODO: Implement and use instead of caching
-        return 0
+        m = np.sum(adjacency_matrix) / 2 #divide by 2 since undirected graph
+        if m == 0:
+            print("edges weigth in graphs = 0")
+            return 0
+        community_modularity = 0 
+        ## edges between new node and community members
+        K_i_in = 0
+        for node_i in community:
+            K_i_in += adjacency_matrix[node_i][node_new]
+        
+        positive_term = K_i_in / (2 * m)
+        
+        K_i = np.sum(adjacency_matrix[node_new])
+        
+        E_tot = 0
+        for node in community:
+            E_tot += np.sum(adjacency_matrix[node])
+            
+        subtraction_term = E_tot * K_i / (2 * m * m)
+
+        return positive_term - subtraction_term * self.resolution
+    
+    def _compute_delta_modularity_movement(self, community_old, community_new, node_new, adjacency_matrix):
+        temp_new = set(community_new.copy())
+        
+        if node_new in temp_new:
+            temp_new.remove(node_new)
+        
+        positive_change = self._compute_delta_modularity_one_community(temp_new, node_new, adjacency_matrix)
+        temp_old = set(community_old.copy())
+        
+        if node_new in temp_old:
+            temp_old.remove(node_new)
+        negative_change = self._compute_delta_modularity_one_community(temp_old, node_new, adjacency_matrix)
+        return positive_change - negative_change
+        
     
     def _compute_modularity(self, communities, adjacency_matrix):
         total_modularity = 0
@@ -57,9 +95,16 @@ class LouvainCommunities():
         curr_modularity = 0        
         initial_iteration = True
         curr_modularity = self._compute_modularity(communities, adjacency_matrix)
-        while curr_modularity > old_modularity or initial_iteration:
+        change = curr_modularity - old_modularity
+        epsilon = 1e-5
+        iteration = 0
+        while (change > epsilon or initial_iteration) and iteration < self.MAX_ITERATIONS:
+            iteration += 1
+            if(iteration == self.MAX_ITERATIONS):
+                print("Louvain matrix loop reached max iterations")
+
             initial_iteration = False
-            old_modularity = curr_modularity
+            old_modularity = curr_modularity = self._compute_modularity(communities, adjacency_matrix)
             
             ## Move nodes ## loop by order of communities
             visited = set()
@@ -69,7 +114,7 @@ class LouvainCommunities():
                     if node_index in visited:
                         continue
                     visited.add(node_index)
-                    ## try removing it
+                    # try removing it
                     best_idx = -1
                     best_modularity = curr_modularity
                     community_set = set(communities[i])
@@ -83,13 +128,23 @@ class LouvainCommunities():
                         comm_j_set = set(community_j)
                         comm_j_set.add(node_index)
                         communities[j] = frozenset(comm_j_set)
-                        new_modularity = self._compute_modularity(communities, adjacency_matrix)
-                        if new_modularity > best_modularity:
-                            best_idx = j
-                            best_modularity = new_modularity
+                        if self.use_delta_modularity:
+                            change_from_curr = self._compute_delta_modularity_movement(community_set, comm_j_set, node_index,adjacency_matrix)
+                            new_modularity = curr_modularity + change_from_curr
+                            change_from_best_modularity = new_modularity - best_modularity
+                            if change_from_best_modularity > epsilon:
+                                best_idx = j
+                                best_modularity = new_modularity
+                                
+                        else:
+                            new_modularity = self._compute_modularity(communities, adjacency_matrix)
+                            change_from_best_modularity = new_modularity - best_modularity
+                            if change_from_best_modularity > epsilon:
+                                best_idx = j
+                                best_modularity = new_modularity
                         communities[j] = community_j
 
-                    if best_modularity - curr_modularity > 1e-10:
+                    if best_modularity - curr_modularity > epsilon:
                         community_dst = communities[best_idx]
                         comm_dst_set = set(community_dst)
                         comm_dst_set.add(node_index)
@@ -100,7 +155,7 @@ class LouvainCommunities():
                         community_orig_set = set(communitiy_orig)
                         community_orig_set.add(node_index)
                         communities[i] = frozenset(community_orig_set)
-                        
+            change = curr_modularity - old_modularity            
             communities = [community for community in communities if len(community)]         
 
         return communities            
@@ -183,6 +238,7 @@ class GargIndex:
         self.garg_graph = nx.from_pandas_edgelist(edges, source=key_from, target=key_to, create_using=nx.Graph())
         self.communities = None
         self.scores = {}
+        self.use_networkx_louvain = False
     
     def compute_all_scores(self):
         for account in self.garg_graph.nodes():
@@ -195,8 +251,12 @@ class GargIndex:
         resolution = 1
         if len(self.garg_graph) > 1000:
             resolution = 10
-        louvain_communities = nx.community.louvain_communities(self.garg_graph, weight=None, resolution=resolution)
-        self.communities = louvain_communities
+        if self.use_networkx_louvain:
+            louvain_communities = nx.community.louvain_communities(self.garg_graph, weight=None, resolution=resolution)
+        else:
+            louvain_object = LouvainCommunities(self.garg_graph, 1)
+            louvain_communities = louvain_object.louvain()
+            self.communities = louvain_communities
         return self.communities
     
     def _compute_score(self, account):
