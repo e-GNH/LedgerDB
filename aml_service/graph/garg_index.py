@@ -238,7 +238,7 @@ class GargIndex:
         self.garg_graph = nx.from_pandas_edgelist(edges, source=key_from, target=key_to, create_using=nx.Graph())
         self.communities = None
         self.scores = {}
-        self.use_networkx_louvain = True
+        self.use_networkx_louvain = False
     
     def compute_all_scores(self):
         for account in self.garg_graph.nodes():
