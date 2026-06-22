@@ -91,7 +91,7 @@ class LouvainCommunities():
 
     def _move_nodes(self, communities, adjacency_matrix):
 
-        old_modularity = 0
+        old_modularity = float('-inf')
         curr_modularity = 0        
         initial_iteration = True
         curr_modularity = self._compute_modularity(communities, adjacency_matrix)
@@ -212,6 +212,7 @@ class LouvainCommunities():
         mappings = list()
         mappings.append(self.mapping)
         adjacency_matrix = self.adjacency_matrix
+
         while not done:
             # reset cached_modularities for this level
             self.cached_modularities = dict()
@@ -226,99 +227,141 @@ class LouvainCommunities():
                 mappings.append(new_mapping)
                 adjacency_matrix = self._aggregate_graph(new_communities, adjacency_matrix)
                 initial_communities = self._singleton_partition(new_mapping)
-                
+
         return self._flatten_clusters(new_communities, mappings)
             
             
 class GargIndex:
     def __init__(self, df, key_from, key_to):
-        edges = df[[key_from, key_to]]
-        edges = edges[edges[key_from] != edges[key_to]]  ## remove self loops
-        edges = edges.drop_duplicates()
-        self.garg_graph = nx.from_pandas_edgelist(edges, source=key_from, target=key_to, create_using=nx.Graph())
+        self.edges = df[[key_from, key_to]]
+        self.edges = self.edges[df[key_from] != df[key_to]] ## remove self loops
+        self.edges = self.edges.drop_duplicates()
+        self.use_networkx_louvain = True
+        self.garg_graph = nx.from_pandas_edgelist(self.edges, key_from, key_to, create_using = nx.Graph())
         self.communities = None
-        self.scores = {}
-        self.use_networkx_louvain = False
+        self.scores = dict()
+        self._node_community = dict()
+        self._community_subgraph = dict()
+        self.weight = None
     
     def compute_all_scores(self):
-        for account in self.garg_graph.nodes():
-            self.get_score(account)
-    
+        for node in self.garg_graph:
+            score = self._compute_score(node)
+            self.scores[node] = score
+        
+        
     def _get_community(self):
         if self.communities is not None:
             return self.communities
-        self.split_graphs = True
+        
         resolution = 1
-        if len(self.garg_graph) > 1000:
+        if self.garg_graph.number_of_nodes() > 1000:
             resolution = 10
         if self.use_networkx_louvain:
-            louvain_communities = nx.community.louvain_communities(self.garg_graph, weight=None, resolution=resolution)
-            self.communities = louvain_communities
+            communities = nx.community.louvain_communities(self.garg_graph, self.weight, resolution)
+            self.communities = communities
         else:
-            louvain_object = LouvainCommunities(self.garg_graph, 1)
-            louvain_communities = louvain_object.louvain()
-            self.communities = louvain_communities
+            use_weight = True if self.weight is not None else False
+            louvainObject = LouvainCommunities(self.garg_graph, resolution, use_weight)
+            communities = louvainObject.louvain()
+            self.communities = communities
+        
+        for community in self.communities:
+            for node in community:
+                self._node_community[node] = frozenset(community)
+        
+            self._community_subgraph[frozenset(community)] = self.garg_graph.subgraph(community)
+            
         return self.communities
-    
+        
+        
     def _compute_score(self, account):
         if account not in self.garg_graph:
             return 0
-        communities = self._get_community()
-        account_community = None
-        for community in communities:
-            if account in community:
-                account_community = community
-                break
-        if account_community is None:
-            return 0
         
-        community_graph = self.garg_graph.subgraph(account_community)
-        direct_neighbors = set(community_graph.neighbors(account))
+        communities = self._get_community()
+        
+        if account not in self._node_community:
+            print(f"Account {account} has no community in cache")
+            return 0
+        account_community = frozenset(self._node_community[account])
+        
+        if account_community not in self._community_subgraph:
+            print(f"Account community {account} has no subgraph in cache")
+            return 0
+        community_subgraph = self._community_subgraph[account_community]
+        
+        direct_neighbors = set(community_subgraph.neighbors(account))
+        direct_neighbors.discard(account)
+        
         n = len(direct_neighbors)
         second_degree_neighbors = set()
         for neighbor in direct_neighbors:
-            second_degree_neighbors.update(community_graph.neighbors(neighbor))
-        if account in second_degree_neighbors:
-            second_degree_neighbors.remove(account)
-        second_degree_neighbors = second_degree_neighbors - direct_neighbors
+            second_degree_neighbors.update(community_subgraph.neighbors(neighbor))
+            
+        second_degree_neighbors.difference_update(direct_neighbors)
+        second_degree_neighbors.discard(account)
+        
         m = len(second_degree_neighbors) + 1
+        
+        garg_matrix = np.zeros((n + m, n + m))
+        
+        nodes = list()
+        nodes.append(account)
+        for second_degree_neighbor in second_degree_neighbors:
+            nodes.append(second_degree_neighbor)
+        for neighbor in direct_neighbors:
+            nodes.append(neighbor)       
+        
+        index_dict = {}
+        index = 0
+        for node in nodes:
+            index_dict[node] = index
+            index += 1
+        
+        for i in range(len(nodes)):
+            for neighbor in community_subgraph.neighbors(nodes[i]):
+                if neighbor not in index_dict:
+                    continue
+                node_index = index_dict[neighbor]
+                if node_index == i:
+                    continue
+                if community_subgraph.has_edge(nodes[i], nodes[node_index]):
+                    garg_matrix[i][node_index] = 1
+    
 
-        garg_matrix = np.zeros((m + n, m + n))
-        matrix_nodes = list()
-        matrix_nodes.append(account)
-        matrix_nodes.extend(second_degree_neighbors)
-        matrix_nodes.extend(direct_neighbors)
-        for i, node_i in enumerate(matrix_nodes):
-            for j, node_j in enumerate(matrix_nodes):
-                if community_graph.has_edge(node_i, node_j):
-                    garg_matrix[i, j] = 1
+        ## add small value to avoid division by zero
+        epsilon = 1e-10
         
-
-        ## defined in paper
-        block1 = np.sum(garg_matrix[:m, :m])
-        block2 = np.sum(garg_matrix[:m, m:])
-        block3 = np.sum(garg_matrix[m:, m:])
+        ## equations defined in paper
+        block1_sum = np.sum(garg_matrix[:m, :m])
+        block2_sum = np.sum(garg_matrix[:m, m:m + n])
+        block3_sum = np.sum(garg_matrix[m:m + n, m:m + n])
+    
+        score1 = block1_sum / (epsilon + m ** 2 - 3 * m + 2)
+        score2 = (block2_sum - n) / (epsilon + m * n - n)
+        score3 = (block3_sum) / (epsilon + n ** 2 - n)
         
-        score1 = block1 / (m * m - 3 * m + 2 + 1e-10)  ## add small value to avoid division by zero
-        score2 = (block2 - n) / (m * n - n + 1e-10)
-        score3 = block3 / (n * n - n + 1e-10)
+        l1 = m ** 2 - 3 * m + 2
+        l3 = n ** 2 - n
         
-        l1 = (m * m - 3 * m + 2)
-        l3 = (n * n - n)
+        score = score2 - (l1 * score1 + l3 * score3) / (epsilon + l1 + l3)
         
-        score = score2 - (l1 * score1 + l3 * score3) / (l1 + l3 + 1e-10)
         return score
+    
 
     def get_score(self, account):
         if account not in self.garg_graph:
             return 0
+        
         if account in self.scores:
             return self.scores[account]
-
+        
         score = self._compute_score(account)
         self.scores[account] = score
         return self.scores[account]
-    
+
+# TODO: DELETE    
 if __name__ == "__main__":
     import pandas as pd
     df = pd.DataFrame({
@@ -329,3 +372,8 @@ if __name__ == "__main__":
     print(garg_index.garg_graph.edges())
     print(garg_index.garg_graph.has_edge('A', 'B'))
     print("Score for A:", garg_index.get_score("A"))
+    print("Score for B:", garg_index.get_score("B"))
+    print("Score for C:", garg_index.get_score("C"))
+    print("Score for D:", garg_index.get_score("D"))
+    print("Score for E:", garg_index.get_score("E"))
+    print("Score for F:", garg_index.get_score("F"))
