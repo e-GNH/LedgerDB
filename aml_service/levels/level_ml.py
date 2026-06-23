@@ -88,6 +88,8 @@ class MLLevel:
             res[account] = (score >= self.prediction_threshold, score)
         return res
 
+    def get_communities(self):
+        return self.garg_index.communities
 if __name__ == '__main__':
     from level_graph import *
     transactions = [{

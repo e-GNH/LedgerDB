@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from zoneinfo import ZoneInfo
 
 from loguru import logger
-
+BIPARTITE_GRAPH_THRESHOLD = 5
 class Transaction(BaseModel):
     sender: str
     receiver: str
@@ -103,9 +103,22 @@ def check_accounts():
         else:
             MLLevel_instance.update_graph(graph)
         level_3_results = MLLevel_instance.predict_all()
-
         level_2_response = []
         level_3_response = []
+
+        communities = MLLevel_instance.get_communities()
+
+        if communities is not None:
+            for community in communities:
+                subgraph_bipartite = graph.check_bipartite_subgraph(community, BIPARTITE_GRAPH_THRESHOLD)
+                if subgraph_bipartite:
+                    for account in community:
+                        if account in level_2_results and level_2_results[account]["result"]:
+                            level_2_response.append({
+                            "account": account,
+                            "reason": "Account is part of bipartite subgraph"
+                        })
+                            ## this account didn't fail
         ## Only include accounts that failed level 2 checks in the response
         for account in level_2_results:
             result = level_2_results[account]

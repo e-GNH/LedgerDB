@@ -170,11 +170,15 @@ class TransactionsGraph:
             edges = self.graph.get_edge_data(account, successor)
             timestamp = min(edges[edge_key]["timestamp"] for edge_key in edges)
             current_dict[successor] = [1, timestamp]
-            
+        
+        if len(current_dict) == 0:
+            return list(), 0
         for _ in range(levels):
             
             if len(current_dict) < threshold_scatter:
-                max_value = max(current_dict[acc][0] for acc in current_dict)
+                max_value = 0
+                if len(current_dict):
+                    max_value = max(current_dict[acc][0] for acc in current_dict)
                 res = list()
                 for acc in current_dict:
                     if current_dict[acc][0] == max_value:
@@ -208,4 +212,13 @@ class TransactionsGraph:
             if current_dict[acc][0] == max_value:
                 res.append(acc)
         return res, max_value
-            
+    
+    def check_bipartite_subgraph(self, community, minimum_graph_size = 5):
+        accounts = set()
+        for acc in community:
+            if acc in self.graph:
+                accounts.add(acc)
+        if len(accounts) < minimum_graph_size:
+            return False
+        subgraph = nx.subgraph(self.graph, accounts)
+        return nx.is_bipartite(subgraph)
