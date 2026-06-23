@@ -1,4 +1,5 @@
 import networkx as nx
+from collections import deque
 
 class TransactionsGraph:
     def __init__(self):
@@ -221,4 +222,21 @@ class TransactionsGraph:
         if len(accounts) < minimum_graph_size:
             return False
         subgraph = nx.subgraph(self.graph, accounts)
-        return nx.is_bipartite(subgraph)
+        colors = dict()
+        for node in subgraph.nodes():
+            if node not in colors:
+                colors[node] = 0
+                
+                q = deque()
+                q.append(node)
+                while q:
+                    acc = q.popleft()
+                    neighbors = set(subgraph.successors(acc)).union(subgraph.predecessors(acc))
+                    for neighbor in neighbors:
+                        if neighbor in colors:
+                            if colors[neighbor] == colors[acc]:
+                                return False
+                        else:
+                            colors[neighbor] = 1 - colors[acc]
+                            q.append(neighbor)
+        return True
