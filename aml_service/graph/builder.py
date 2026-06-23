@@ -159,3 +159,53 @@ class TransactionsGraph:
     
     def get_accounts(self):
         return self.graph.nodes()
+    
+    def check_scatter_gather(self, account, levels, threshold_scatter = 3):
+        if account not in self.graph:
+            return list(), 0
+        
+        current_dict = dict()
+        
+        for successor in self.graph.successors(account):
+            edges = self.graph.get_edge_data(account, successor)
+            timestamp = min(edges[edge_key]["timestamp"] for edge_key in edges)
+            current_dict[successor] = [1, timestamp]
+            
+        for _ in range(levels):
+            
+            if len(current_dict) < threshold_scatter:
+                max_value = max(current_dict[acc][0] for acc in current_dict)
+                res = list()
+                for acc in current_dict:
+                    if current_dict[acc][0] == max_value:
+                        res.append(acc)
+                return res, max_value
+            prev_dict = current_dict
+            current_dict = dict()
+            
+            for successor in prev_dict:
+                successors = self.graph.successors(successor)
+                successor_val, successor_timestamp = prev_dict[successor]
+                for next_successor in successors:
+                    edges = self.graph.get_edge_data(successor, next_successor)
+                    max_timestamp = max(edges[edge_key]["timestamp"] for edge_key in edges)
+                    ### the gather was after scatter
+                    if max_timestamp < successor_timestamp:
+                        continue
+                    timestamp = min(edges[edge_key]["timestamp"] for edge_key in edges)
+                    if next_successor in current_dict:
+                        current_dict[next_successor][0] = current_dict[next_successor][0] + successor_val
+                        current_dict[next_successor][1] = min(current_dict[next_successor][1], timestamp)
+                    else:
+                        current_dict[next_successor] = [successor_val, timestamp]
+        if len(current_dict):
+            max_value = max(current_dict[acc][0] for acc in current_dict) 
+        else:
+            max_value = 0
+        res = list()
+        
+        for acc in current_dict:
+            if current_dict[acc][0] == max_value:
+                res.append(acc)
+        return res, max_value
+            
