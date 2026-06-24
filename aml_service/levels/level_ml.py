@@ -22,7 +22,7 @@ import logging
 class MLLevel:
     def __init__(self, transactions_graph):
         self.graph = transactions_graph
-        artifact_path = os.path.join(BASE_DIR, "output", "lgb_model.joblib")
+        artifact_path = os.path.join(BASE_DIR, "output", "lgb_2.joblib")
         df = nx.to_pandas_edgelist(transactions_graph.graph, "from", "to")
         self.garg = GargIndex(df, "from", "to")
         artifact = joblib.load(artifact_path)
