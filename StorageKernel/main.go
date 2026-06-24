@@ -197,7 +197,7 @@ func main() {
 		panic(err2)
 	}
 
-fmt.Printf("\nSaved %d account IDs to account_ids.txt\n", len(accountIDs))
+	fmt.Printf("\nSaved %d account IDs to account_ids.txt\n", len(accountIDs))
 
 	// if _, err := h.CreateAccount(ctx, &pb.CreateAccountRequest{Nonce: "nonce:123s456", AccountId: "000_wallet_A", Balance: 92000000, Tier: "PERSON"}); err != nil { // Shall be from onboarding
 	// 	logger.Error(" - [" + file_name + "] - " + err.Error())
