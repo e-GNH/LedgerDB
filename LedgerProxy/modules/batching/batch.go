@@ -44,8 +44,6 @@ func SetRegistry(r Registry) {
 }
 
 func SaveBatchItem[T proto.Message](item T, client ledgerserverpb.TransactionsServiceClient) error {
-	mu.Lock()
-	defer mu.Unlock()
 
 	if LedgerServerClient == nil {
 		LedgerServerClient = client
@@ -57,6 +55,9 @@ func SaveBatchItem[T proto.Message](item T, client ledgerserverpb.TransactionsSe
 		return err
 	}
 
+	mu.Lock()
+	defer mu.Unlock()
+	
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to open batch file: %v", err))
@@ -153,9 +154,9 @@ func StreamReceipt(item *types.SecureMessage) {
 		IsMerchant: isMerchant,
 	}
 
-	sendReceipt(fromPrefix, receipt)
+	go sendReceipt(fromPrefix, receipt)
 	if toPrefix != fromPrefix {
-		sendReceipt(toPrefix, receipt)
+		go sendReceipt(toPrefix, receipt)
 	}
 }
 
