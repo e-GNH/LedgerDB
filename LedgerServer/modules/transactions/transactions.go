@@ -51,7 +51,7 @@ func extractTransaction(a *anypb.Any) (*worldstate.TransferRequest, bool) {
 }
 
 func (s *LedgerServer) BatchAppend(ctx context.Context, req *pb.BatchToAppend) (*pb.ServerResponse, error) {
-	logger.Info("--> Received gRPC BatchAppend() request")
+	logger.Info("Received gRPC BatchAppend() request")
 	if len(req.Logs) == 0 {
 		return &pb.ServerResponse{Success: false}, nil
 	}

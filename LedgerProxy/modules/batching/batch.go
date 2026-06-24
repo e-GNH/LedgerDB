@@ -29,10 +29,13 @@ type Registry interface {
 }
 
 var (
-	batchSize          = 10
+	batchSize          = 50
+	curr_count         = 0
 	mu                 sync.Mutex
 	LedgerServerClient ledgerserverpb.TransactionsServiceClient = nil
 	reg                Registry
+	batchFile          *os.File
+	batchWriter        *bufio.Writer
 )
 
 var logger = logging.New("batching/batch", "./")
@@ -43,12 +46,21 @@ func SetRegistry(r Registry) {
 	reg = r
 }
 
-func SaveBatchItem[T proto.Message](item T, client ledgerserverpb.TransactionsServiceClient) error {
+func InitBatchWriter(client ledgerserverpb.TransactionsServiceClient) error {
+	mu.Lock()
+	defer mu.Unlock()
 
-	if LedgerServerClient == nil {
-		LedgerServerClient = client
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open batch file: %w", err)
 	}
+	batchFile = f
+	batchWriter = bufio.NewWriterSize(f, 64*1024)
+	LedgerServerClient = client
+	return nil
+}
 
+func SaveBatchItem[T proto.Message](item T) error {
 	jsonData, err := protojson.Marshal(item)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to marshal batch item: %v", err))
@@ -57,33 +69,33 @@ func SaveBatchItem[T proto.Message](item T, client ledgerserverpb.TransactionsSe
 
 	mu.Lock()
 	defer mu.Unlock()
-	
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to open batch file: %v", err))
-		return err
+
+	if batchWriter == nil {
+		return fmt.Errorf("batch writer not initialized, call InitBatchWriter first")
 	}
 
-	if _, err := file.Write(append(jsonData, '\n')); err != nil {
+	if _, err := batchWriter.Write(append(jsonData, '\n')); err != nil {
 		logger.Error(fmt.Sprintf("failed to write to batch file: %v", err))
-		file.Close()
 		return err
 	}
-
-	file.Close()
-
+	curr_count++
 	return nil
 }
 
 func FlushBatch() error {
 
+	mu.Lock()
+	defer mu.Unlock()
+
+	if curr_count < batchSize {
+		return nil
+	}
+
 	lines, err := readFileLines(filename)
 	if err != nil {
 		return err
 	}
-	if len(lines) < batchSize {
-		return nil
-	}
+
 	batch := &ledgerserverpb.BatchToAppend{}
 
 	for _, line := range lines {
@@ -107,6 +119,7 @@ func FlushBatch() error {
 		return fmt.Errorf("batch append failed")
 	}
 
+	curr_count = 0
 	return os.Truncate(filename, 0)
 }
 

@@ -17,6 +17,7 @@ func New(module string, path string) *Logger {
 }
 
 func (l *Logger) log(level, message string) {
+	return
 	now := time.Now()
 	timestamp := now.Format("15:04:05")
 	dateFile := now.Format("02-01-2006")

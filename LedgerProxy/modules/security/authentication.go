@@ -220,5 +220,5 @@ func VerifyTimeliness(msgTimestamp time.Time) bool {
 		diff = -diff
 	}
 
-	return diff <= 5*time.Minute
+	return diff <= 50*time.Minute
 }

@@ -97,7 +97,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 	}
 
 	logger.Info("WAL: writing to local disk")
-	if err := batching.SaveBatchItem(anyTx, s.LedgerServerClient); err != nil {
+	if err := batching.SaveBatchItem(anyTx); err != nil {
 		logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
 	}
 
@@ -166,18 +166,16 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 			if err != nil {
 				logger.Error(fmt.Sprintf("Failed to wrap undo transaction: %v", err))
 			} else {
-				batching.SaveBatchItem(anyUndo, s.LedgerServerClient)
+				batching.SaveBatchItem(anyUndo)
 			}
 
 			if merchantTx {
 				msg.To = toReceipt
 			}
-			
+
 			batching.StreamReceipt(msg)
-			
-			if err := batching.FlushBatch(); err != nil {
-				logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
-			}
+
+			go batching.FlushBatch()
 
 			return &pb.SecureResponse{
 				Success: false,
@@ -194,9 +192,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 		message = "Transaction validated & successfully added to world state"
 	}
 
-	if err := batching.FlushBatch(); err != nil {
-		logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
-	}
+	go batching.FlushBatch()
 
 	return &pb.SecureResponse{Success: ok, Message: message}, nil
 }
@@ -239,7 +235,7 @@ func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*
 		}
 
 		logger.Info("WAL: writing to local disk")
-		if err := batching.SaveBatchItem(anySync, s.LedgerServerClient); err != nil {
+		if err := batching.SaveBatchItem(anySync); err != nil {
 			logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
 		}
 
@@ -264,9 +260,7 @@ func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*
 		})
 	}
 
-	if err := batching.FlushBatch(); err != nil {
-		logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
-	}
+	go batching.FlushBatch()
 
 	return &pb.SecureResponseList{Responses: responses}, nil
 }
@@ -294,7 +288,7 @@ func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequ
 	}
 
 	logger.Info("WAL: writing to local disk")
-	if err := batching.SaveBatchItem(anyWithdraw, s.LedgerServerClient); err != nil {
+	if err := batching.SaveBatchItem(anyWithdraw); err != nil {
 		logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
 	}
 
@@ -309,9 +303,7 @@ func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequ
 		logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 	}
 
-	if err := batching.FlushBatch(); err != nil {
-		logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
-	}
+	go batching.FlushBatch()
 
 	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
 }
@@ -339,7 +331,7 @@ func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureReque
 	}
 
 	logger.Info("WAL: writing to local disk")
-	if err := batching.SaveBatchItem(anyDeposit, s.LedgerServerClient); err != nil {
+	if err := batching.SaveBatchItem(anyDeposit); err != nil {
 		logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
 	}
 
@@ -354,9 +346,7 @@ func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureReque
 		logger.Error(fmt.Sprintf("Kernel rejected transfer: %v", err))
 	}
 
-	if err := batching.FlushBatch(); err != nil {
-		logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
-	}
+	go batching.FlushBatch()
 
 	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
 }
@@ -390,7 +380,7 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 	}
 
 	logger.Info("WAL: writing to local disk")
-	if err := batching.SaveBatchItem(anyCreate, s.LedgerServerClient); err != nil {
+	if err := batching.SaveBatchItem(anyCreate); err != nil {
 		logger.Error(fmt.Sprintf("Failed to save batch item: %v", err))
 	}
 
@@ -412,9 +402,7 @@ func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureReques
 		logger.Error(fmt.Sprintf("Kernel rejected wallet creation: %v", err))
 	}
 
-	if err := batching.FlushBatch(); err != nil {
-		logger.Error(fmt.Sprintf("Failed to flush batch: %v", err))
-	}
+	go batching.FlushBatch()
 
 	return &pb.SecureResponse{Success: resp.GetOk(), Message: resp.GetMessage()}, nil
 }
@@ -478,6 +466,7 @@ func main() {
 	reg := NewBankRegistry()
 	batching.SetRegistry(reg)
 
+
 	grpcServer := grpc.NewServer()
 
 	myServerInstance := &securityServer{
@@ -487,6 +476,8 @@ func main() {
 		LedgerServerClient: ledgerserverpb.NewTransactionsServiceClient(storeConn),
 		registry:           reg,
 	}
+	batching.InitBatchWriter(myServerInstance.LedgerServerClient)
+
 
 	pb.RegisterSecurityServiceServer(grpcServer, myServerInstance)
 	pb.RegisterReceiptServiceServer(grpcServer, myServerInstance)

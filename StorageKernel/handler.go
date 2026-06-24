@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"sync"
 
 	"github.com/colinmarc/hdfs/v2"
 	"github.com/redis/go-redis/v9"
@@ -456,32 +457,86 @@ func (h *KernelHandler) writeBatchToHDFS(req *anypb.Any, fileName string) (strin
 		return "", status.Error(codes.Internal, "failed to unmarshal batch")
 	}
 
+	type result struct {
+		ind int
+		data json.RawMessage
+		err error
+	}
+
+	numLogs := len(batch.Logs)
+	results := make([]json.RawMessage, numLogs)
+    errCh := make(chan error, 1)
+    resCh := make(chan result, numLogs)
+
+	var wait sync.WaitGroup
+
 	marshaler := protojson.MarshalOptions{EmitUnpopulated: false}
-	entries := make([]json.RawMessage, 0, len(batch.Logs))
 
-	for _, anyMsg := range batch.Logs {
-		jsonBytes, err := marshaler.Marshal(anyMsg)
-		if err != nil {
-			logger.Error(fmt.Sprintf(" - [%s] - failed to marshal entry: %v", fileName, err))
-			return "", status.Error(codes.Internal, "failed to marshal entry")
-		}
-		entries = append(entries, json.RawMessage(jsonBytes))
+	for i, anyMsg := range batch.Logs {
+		wait.Add(1)
+		go func(idx int, msg proto.Message) {
+            defer wait.Done()
+            jsonBytes, err := marshaler.Marshal(msg)
+            if err != nil {
+                select {
+                case errCh <- fmt.Errorf("entry %d: %w", idx, err):
+                default:
+                }
+                return
+            }
+            resCh <- result{ind: idx, data: json.RawMessage(jsonBytes)}
+        }(i, anyMsg)
 	}
 
-	txData, err := json.Marshal(entries)
-	if err != nil {
-		logger.Error(" - [" + fileName + "] - failed to marshal JSON array: " + err.Error())
-		return "", status.Error(codes.Internal, "failed to marshal batch JSON")
+	go func() {
+		wait.Wait()
+		close(resCh)
+	}()
+
+	for r := range resCh {
+        results[r.ind] = r.data
+    }
+	
+	select {
+		case err := <-errCh:
+			logger.Error(" - [" + fileName + "] - failed to marshal batch entry: " + err.Error())
+			return "", status.Error(codes.Internal, "failed to marshal batch entry")
+		default:
+			// no error, continue
 	}
 
-	ledgerDir := "/ledger/transactions"
+	var txData   []byte
+
+    ledgerDir := "/ledger/transactions"
+    mkdirErrCh := make(chan error, 1)
+    marshalErrCh := make(chan error, 1)
+
+    go func() {
+        mkdirErrCh <- h.hdfs.MkdirAll(ledgerDir, 0755)
+    }()
+
+    go func() {
+        data, err := json.Marshal(results)
+        if err != nil {
+            marshalErrCh <- err
+            return
+        }
+        txData = data
+        marshalErrCh <- nil
+    }()
+
+    if err := <-marshalErrCh; err != nil {
+        logger.Error(fmt.Sprintf(" - [%s] - failed to marshal JSON array: %v", fileName, err))
+        return "", status.Error(codes.Internal, "failed to marshal batch JSON")
+    }
+
+    if err := <-mkdirErrCh; err != nil {
+        logger.Error(fmt.Sprintf(" - [%s] - failed to create HDFS directory: %v", fileName, err))
+        return "", status.Error(codes.Internal, "failed to create HDFS directory")
+    }
+
 	batchId := fmt.Sprintf("batch_%d", time.Now().UnixNano())
 	filePath := fmt.Sprintf("%s/%s.json", ledgerDir, batchId)
-
-	if err = h.hdfs.MkdirAll(ledgerDir, 0755); err != nil {
-		logger.Error(" - [" + fileName + "] - failed to create HDFS directory: " + err.Error())
-		return "", status.Error(codes.Internal, "failed to create HDFS directory")
-	}
 
 	writer, err := h.hdfs.Create(filePath)
 	if err != nil {
@@ -493,6 +548,7 @@ func (h *KernelHandler) writeBatchToHDFS(req *anypb.Any, fileName string) (strin
 			logger.Error(" - [" + fileName + "] - failed to close writer: " + cerr.Error())
 		}
 	}()
+	
 
 	if _, err = writer.Write(txData); err != nil {
 		logger.Error(" - [" + fileName + "] - failed to write data: " + err.Error())
