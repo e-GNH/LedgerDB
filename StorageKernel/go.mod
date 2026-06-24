@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	LedgerDB v0.0.0-00010101000000-000000000000
+	LedgerProxy v0.0.0-00010101000000-000000000000
 	LedgerServer v0.0.0-00010101000000-000000000000
 	github.com/colinmarc/hdfs/v2 v2.4.0
 	github.com/redis/go-redis/v9 v9.18.0
@@ -32,3 +33,5 @@ require (
 replace LedgerDB => ../
 
 replace LedgerServer => ../LedgerServer
+
+replace LedgerProxy => ../LedgerProxy

@@ -10,7 +10,7 @@ import (
 
 	"LedgerDB/services/logging"
 	pb "LedgerServer/api"
-	aml_batch "LedgerServer/modules/aml"
+	// aml_batch "LedgerServer/modules/aml"
 	ts "LedgerServer/modules/transactions"
 	ts_store "StorageKernel/proto/TransactionsStore"
 	worldstate "StorageKernel/proto/worldstate"
@@ -43,7 +43,7 @@ func main() {
 
 	pb.RegisterTransactionsServiceServer(grpcServer, serverInstance)
 	reflection.Register(grpcServer)
-	go aml_batch.PeriodicAMLCheck("http://localhost:8000/", 5, logger, worldstate.NewWorldStateServiceClient(StorageKernelConn))
+	// go aml_batch.PeriodicAMLCheck("http://localhost:8000/", 5, logger, worldstate.NewWorldStateServiceClient(StorageKernelConn))
 	logger.Info("LedgerServer running on port 50003...")
 	if err := grpcServer.Serve(lis); err != nil {
 		logger.Error(fmt.Sprintf("Failed to serve: %v", err))

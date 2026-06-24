@@ -24,6 +24,30 @@ import (
 )
 
 var logger = logging.New("client", "./")
+/*
+AccountId string  `json:"account_id"`
+	Balance   int64 `json:"balance"`
+	Nonce     string  `json:"nonce"`
+	Tier      string  `json:"tier"`
+	Name      *string `json:"name,omitempty"`
+*/
+func create_account() {
+	// TODO: randomize the nonce, wallet name, balance, tier
+	// Name is not null if and only if the tier is MERCHANT
+	// account id starts with "000_" or "001_", all 8 binary combs
+	payload := types.SecureCreateAccountMessage{
+		AccountId: "000_wallet_A",
+		Balance:   1000000,
+		Nonce:     "0000000000000000000000000000000000000000000000000000000000000000",
+		Tier:      "USER",
+		Name:      nil,
+	}
+}
+
+func send_request() {
+	// TODO: like the main fucntion
+	// but do many transactions
+}
 
 func main() {
 	fmt.Println("=== Starting gRPC Security Client ===")

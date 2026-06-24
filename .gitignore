@@ -1,0 +1,6 @@
+*.html
+.env
+*.txt
+*.pem
+*.pub
+*.sh
