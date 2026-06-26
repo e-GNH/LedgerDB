@@ -361,19 +361,3 @@ class GargIndex:
         self.scores[account] = score
         return self.scores[account]
 
-# TODO: DELETE    
-if __name__ == "__main__":
-    import pandas as pd
-    df = pd.DataFrame({
-        "from": ["A", "A", "A", "B", "C", "D"],
-        "to": ["B", "C", "D", "E", "E", "E"]
-    })
-    garg_index = GargIndex(df, key_from="from", key_to="to")
-    print(garg_index.garg_graph.edges())
-    print(garg_index.garg_graph.has_edge('A', 'B'))
-    print("Score for A:", garg_index.get_score("A"))
-    print("Score for B:", garg_index.get_score("B"))
-    print("Score for C:", garg_index.get_score("C"))
-    print("Score for D:", garg_index.get_score("D"))
-    print("Score for E:", garg_index.get_score("E"))
-    print("Score for F:", garg_index.get_score("F"))
