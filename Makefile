@@ -11,9 +11,7 @@ proxy: logs-dir
 	cd LedgerProxy && go mod tidy && go run ./cmd/server/ > ../logs/proxy.log 2>&1
 
 kernel: logs-dir
-	sleep 3 && git clone https://github.com/big-data-europe/docker-hadoop && \
-	cd docker-hadoop && docker compose up && \
-	cd ../StorageKernel && go mod tidy && go run . > ../logs/kernel.log 2>&1
+	sleep 3 && cd StorageKernel && go mod tidy && go run . > ../logs/kernel.log 2>&1
 
 aml: logs-dir
 	cd aml_service && uvicorn main:app --reload > ../logs/aml.log 2>&1
