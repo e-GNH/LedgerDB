@@ -1,15 +1,11 @@
-.PHONY: run-all server proxy kernel aml logs-dir aml-install redis aml
-
+.PHONY: run-all server proxy kernel aml logs-dir aml-install redis
 # Ensure the logs directory exists before running services
 logs-dir:
 	mkdir -p logs
-
 server: logs-dir
 	cd LedgerServer && go mod tidy && go run . > ../logs/server.log 2>&1
-
 proxy: logs-dir
 	cd LedgerProxy && go mod tidy && go run ./cmd/server/ > ../logs/proxy.log 2>&1
-
 redis:
 	docker run -d \
 		--name ledger-redis \
@@ -19,14 +15,11 @@ redis:
 		|| docker start ledger-redis 2>/dev/null || true
 kernel: logs-dir redis
 	sleep 3 && ([ ! -d docker-hadoop ] && git clone https://github.com/big-data-europe/docker-hadoop || true) && cd docker-hadoop && docker compose up -d && cd ../StorageKernel && go mod tidy && go run . > ../logs/kernel.log 2>&1
-
 aml-install: logs-dir
 	cd aml_service && \
 	([ -d .venv ] || python3 -m venv .venv) && \
 	.venv/bin/pip install -q -r requirements.txt
-
-aml: logs-dir
-	cd aml_service && uvicorn main:app --reload > ../logs/aml.log 2>&1
-
+aml: aml-install
+	cd aml_service && .venv/bin/uvicorn main:app --reload > ../logs/aml.log 2>&1
 run-all: aml-install
 	make -j 4 aml server proxy kernel
