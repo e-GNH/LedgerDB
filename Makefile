@@ -18,9 +18,7 @@ redis:
 		redis:7-alpine \
 		|| docker start ledger-redis 2>/dev/null || true
 kernel: logs-dir redis
-	sleep 3 && git clone https://github.com/big-data-europe/docker-hadoop && \
-	cd docker-hadoop && docker compose up && \
-	cd ../StorageKernel && go mod tidy && go run . > ../logs/kernel.log 2>&1
+	sleep 3 && ([ ! -d docker-hadoop ] && git clone https://github.com/big-data-europe/docker-hadoop || true) && cd docker-hadoop && docker compose up -d && cd ../StorageKernel && go mod tidy && go run . > ../logs/kernel.log 2>&1
 
 aml: logs-dir
 	cd aml_service && uvicorn main:app --reload > ../logs/aml.log 2>&1
