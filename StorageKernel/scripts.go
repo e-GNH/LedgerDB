@@ -183,7 +183,7 @@ var offlineDepositScript = redis.NewScript(`
 `)
 
 var offlineWithdrawScript = redis.NewScript(`
---KEYS[1] = nonce key
+	--KEYS[1] = nonce key
 	--KEYS[2] = account key
 	--ARGV[1] = amount
 	local amount = tonumber(ARGV[1])
@@ -253,7 +253,7 @@ var createAccountScript = redis.NewScript(`
 `)
 var changeAccountStatusScript = redis.NewScript(`
 	--KEYS[1] = account key
-	--ARGV[1] = tier
+	--ARGV[1] = status
 	--ARGV[2] = reason for level 2 checks
 	--ARGV[3] = score of machine learning model
 	if redis.call("EXISTS", KEYS[1]) == 0 then
