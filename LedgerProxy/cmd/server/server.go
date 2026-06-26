@@ -58,7 +58,7 @@ func (s *securityServer) Subscribe(req *pb.SubscribeRequest, stream pb.ReceiptSe
 }
 
 func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
-	logger.Info("--> Received gRPC Secure() request")
+	logger.Info("Received gRPC Secure() request")
 	merchantTx := false
 	msg, ok := sec.VerifySecurity[types.SecureMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 
@@ -202,7 +202,7 @@ func (s *securityServer) Execute(ctx context.Context, req *pb.SecureRequest) (*p
 }
 
 func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*pb.SecureResponseList, error) {
-	logger.Info("--> Received Sync() request")
+	logger.Info("Received Sync() request")
 
 	var responses []*pb.SecureResponse
 
@@ -272,7 +272,7 @@ func (s *securityServer) Sync(ctx context.Context, req *pb.SecureRequestList) (*
 }
 
 func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
-	logger.Info("--> Received Offline Withdraw() request")
+	logger.Info("Received Offline Withdraw() request")
 
 	msg, ok := sec.VerifySecurity[types.SecureOfflineWithdrawMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 	if msg == nil || !ok {
@@ -317,7 +317,7 @@ func (s *securityServer) OfflineWithdraw(ctx context.Context, req *pb.SecureRequ
 }
 
 func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
-	logger.Info("--> Received Offline Deposit() request")
+	logger.Info("Received Offline Deposit() request")
 
 	msg, ok := sec.VerifySecurity[types.SecureOfflineDepositMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 	if msg == nil || !ok {
@@ -362,7 +362,7 @@ func (s *securityServer) OfflineDeposit(ctx context.Context, req *pb.SecureReque
 }
 
 func (s *securityServer) CreateAccount(ctx context.Context, req *pb.SecureRequest) (*pb.SecureResponse, error) {
-	logger.Info("--> Received Create Account() request")
+	logger.Info("Received Create Account() request")
 
 	msg, ok := sec.VerifySecurity[types.SecureCreateAccountMessage](req.EncryptedData, s.myPrivKey, s.bankKeys)
 	if msg == nil || !ok {
