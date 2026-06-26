@@ -10,7 +10,14 @@ server: logs-dir
 proxy: logs-dir
 	cd LedgerProxy && go mod tidy && go run ./cmd/server/ > ../logs/proxy.log 2>&1
 
-kernel: logs-dir
+redis:
+	docker run -d \
+		--name ledger-redis \
+		--restart unless-stopped \
+		-p 6379:6379 \
+		redis:7-alpine \
+		|| docker start ledger-redis 2>/dev/null || true
+kernel: logs-dir redis
 	sleep 3 && git clone https://github.com/big-data-europe/docker-hadoop && \
 	cd docker-hadoop && docker compose up && \
 	cd ../StorageKernel && go mod tidy && go run . > ../logs/kernel.log 2>&1
