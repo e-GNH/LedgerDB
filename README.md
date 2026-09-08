@@ -184,7 +184,7 @@ cd LedgerProxy && go mod tidy && go run ./cmd/server/
 cd StorageKernel && go mod tidy && go run .
 
 # Terminal 4 - AML Service
-cd aml_service && uvicorn main:app --reload
+cd aml_service && pip install -r requirements.txt && uvicorn main:app --reload
 ```
 
 ---
