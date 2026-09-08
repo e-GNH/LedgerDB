@@ -106,14 +106,6 @@ if not is_valid_graph:
 
 ```
 
-## Next Steps
-**for level 2 implement your own dfs to handle timestamps pruning instead of checking after dfs**
-**reference for money cycles: https://arxiv.org/pdf/2011.09318**
-**for level start level 3 ML based on those papers**
-**https://arxiv.org/pdf/2506.04292v3**
-**https://arxiv.org/pdf/2112.07508**
-**https://arxiv.org/pdf/2405.19383v1**
-
 ## How to run service
 `uvicorn main:app --reload`
 
