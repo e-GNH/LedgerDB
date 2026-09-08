@@ -73,7 +73,7 @@ All monitoring thresholds are decoupled from the logic and stored in `config/thr
 Ensure you have Python 3 installed along with the required dependencies:
 
 ```bash
-pip install networkx
+pip install -r requirements.txt
 
 ```
 
