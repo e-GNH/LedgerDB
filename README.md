@@ -2,6 +2,12 @@
 
 LedgerDB is the backend ledger system for a CBDC prototype: a gRPC pipeline that authenticates and executes transactions, commits them to durable storage, maintains live account state, and screens every transaction and account through a three-level Anti-Money Laundering (AML) engine.
 
+**Highlights:**
+- A hybrid RSA+AES encrypted, signed gRPC transaction pipeline (LedgerProxy), with WAL-backed batching and real-time cross-bank receipt streaming.
+- Server-stamped batch persistence (LedgerServer) that decouples proxy-side WAL batches from durable storage, never trusting a client-supplied commit time.
+- Atomic, nonce-guarded Lua scripts driving all account-state mutations in Redis (StorageKernel), with a two-phase pending/commit settlement to prevent double-spending across a synchronous AML check.
+- A from-scratch, three-level AML pipeline (rule-based, graph-based, ML) including a custom time-respecting cycle-detection algorithm for round-trip laundering, plus Louvain community detection and a GARG-index implementation feeding the ML layer.
+
 The system is split into four services that form a straight-through pipeline, plus a shared AML client:
 
 ```
@@ -28,9 +34,7 @@ Bank / Wallet Client
 - **StorageKernel** - the lowest layer: the **World State** (live account balances in Redis, mutated via atomic Lua scripts) and the **Transaction Store** (permanent batch log in HDFS). Also the integration point with the AML service.
 - **AML Service** - a Python/FastAPI microservice that screens every transaction synchronously and re-screens the whole account graph periodically, feeding flag/ban decisions back into the World State.
 
----
-
-## Repository Layout
+Each service directory has its own detailed README - this document is an overview; see those for full proto definitions, RPC-by-RPC internals, and design-history notes.
 
 ```
 LedgerProxy/       gRPC entry point - auth, WAL, batching, receipt streaming
@@ -45,154 +49,60 @@ services/logging/  Shared structured logging used across the Go services
 
 ## 1. LedgerProxy
 
-The entry point of the system. Exposes two gRPC services on port `50001` (`api/service.proto`):
+The entry point of the system. Exposes two gRPC services on port `50001`: `SecurityService.Execute` for banks to submit a transaction, and `ReceiptService.Subscribe` for banks to stream receipts on their wallets.
 
-- `SecurityService.Execute(SecureRequest) → SecureResponse` - banks submit a hybrid-encrypted transaction payload.
-- `ReceiptService.Subscribe(SubscribeRequest) → stream TransactionReceipt` - banks hold a connection open and receive receipts for any transaction touching their wallets.
+Transactions arrive hybrid-encrypted (`[RSA-OAEP-encrypted AES key][AES-256-GCM ciphertext]`) and pass a strict six-step security pipeline before anything else happens: decrypt, unmarshal, verify the sender's key against a trusted-bank store, verify an RSA-PKCS1v15 signature, recompute and compare a SHA-256 hash (tamper check), and reject anything older than 5 minutes or timestamped in the future (replay protection).
 
-**Payload format.** Transactions arrive as `[RSA-OAEP-encrypted AES key][AES-256-GCM ciphertext]`. The decrypted payload (`UnpackedMessage`) contains the JSON-encoded transaction (`SecureMessage`), an RSA-PKCS1v15 signature, a SHA-256 hash, and the sending bank's public key.
+Verified transactions are appended to a local write-ahead log and immediately receipted; once the WAL reaches 10 entries, it's batched and forwarded to LedgerServer. Receipts are routed by a bank-prefix embedded in each wallet ID, so cross-bank transfers correctly notify both sides.
 
-**Security pipeline (`modules/security/authentication.go`), in order - any failure aborts:**
-1. Hybrid-decrypt the payload with the proxy's RSA private key + AES-GCM.
-2. Unmarshal into `UnpackedMessage`.
-3. Check the sender's public key against the trusted-bank key store (`modules/security/keys/banks/*.pem`).
-4. Verify the RSA-PKCS1v15 signature over the payload hash.
-5. Recompute SHA-256 over the payload and compare to the claimed hash (tamper check).
-6. Reject if the timestamp is more than 5 minutes old or in the future (replay protection).
-
-**WAL and batching (`modules/batching/batch.go`).** Verified transactions are appended to a local `ledger_batches.jsonl` write-ahead log under a mutex, and a receipt is streamed immediately. Once the WAL reaches `batchSize = 10`, the accumulated entries are packaged into a `TransactionsBatch`, sent to LedgerServer via `BatchAppend`, and the WAL file is truncated.
-
-**Receipt routing (`cmd/server/registry.go`).** Wallet IDs encode their owning bank as a 3-character prefix (e.g. `000_wallet_A`). A same-bank transfer generates one receipt; a cross-bank transfer generates two, one per bank, routed through a thread-safe `BankRegistry` of active subscriber streams.
-
----
+→ [full details](./LedgerProxy/README.md)
 
 ## 2. LedgerServer
 
-The persistence coordinator, on port `50003` (`api/ledgerserver.proto`). Its only job is `TransactionsService.BatchAppend(TransactionsBatch) → ServerResponse`: it maps each transaction into StorageKernel's schema (stamping the server-side commit time rather than trusting the client's), calls StorageKernel's `Store`, and returns success only if both the RPC and the storage acknowledgement succeed.
+The persistence coordinator, on port `50003`. Its only job is `BatchAppend`: map each transaction into StorageKernel's schema (stamping the server-side commit time, not the client's), call `Store`, and confirm success only if both the RPC and the storage acknowledgement succeed.
 
----
+→ [full details](./LedgerServer/README.md)
 
 ## 3. StorageKernel
 
-The storage and truth layer, on port `50058`, implementing two gRPC services on one `KernelHandler` backed by Redis and HDFS.
+The storage and truth layer, on port `50058`, backed by Redis (**World State**) and HDFS (**Transaction Store**).
 
-### World State (`worldstate.proto`)
+Every account mutation runs as an atomic Redis Lua script, gated by a nonce, eliminating read-modify-write races. Transfers settle in two phases - the sender's balance is deducted immediately, but funds land in the receiver's `pending` field, not their spendable balance, until a later `CommitTransfer` confirms durable storage. This means a transaction that fails its AML check can be cleanly rolled back before it's ever finalized: a sender can't double-spend while a decision is pending, and a receiver can't spend money from a transaction that didn't ultimately settle.
 
-The authoritative, real-time state of every account. Backed by Redis, with every mutation implemented as an atomic Lua script to eliminate read-modify-write race conditions - Redis guarantees no other command executes while a script runs.
+`Transfer` calls out synchronously to the AML service after the balance mutation but before returning - looking up both accounts' tiers, running Level-1 rule checks, and rolling back on rejection. AML errors fail open, so a service outage never blocks legitimate transfers.
 
-**Account schema** (`account:<id>` Redis hash):
-- `balance` - spendable online balance
-- `pending` - funds received but not yet committed (see below)
-- `offline` - balance available for offline transactions
-- `status` - `active`, `flagged`, or `banned`
-- `tier` - account type (`PERSON`, `POS`, `MERCHANT`) used for AML thresholds
-- `reason` / `score` - optional, set when an account is flagged/banned by the AML service
-
-**RPCs:**
-| RPC | Purpose |
-|---|---|
-| `CreateAccount` | Creates an account with an initial balance and tier; merchant accounts also register a `merchant:<name> → account:<id>` mapping. |
-| `Transfer` | Debits the sender, credits the receiver's `pending` balance, resolves a merchant name to an account ID if needed, then synchronously calls the AML service before returning. |
-| `CommitTransfer` | Moves a receiver's `pending` balance into `balance` once a batch is durably stored. |
-| `OfflineDeposit` / `OfflineWithdraw` | Moves funds between `balance` and `offline`, each idempotent via a nonce check. |
-| `ChangeAccountStatus` | Sets an account to `active` / `flagged` / `banned`, optionally recording an AML reason and score. |
-| `GetAccountsTier` / `GetMerchantAccountId` | Lookups used internally to resolve tiers for AML and merchant names to account IDs. |
-
-**Double-spend / partial-commit safety.** Every write path takes a nonce key as part of its Lua script and rejects replays. Transfers use a two-phase settle: the sender's `balance` is deducted immediately, but the amount lands in the receiver's `pending` field, not their spendable `balance`. It only becomes spendable once `CommitTransfer` runs after the batch is durably stored. If the AML check on a `Transfer` rejects the transaction, a rollback script reverses the debit/credit before it ever reaches the batch - so a sender can never double-spend while a decision is pending, and a receiver can never spend funds from a transaction that didn't ultimately settle.
-
-**AML integration.** `Transfer` calls out synchronously to the AML service (via `services/aml`) after the balance mutation but before returning to LedgerProxy: it looks up both accounts' tiers, sends the transaction for Level-1 rule checking, and either lets the transfer stand or runs the rollback script if it's rejected. Internal AML errors fail open (the transfer is not blocked by an AML service outage).
-
-### Transaction Store (`TransactionsStore.proto`)
-
-`TransactionsStoreService.Store` receives a batch from LedgerServer, JSON-marshals it, and writes it to HDFS at `/ledger/transactions/batch_<unix_nano>.json`, returning a `StoreAck` with a generated batch ID.
-
----
+→ [full details](./StorageKernel/README.md), [world state internals](./StorageKernel/README_worldstate.md)
 
 ## 4. AML Service
 
-A Python/FastAPI microservice (`aml_service/`) that is the compliance layer of the system. It exposes two endpoints:
+A Python/FastAPI microservice, and the compliance layer of the system. `POST /check_transaction` runs synchronously on every transfer; `POST /check_accounts` runs periodically over the whole account graph. Every threshold is configured per account type (`PERSON`, `MERCHANT`, `POS`) in `config/thresholds.json`, decoupling policy from detection logic.
 
-- `POST /check_transaction` - called synchronously by StorageKernel on every transfer; runs Level 1 rule checks and, if approved, adds the transaction to the in-memory transaction graph for Level 2/3 analysis.
-- `POST /check_accounts` - called periodically; rebuilds the recent-transaction graph, runs Level 2 graph checks and Level 3 ML scoring across all accounts, and returns the accounts to flag or ban.
+**Level 1 - Rule-based.** In-memory, per-sender rolling windows catch transaction/daily limit breaches, structuring (repeated transactions just under the reporting threshold), and velocity bursts.
 
-Thresholds for every check are defined per account type (`PERSON`, `MERCHANT`, `POS`) in `config/thresholds.json`, decoupling policy from detection logic.
+**Level 2 - Graph-based.** Recent transactions are modeled as a directed multigraph (accounts as nodes, timestamped transactions as edges) and screened for the classic laundering topologies - fan-in/fan-out, gather-scatter, scatter-gather, bipartite layering, and round-tripping. The round-tripping check is a custom DFS-based flow-routing algorithm built from scratch, since standard max-flow algorithms (e.g. Edmonds-Karp) can't be constrained to strictly-chronological paths. It sorts branches by timestamp, tracks per-edge remaining capacity to avoid double-counting money across overlapping paths, and never materializes full paths in memory - giving O(depth) space and a mathematically defensible lower bound on cycled money.
 
-### Level 1 - Rule-Based (`levels/level_rules.py`)
+→ [design history for cycle detection](./aml_service/README_graph.md)
 
-Synchronous, in-memory checks using rolling time windows per sender:
+**Level 3 - Machine learning.** A LightGBM classifier, trained on account-level graph features, catches patterns the first two levels can't generalize to. Two components were implemented from scratch as part of the feature pipeline: the **GARG-index** (an interpretable smurfing risk score from second-order neighborhood topology) and **Louvain community detection** (verified for correctness and benchmarked against `networkx`, which won on speed and is used live). The model was thresholded on a high-β Fβ score (β=7), prioritizing recall since missing a launderer is far costlier than a false positive.
 
-- **Transaction limit** - rejects a single transaction above the account type's ceiling.
-- **Daily limit** - rejects transactions that push a sender's rolling 24-hour total over their limit.
-- **Structuring / smurfing** - flags repeated transactions just under the reporting threshold (e.g. ≥90% of the limit) within 24 hours, a common tactic to dodge reporting requirements.
-- **Velocity** - flags bursts of rapid-fire transactions within a short window (e.g. 5 in 1 minute).
-
-### Level 2 - Graph-Based (`graph/builder.py`, `levels/level_graph.py`)
-
-Models recent transactions as a directed multigraph (`NetworkX MultiDiGraph`) - accounts as nodes, timestamped transactions as edges - and screens for the classic laundering topologies from IBM's synthetic AML transactions paper:
-
-- **Fan-out / Fan-in** - flags accounts sending to, or receiving from, an abnormally high number of *unique* counterparties (not raw transaction volume).
-- **Gather-scatter** - flags accounts exceeding both fan-in and fan-out thresholds that pass most incoming money straight back out.
-- **Scatter-gather** - detected via a time-aware search following strictly-increasing-timestamp paths that converge on a single account, catching indirect consolidation across many hops.
-- **Time-respecting cycle detection (round-tripping)** - a custom DFS-based flow-routing algorithm (`fast_get_money_cycled`, see `README_graph.md` for the full design history) finds money that loops back to its origin through intermediaries. Standard max-flow algorithms (e.g. Edmonds-Karp) can't be constrained to strictly-chronological paths, so this was built from scratch:
-  - Root out-edges and DFS branches are sorted by timestamp so a later transaction can never drain capacity a chronologically earlier one needed.
-  - Sibling branches are isolated via dynamically computed available capacity, preventing the same upstream money from being double-counted across overlapping paths.
-  - No paths are materialized in memory - the traversal stack itself carries the current path, giving O(depth) memory instead of the path-explosion blowup of earlier full-materialization approaches.
-  - Branches are pruned the instant remaining capacity hits zero.
-  - The result is a mathematically defensible **lower bound** on cycled money - if it reports $5,000 cycled, at least that much genuinely cycled.
-- **Bipartite subgraph checks** - communities produced by Level 3's Louvain detection are tested with a graph-coloring approach to catch two-sided layering structures.
-
-### Level 3 - Machine Learning (`graph/garg_index.py`, `levels/level_ml.py`, `train.py`)
-
-Catches patterns the first two levels can't reliably generalize to (e.g. stacked or randomized laundering), using a LightGBM classifier scored on account-level features, refreshed periodically alongside Level 2.
-
-- **GARG-index** (implemented from scratch, undirected variant) - an interpretable graph-based smurfing risk score computed from each account's second-order neighborhood adjacency structure.
-- **Louvain community detection** (implemented from scratch, weighted and unweighted) - used both as a preprocessing step for the GARG-index and to feed the Level 2 bipartite check; verified for correctness and benchmarked against `networkx`'s implementation (networkx won on speed and is used in the live path).
-- **Graph topology features** - total cycled money (from Level 2), input/output volume and ratios, unique senders/receivers, transaction counts and per-counterparty averages.
-- **Model selection** - Random Forest and LightGBM were both trained and evaluated; LightGBM won and was thresholded by optimizing a high-β Fβ score (β=7), since in AML missing a launderer is far costlier than a false positive.
-
-**Results**, trained/evaluated on the IBM AMLWorld synthetic dataset (HI-Small: 5M+ transactions, 500k+ accounts):
-
-| Dataset | AUC ROC (ours) | AUC ROC (GARG paper) | AUC PR (ours) | AUC PR (GARG paper) |
-|---|---|---|---|---|
-| AMLWorld HI-Small (validation) | 0.9491 | 0.612 | 0.1645 | 0.02023 |
-| AMLWorld LI-Small (generalization check) | 0.9356 | 0.551 | 0.0476 | 0.00255 |
-
-Tests for the graph builder, GARG index, and each level live in `aml_service/tests/`.
+→ [full details](./aml_service/README.md)
 
 ---
 
 ## Running Locally
 
-**Prerequisites:** Go, Python 3, Docker (for Redis and HDFS).
-
 ```bash
 make run-all
 ```
 
-This installs the AML service's virtualenv, starts Redis and HDFS via Docker, and runs all four services in parallel (logs land in `logs/`).
-
-Or run each component manually, in separate terminals:
-
-```bash
-# Terminal 1 - LedgerServer
-cd LedgerServer && go mod tidy && go run .
-
-# Terminal 2 - LedgerProxy
-cd LedgerProxy && go mod tidy && go run ./cmd/server/
-
-# Terminal 3 - StorageKernel (requires Redis + HDFS running)
-cd StorageKernel && go mod tidy && go run .
-
-# Terminal 4 - AML Service
-cd aml_service && pip install -r requirements.txt && uvicorn main:app --reload
-```
+Installs the AML service's virtualenv, starts Redis and HDFS via Docker, and runs all four services in parallel (logs land in `logs/`). For manual per-service startup and prerequisites, see the [Makefile](./Makefile) and each service's README.
 
 ---
 
 ## Future Work
 
-- Scale beyond a single LedgerProxy/LedgerServer instance with a ledger-master coordinator to handle multiple proxies/servers and server failures; evaluate Redis Cluster sharding for World State throughput.
-- Reimplement the AML service in Go or C++ for faster graph analysis, allowing higher cycle-detection thresholds without CPU cost.
+- Scale beyond a single LedgerProxy/LedgerServer instance with a ledger-master coordinator; evaluate Redis Cluster sharding for World State throughput.
+- Reimplement the AML service in Go or C++ for faster graph analysis at higher cycle-detection thresholds.
 - Add neighbor-aggregated features to the ML level (e.g. average GARG score or cycled money across an account's neighborhood).
 
 ## References
